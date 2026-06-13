@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../models/order_model.dart';
+import '../../services/order_service.dart';
 import 'booking_laundry_screen.dart';
 
 class CustomerDashboardScreen extends StatelessWidget {
@@ -295,7 +296,8 @@ class CustomerDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildOrderCard(OrderModel order) {
-    final dateStr = DateFormat('d MMM yyyy HH:mm', 'id').format(order.pickupDate);
+    final dateStr =
+        DateFormat('d MMM yyyy HH:mm', 'id').format(order.pickupDate);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -373,7 +375,8 @@ class CustomerDashboardScreen extends StatelessWidget {
                   )),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 decoration: BoxDecoration(
                   border: Border.all(color: _blue, width: 1.2),
                   borderRadius: BorderRadius.circular(8),
@@ -423,8 +426,7 @@ class CustomerDashboardScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          const Icon(Icons.shopping_basket_rounded,
-              color: _blue, size: 32),
+          const Icon(Icons.shopping_basket_rounded, color: _blue, size: 32),
           const SizedBox(width: 4),
           const Text('✨', style: TextStyle(fontSize: 18)),
         ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../models/order_model.dart';
+import '../../services/order_service.dart';
 import 'detail_pembayaran_screen.dart';
 
 class CustomerPembayaranScreen extends StatelessWidget {
@@ -36,8 +37,8 @@ class CustomerPembayaranScreen extends StatelessWidget {
               if (tagihan.isNotEmpty)
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFDECEC),
                     borderRadius: BorderRadius.circular(12),
@@ -128,8 +129,7 @@ class CustomerPembayaranScreen extends StatelessWidget {
               );
             },
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
               decoration: BoxDecoration(
                 color: _blue,
                 borderRadius: BorderRadius.circular(10),

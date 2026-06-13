@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/order_model.dart';
+import '../../services/order_service.dart';
 import 'customer_main_screen.dart';
 
 class DetailPembayaranScreen extends StatefulWidget {
@@ -9,8 +10,7 @@ class DetailPembayaranScreen extends StatefulWidget {
   final OrderModel order;
 
   @override
-  State<DetailPembayaranScreen> createState() =>
-      _DetailPembayaranScreenState();
+  State<DetailPembayaranScreen> createState() => _DetailPembayaranScreenState();
 }
 
 class _DetailPembayaranScreenState extends State<DetailPembayaranScreen> {
@@ -188,7 +188,8 @@ class _DetailPembayaranScreenState extends State<DetailPembayaranScreen> {
               // ── Catatan ───────────────────────────────────
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -291,7 +292,7 @@ class _DetailPembayaranScreenState extends State<DetailPembayaranScreen> {
             const SizedBox(height: 20),
             GestureDetector(
               onTap: () {
-                order.status = OrderStatus.selesai;
+                OrderRepository.updateStatus(order, OrderStatus.selesai);
                 Navigator.of(context).popUntil((route) => route.isFirst);
                 Navigator.pushReplacement(
                   context,

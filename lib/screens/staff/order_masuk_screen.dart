@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../app_theme.dart';
 import '../../models/order_model.dart';
+import '../../services/order_service.dart';
 import 'verifikasi_berat_screen.dart';
 
 class OrderMasukScreen extends StatefulWidget {
@@ -317,7 +318,8 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        setState(() => order.status = OrderStatus.diproses);
+                        setState(() => OrderRepository.updateStatus(
+                            order, OrderStatus.diproses));
                         Navigator.pop(context);
                         _showSnack('Order ${order.id} berhasil diambil');
                       },

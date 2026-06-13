@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../app_theme.dart';
 import '../../models/order_model.dart';
+import '../../services/order_service.dart';
 import 'lanjut_proses_screen.dart';
 
 class KelolaOrderScreen extends StatefulWidget {
@@ -134,8 +135,7 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
                   : ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                       itemCount: _filtered.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(height: 10),
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
                       itemBuilder: (_, i) => _buildCard(_filtered[i]),
                     ),
             ),
@@ -158,9 +158,7 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
             color: isActive ? AppColors.primary : Colors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isActive
-                  ? AppColors.primary
-                  : const Color(0xFFDDDDDD),
+              color: isActive ? AppColors.primary : const Color(0xFFDDDDDD),
               width: 1.2,
             ),
           ),
@@ -179,8 +177,7 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
 
   // ── Order Card ────────────────────────────────────────────
   Widget _buildCard(OrderModel order) {
-    final dateStr =
-        DateFormat('d MMMM yyyy', 'id').format(order.pickupDate);
+    final dateStr = DateFormat('d MMMM yyyy', 'id').format(order.pickupDate);
     final timeStr = order.pickupSlot.split(' ').first;
     final badge = _badgeFor(order.status);
 
@@ -265,8 +262,7 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
             ),
             const SizedBox(width: 10),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: badge.bg,
                 borderRadius: BorderRadius.circular(20),
@@ -304,6 +300,5 @@ class _BadgeConfig {
   final String label;
   final Color bg;
   final Color fg;
-  const _BadgeConfig(
-      {required this.label, required this.bg, required this.fg});
+  const _BadgeConfig({required this.label, required this.bg, required this.fg});
 }

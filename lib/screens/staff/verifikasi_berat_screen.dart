@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../app_theme.dart';
 import '../../models/order_model.dart';
+import '../../services/order_service.dart';
 
 class VerifikasiBeratScreen extends StatefulWidget {
   final OrderModel order;
@@ -28,8 +29,7 @@ class _VerifikasiBeratScreenState extends State<VerifikasiBeratScreen> {
     super.dispose();
   }
 
-  String _formatDate(DateTime dt) =>
-      DateFormat('d MMMM yyyy', 'id').format(dt);
+  String _formatDate(DateTime dt) => DateFormat('d MMMM yyyy', 'id').format(dt);
 
   // ── Header card: ORD + tanggal + status badge ──────────────
   Widget _buildOrderHeader() {
@@ -66,8 +66,7 @@ class _VerifikasiBeratScreenState extends State<VerifikasiBeratScreen> {
             ),
           ),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             decoration: BoxDecoration(
               color: const Color(0xFFD9C2F0),
               borderRadius: BorderRadius.circular(20),
@@ -148,8 +147,7 @@ class _VerifikasiBeratScreenState extends State<VerifikasiBeratScreen> {
         const SizedBox(height: 8),
         TextField(
           controller: _beratController,
-          keyboardType:
-              const TextInputType.numberWithOptions(decimal: true),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
           ],
@@ -166,8 +164,7 @@ class _VerifikasiBeratScreenState extends State<VerifikasiBeratScreen> {
             fillColor: Colors.white,
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide:
-                  const BorderSide(color: Color(0xFFDDDDDD), width: 1),
+              borderSide: const BorderSide(color: Color(0xFFDDDDDD), width: 1),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -216,16 +213,14 @@ class _VerifikasiBeratScreenState extends State<VerifikasiBeratScreen> {
             style: GoogleFonts.inter(fontSize: 13)),
         backgroundColor: Colors.redAccent,
         behavior: SnackBarBehavior.floating,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         margin: const EdgeInsets.all(16),
       ));
       return;
     }
 
     // Simpan berat & update status
-    widget.order.beratKg = kg;
-    widget.order.status = OrderStatus.konfirmasiBayar;
+    OrderRepository.updateWeightAndConfirm(widget.order, kg);
     widget.onKonfirmasi?.call();
 
     // Tampilkan dialog sukses
@@ -238,8 +233,7 @@ class _VerifikasiBeratScreenState extends State<VerifikasiBeratScreen> {
       context: context,
       barrierDismissible: false,
       builder: (_) => Dialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: Colors.white,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),

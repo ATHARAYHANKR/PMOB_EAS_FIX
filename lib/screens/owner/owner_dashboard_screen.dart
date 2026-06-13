@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/order_model.dart';
+import '../../services/order_service.dart';
 
 class OwnerDashboardScreen extends StatelessWidget {
   const OwnerDashboardScreen({super.key});
@@ -310,9 +311,7 @@ class OwnerDashboardScreen extends StatelessWidget {
   // ── Recent Orders ────────────────────────────────────────────
   List<Widget> _buildRecentOrders() {
     final recents = OrderRepository.all.take(2).toList();
-    return recents
-        .map((o) => _buildOrderRow(o))
-        .toList();
+    return recents.map((o) => _buildOrderRow(o)).toList();
   }
 
   Widget _buildOrderRow(OrderModel order) {

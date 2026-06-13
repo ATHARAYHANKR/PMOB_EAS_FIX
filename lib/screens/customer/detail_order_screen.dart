@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../models/order_model.dart';
+import '../../services/order_service.dart';
 import 'edit_order_screen.dart';
 
 class DetailOrderScreen extends StatefulWidget {
@@ -22,6 +23,11 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
     Color badgeBg;
     Color badgeFg;
     String badgeLabel;
+
+    final steps = order.computedSteps;
+    final progress =
+        order.status == OrderStatus.dibatalkan ? 0.0 : order.workflowProgress;
+    final doneSteps = steps.where((step) => step.done).length;
 
     switch (order.status) {
       case OrderStatus.masuk:
@@ -139,6 +145,42 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
                 ),
               ),
               const SizedBox(height: 14),
+              if (order.status != OrderStatus.dibatalkan) ...[
+                Text('Progress Pesanan',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                    )),
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 8,
+                    backgroundColor: const Color(0xFFEDEDF2),
+                    valueColor:
+                        const AlwaysStoppedAnimation<Color>(Color(0xFF3B5BDB)),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('${(progress * 100).round()}% selesai',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        )),
+                    Text('$doneSteps/${steps.length} tahap',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        )),
+                  ],
+                ),
+                const SizedBox(height: 14),
+              ],
 
               // Info card
               Container(
@@ -243,9 +285,9 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
                       color: Colors.black87,
                     )),
                 const SizedBox(height: 12),
-                ...List.generate(order.steps.length, (i) {
-                  final step = order.steps[i];
-                  final isLast = i == order.steps.length - 1;
+                ...List.generate(steps.length, (i) {
+                  final step = steps[i];
+                  final isLast = i == steps.length - 1;
                   return _buildStepRow(step, isLast);
                 }),
               ],
@@ -419,7 +461,7 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
                     child: GestureDetector(
                       onTap: () {
                         setState(() {
-                          order.status = OrderStatus.dibatalkan;
+                          OrderRepository.cancel(order);
                         });
                         Navigator.pop(context);
                       },

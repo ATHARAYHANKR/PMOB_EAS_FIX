@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../app_theme.dart';
 import '../../models/order_model.dart';
+import '../../services/order_service.dart';
 
 class LanjutProsesScreen extends StatelessWidget {
   final OrderModel order;
@@ -14,8 +15,7 @@ class LanjutProsesScreen extends StatelessWidget {
     this.onUpdated,
   });
 
-  String _formatDate(DateTime dt) =>
-      DateFormat('d MMMM yyyy', 'id').format(dt);
+  String _formatDate(DateTime dt) => DateFormat('d MMMM yyyy', 'id').format(dt);
 
   // ── Warna & label badge berdasarkan status ─────────────────
   _BadgeStyle _badgeStyle() {
@@ -49,37 +49,50 @@ class LanjutProsesScreen extends StatelessWidget {
 
   // ── Teks keterangan & label tombol ─────────────────────────
   String get _keterangan {
+    if (order.isFinalized) {
+      return 'Order telah selesai atau dibatalkan.';
+    }
     switch (order.status) {
+      case OrderStatus.masuk:
+        return 'Terima order untuk memulai proses laundry.';
+      case OrderStatus.konfirmasi:
+        return 'Ambil pakaian dan kirim ke proses cucian.';
+      case OrderStatus.dijemput:
+        return 'Pakaian sudah dijemput, lanjutkan ke proses selanjutnya.';
       case OrderStatus.diproses:
-        return 'Lanjut setrika jika pakaian siap disetrika';
+        return 'Lanjut setrika jika pakaian siap disetrika.';
       case OrderStatus.perluTimbang:
-        return 'Lanjut kirim jika pakaian sudah siap dikirim';
+        return 'Lanjut kirim jika pakaian sudah siap dikirim.';
+      case OrderStatus.konfirmasiBayar:
+        return 'Pastikan pembayaran diterima sebelum menutup order.';
       default:
-        return 'Lanjutkan proses pesanan ini';
+        return 'Lanjutkan proses pesanan ini.';
     }
   }
 
   String get _buttonLabel {
+    if (order.isFinalized) return 'Tidak Dapat Dilanjutkan';
     switch (order.status) {
+      case OrderStatus.masuk:
+        return 'Terima Order';
+      case OrderStatus.konfirmasi:
+        return 'Mulai Proses';
+      case OrderStatus.dijemput:
+        return 'Masuk Cucian';
       case OrderStatus.diproses:
         return 'Lanjut Setrika';
       case OrderStatus.perluTimbang:
         return 'Lanjut Kirim';
+      case OrderStatus.konfirmasiBayar:
+        return 'Selesai';
       default:
         return 'Lanjut Proses';
     }
   }
 
-  OrderStatus get _nextStatus {
-    switch (order.status) {
-      case OrderStatus.diproses:
-        return OrderStatus.perluTimbang;
-      case OrderStatus.perluTimbang:
-        return OrderStatus.konfirmasiBayar;
-      default:
-        return OrderStatus.selesai;
-    }
-  }
+  OrderStatus? get _nextStatus => order.nextStatus;
+
+  bool get _canContinue => _nextStatus != null && !order.isFinalized;
 
   // ──────────────────────────────────────────────────────────
 
@@ -187,8 +200,7 @@ class LanjutProsesScreen extends StatelessWidget {
       context: context,
       barrierDismissible: false,
       builder: (_) => Dialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: Colors.white,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
@@ -196,7 +208,7 @@ class LanjutProsesScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Yakin Update Orderan?',
+                'Konfirmasi Perubahan Status',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                   fontSize: 17,
@@ -205,7 +217,7 @@ class LanjutProsesScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 18),
-              const Text('🤔', style: TextStyle(fontSize: 68)),
+              const Text('🚚', style: TextStyle(fontSize: 68)),
               const SizedBox(height: 18),
               RichText(
                 textAlign: TextAlign.center,
@@ -216,17 +228,28 @@ class LanjutProsesScreen extends StatelessWidget {
                     height: 1.5,
                   ),
                   children: [
-                    const TextSpan(
-                        text:
-                            'Pastikan nomor orderan yang kamu\nkerjakan '),
+                    const TextSpan(text: 'Update order '),
                     TextSpan(
                       text: order.id,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const TextSpan(text: ' ke status '),
+                    TextSpan(
+                      text: _nextStatus?.stepTitle ?? 'selesai',
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 18),
+              LinearProgressIndicator(
+                value: order.workflowProgress,
+                minHeight: 8,
+                backgroundColor: const Color(0xFFEDEDF2),
+                valueColor:
+                    const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              ),
+              const SizedBox(height: 18),
               Row(
                 children: [
                   Expanded(
@@ -253,25 +276,34 @@ class LanjutProsesScreen extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        order.status = _nextStatus;
-                        onUpdated?.call();
-                        Navigator.pop(context); // tutup dialog
-                        Navigator.pop(context); // kembali ke kelola order
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(
-                            'Order ${order.id} berhasil diupdate',
-                            style: GoogleFonts.inter(fontSize: 13),
-                          ),
-                          backgroundColor: AppColors.primary,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                          margin: const EdgeInsets.all(16),
-                        ));
-                      },
+                      onPressed: _canContinue
+                          ? () {
+                              if (order.nextStatus != null) {
+                                final updatedStatus = order.nextStatus!;
+                                OrderRepository.advanceStatus(order);
+                                onUpdated?.call();
+                                Navigator.pop(context);
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Order ${order.id} berhasil dipindah ke ${updatedStatus.stepTitle}',
+                                      style: GoogleFonts.inter(fontSize: 13),
+                                    ),
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
+                                    margin: const EdgeInsets.all(16),
+                                  ),
+                                );
+                              }
+                            }
+                          : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: _canContinue
+                            ? AppColors.primary
+                            : Colors.grey.shade400,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 13),
@@ -280,7 +312,7 @@ class LanjutProsesScreen extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        'Lanjut',
+                        _buttonLabel,
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -307,8 +339,7 @@ class LanjutProsesScreen extends StatelessWidget {
           children: [
             // ── App Bar ───────────────────────────────────
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -336,8 +367,7 @@ class LanjutProsesScreen extends StatelessWidget {
             // ── Body ─────────────────────────────────────
             Expanded(
               child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -360,14 +390,12 @@ class LanjutProsesScreen extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () =>
-                            _showKonfirmasiDialog(context),
+                        onPressed: () => _showKonfirmasiDialog(context),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           elevation: 0,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -397,6 +425,5 @@ class _BadgeStyle {
   final Color bg;
   final Color fg;
   final String label;
-  const _BadgeStyle(
-      {required this.bg, required this.fg, required this.label});
+  const _BadgeStyle({required this.bg, required this.fg, required this.label});
 }

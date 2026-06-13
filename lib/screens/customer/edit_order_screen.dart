@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/order_model.dart';
+import '../../services/order_service.dart';
 import '../owner/owner_kelola_screen.dart';
 
 class EditOrderScreen extends StatefulWidget {
@@ -43,8 +44,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             ),
     );
     _alamatCtrl.text = widget.order.address;
-    _catatanCtrl.text =
-        widget.order.catatan == '-' ? '' : widget.order.catatan;
+    _catatanCtrl.text = widget.order.catatan == '-' ? '' : widget.order.catatan;
     _tanggalJemput = widget.order.pickupDate;
     final slot = widget.order.pickupSlot;
     _sesiJemput = _sesiOptions.firstWhere(
@@ -340,9 +340,8 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                     : '${_tanggalJemput!.day.toString().padLeft(2, '0')}/${_tanggalJemput!.month.toString().padLeft(2, '0')}/${_tanggalJemput!.year}',
                 style: GoogleFonts.inter(
                   fontSize: 13,
-                  color: _tanggalJemput == null
-                      ? Colors.black38
-                      : Colors.black87,
+                  color:
+                      _tanggalJemput == null ? Colors.black38 : Colors.black87,
                 ),
               ),
             ),
@@ -437,7 +436,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                   child: GestureDetector(
                     onTap: () {
                       setState(() {
-                        widget.order.status = OrderStatus.dibatalkan;
+                        OrderRepository.cancel(widget.order);
                       });
                       Navigator.pop(context); // close dialog
                       Navigator.pop(context); // close edit screen

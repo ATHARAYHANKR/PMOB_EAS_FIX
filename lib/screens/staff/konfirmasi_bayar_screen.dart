@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../app_theme.dart';
 import '../../models/order_model.dart';
+import '../../services/order_service.dart';
 
 class KonfirmasiBayarScreen extends StatefulWidget {
   const KonfirmasiBayarScreen({super.key});
@@ -15,8 +16,7 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
   List<OrderModel> get _orders =>
       OrderRepository.byStatus(OrderStatus.konfirmasiBayar);
 
-  String _formatDate(DateTime dt) =>
-      DateFormat('d MMMM yyyy', 'id').format(dt);
+  String _formatDate(DateTime dt) => DateFormat('d MMMM yyyy', 'id').format(dt);
 
   @override
   Widget build(BuildContext context) {
@@ -46,8 +46,7 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
                   : ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                       itemCount: _orders.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(height: 12),
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (_, i) => _buildCard(_orders[i]),
                     ),
             ),
@@ -128,8 +127,7 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               elevation: 0,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -172,8 +170,7 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
       context: context,
       barrierDismissible: false,
       builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: Colors.white,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
@@ -215,8 +212,7 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 13),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -237,18 +233,16 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        setState(
-                            () => order.status = OrderStatus.selesai);
+                        setState(() => OrderRepository.updateStatus(
+                            order, OrderStatus.selesai));
                         Navigator.pop(context);
-                        _showSnack(
-                            '${order.id} berhasil dikonfirmasi lunas');
+                        _showSnack('${order.id} berhasil dikonfirmasi lunas');
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 13),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -277,8 +271,7 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
       content: Text(msg, style: GoogleFonts.inter(fontSize: 13)),
       backgroundColor: AppColors.primary,
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       margin: const EdgeInsets.all(16),
     ));
   }
