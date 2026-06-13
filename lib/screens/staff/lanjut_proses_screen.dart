@@ -1,0 +1,402 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import '../../app_theme.dart';
+import '../../models/order_model.dart';
+
+class LanjutProsesScreen extends StatelessWidget {
+  final OrderModel order;
+  final VoidCallback? onUpdated;
+
+  const LanjutProsesScreen({
+    super.key,
+    required this.order,
+    this.onUpdated,
+  });
+
+  String _formatDate(DateTime dt) =>
+      DateFormat('d MMMM yyyy', 'id').format(dt);
+
+  // ── Warna & label badge berdasarkan status ─────────────────
+  _BadgeStyle _badgeStyle() {
+    switch (order.status) {
+      case OrderStatus.diproses:
+        return _BadgeStyle(
+          bg: const Color(0xFFD6EEFF),
+          fg: const Color(0xFF1565C0),
+          label: 'Dicuci',
+        );
+      case OrderStatus.perluTimbang:
+        return _BadgeStyle(
+          bg: const Color(0xFFFFF9C4),
+          fg: const Color(0xFF795548),
+          label: 'Disetrika',
+        );
+      case OrderStatus.konfirmasiBayar:
+        return _BadgeStyle(
+          bg: const Color(0xFFEDD6FF),
+          fg: const Color(0xFF6A1F9F),
+          label: 'Dikirim',
+        );
+      default:
+        return _BadgeStyle(
+          bg: const Color(0xFFE8F5E9),
+          fg: AppColors.primary,
+          label: order.statusLabel,
+        );
+    }
+  }
+
+  // ── Teks keterangan & label tombol ─────────────────────────
+  String get _keterangan {
+    switch (order.status) {
+      case OrderStatus.diproses:
+        return 'Lanjut setrika jika pakaian siap disetrika';
+      case OrderStatus.perluTimbang:
+        return 'Lanjut kirim jika pakaian sudah siap dikirim';
+      default:
+        return 'Lanjutkan proses pesanan ini';
+    }
+  }
+
+  String get _buttonLabel {
+    switch (order.status) {
+      case OrderStatus.diproses:
+        return 'Lanjut Setrika';
+      case OrderStatus.perluTimbang:
+        return 'Lanjut Kirim';
+      default:
+        return 'Lanjut Proses';
+    }
+  }
+
+  OrderStatus get _nextStatus {
+    switch (order.status) {
+      case OrderStatus.diproses:
+        return OrderStatus.perluTimbang;
+      case OrderStatus.perluTimbang:
+        return OrderStatus.konfirmasiBayar;
+      default:
+        return OrderStatus.selesai;
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────
+
+  Widget _buildOrderHeader() {
+    final badge = _badgeStyle();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F7F0),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  order.id,
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${_formatDate(order.pickupDate)} - ${order.pickupSlot.split(' ').first}',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: AppColors.textGrey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              color: badge.bg,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              badge.label,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: badge.fg,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailCard() {
+    final rows = [
+      ('Customer', order.customerName),
+      ('Layanan', order.serviceType),
+      (
+        'Jemput',
+        '${_formatDate(order.pickupDate)}, ${order.pickupSlot.split(' ').first}'
+      ),
+      ('Catatan', '-'),
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFEEEEEE), width: 1),
+      ),
+      child: Column(
+        children: rows.map((r) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(r.$1,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: AppColors.textGrey,
+                    )),
+                Text(r.$2,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textDark,
+                    )),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  void _showKonfirmasiDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Dialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Yakin Update Orderan?',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text('🤔', style: TextStyle(fontSize: 68)),
+              const SizedBox(height: 18),
+              RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: AppColors.textDark,
+                    height: 1.5,
+                  ),
+                  children: [
+                    const TextSpan(
+                        text:
+                            'Pastikan nomor orderan yang kamu\nkerjakan '),
+                    TextSpan(
+                      text: order.id,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        side: const BorderSide(
+                            color: Color(0xFFCCCCCC), width: 1.2),
+                      ),
+                      child: Text(
+                        'Kembali',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        order.status = _nextStatus;
+                        onUpdated?.call();
+                        Navigator.pop(context); // tutup dialog
+                        Navigator.pop(context); // kembali ke kelola order
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(
+                            'Order ${order.id} berhasil diupdate',
+                            style: GoogleFonts.inter(fontSize: 13),
+                          ),
+                          backgroundColor: AppColors.primary,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          margin: const EdgeInsets.all(16),
+                        ));
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text(
+                        'Lanjut',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ── App Bar ───────────────────────────────────
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                          size: 20, color: AppColors.textDark),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                  Text(
+                    'LANJUT PROSES',
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Body ─────────────────────────────────────
+            Expanded(
+              child: SingleChildScrollView(
+                padding:
+                    const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildOrderHeader(),
+                    const SizedBox(height: 12),
+                    _buildDetailCard(),
+                    const SizedBox(height: 20),
+
+                    // Keterangan
+                    Text(
+                      _keterangan,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Tombol aksi
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () =>
+                            _showKonfirmasiDialog(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          _buttonLabel,
+                          style: GoogleFonts.inter(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BadgeStyle {
+  final Color bg;
+  final Color fg;
+  final String label;
+  const _BadgeStyle(
+      {required this.bg, required this.fg, required this.label});
+}
