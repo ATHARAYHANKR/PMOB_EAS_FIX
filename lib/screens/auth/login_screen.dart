@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../staff_main_screen.dart';
 import '../owner_main_screen.dart';
+import '../customer/customer_main_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   static const _accounts = {
     'staff': ('staff123', 'staff'),
     'owner': ('owner123', 'owner'),
+    'customer': ('customer123', 'customer'),
   };
 
   static const Color _blue = Color(0xFF3B5BDB);
@@ -292,12 +294,20 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     final role = account.$2;
+    Widget target;
+    switch (role) {
+      case 'owner':
+        target = const OwnerMainScreen();
+        break;
+      case 'customer':
+        target = const CustomerMainScreen();
+        break;
+      default:
+        target = const StaffMainScreen();
+    }
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (_) =>
-            role == 'owner' ? const OwnerMainScreen() : const StaffMainScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => target),
     );
   }
 

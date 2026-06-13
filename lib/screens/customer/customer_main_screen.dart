@@ -1,35 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'owner/owner_dashboard_screen.dart';
-import 'owner/owner_kelola_screen.dart';
-import 'owner/owner_laporan_screen.dart';
-import 'owner/owner_profil_screen.dart';
+import 'customer_dashboard_screen.dart';
+import 'customer_order_screen.dart';
+import 'customer_tracking_screen.dart';
+import 'customer_pembayaran_screen.dart';
+import 'customer_profil_screen.dart';
 
-class OwnerMainScreen extends StatefulWidget {
-  const OwnerMainScreen({super.key, this.initialIndex = 0});
+class CustomerMainScreen extends StatefulWidget {
+  const CustomerMainScreen({super.key, this.initialIndex = 0});
   final int initialIndex;
 
   @override
-  State<OwnerMainScreen> createState() => _OwnerMainScreenState();
+  State<CustomerMainScreen> createState() => _CustomerMainScreenState();
 }
 
-class _OwnerMainScreenState extends State<OwnerMainScreen> {
+class _CustomerMainScreenState extends State<CustomerMainScreen> {
   late int _currentIndex;
 
-  static const Color _purple = Color(0xFFBB2BCD);
+  static const Color _blue = Color(0xFF3B5BDB);
+
+  final List<Widget> _screens = const [
+    CustomerDashboardScreen(),
+    CustomerOrderScreen(),
+    CustomerTrackingScreen(),
+    CustomerPembayaranScreen(),
+    CustomerProfilScreen(),
+  ];
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
   }
-
-  final List<Widget> _screens = const [
-    OwnerDashboardScreen(),
-    OwnerKelolaScreen(),
-    OwnerLaporanScreen(),
-    OwnerProfilScreen(),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +61,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
           onTap: (i) => setState(() => _currentIndex = i),
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.white,
-          selectedItemColor: _purple,
+          selectedItemColor: _blue,
           unselectedItemColor: const Color(0xFFB0B0B0),
           selectedLabelStyle:
               GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600),
@@ -69,17 +71,22 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),
               activeIcon: Icon(Icons.home_rounded),
-              label: 'Beranda',
+              label: 'Dashboard',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.flash_on_outlined),
-              activeIcon: Icon(Icons.flash_on_rounded),
-              label: 'Kelola',
+              icon: Icon(Icons.description_outlined),
+              activeIcon: Icon(Icons.description_rounded),
+              label: 'Order',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.bar_chart_outlined),
-              activeIcon: Icon(Icons.bar_chart_rounded),
-              label: 'Laporan',
+              icon: Icon(Icons.local_shipping_outlined),
+              activeIcon: Icon(Icons.local_shipping_rounded),
+              label: 'Tracking',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.credit_card_outlined),
+              activeIcon: Icon(Icons.credit_card_rounded),
+              label: 'Pembayaran',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline_rounded),
