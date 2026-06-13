@@ -191,10 +191,10 @@ class OwnerDashboardScreen extends StatelessWidget {
         value: '$selesai',
         valueColor: const Color(0xFF2E7D32),
       ),
-      _StatItem(
+      const _StatItem(
         icon: Icons.monetization_on_rounded,
-        iconBg: const Color(0xFFFFF8E1),
-        iconColor: const Color(0xFFF9A825),
+        iconBg: Color(0xFFFFF8E1),
+        iconColor: Color(0xFFF9A825),
         label: 'Total Omzet',
         value: 'Rp 24.000',
         valueColor: _purple,
@@ -394,7 +394,7 @@ class OwnerDashboardScreen extends StatelessWidget {
   // ── Staff List ───────────────────────────────────────────────
   List<Widget> _buildStaffList() {
     final staffs = [
-      _StaffItem(name: 'Karimah Staff', role: 'staff', active: true),
+      const _StaffItem(name: 'Karimah Staff', role: 'staff', active: true),
     ];
 
     return staffs.map((s) {
@@ -463,40 +463,40 @@ class OwnerDashboardScreen extends StatelessWidget {
   // ── Menu Cepat 2x3 ─────────────────────────────────────────
   Widget _buildQuickMenu(BuildContext context) {
     final items = [
-      _MenuItem(
+      const _MenuItem(
         icon: Icons.list_alt_rounded,
         label: 'Semua Order',
-        bg: const Color(0xFFF3E5F5),
+        bg: Color(0xFFF3E5F5),
         iconColor: _purple,
       ),
-      _MenuItem(
+      const _MenuItem(
         icon: Icons.sell_rounded,
         label: 'Katalog Harga',
-        bg: const Color(0xFFF3E5F5),
+        bg: Color(0xFFF3E5F5),
         iconColor: _purple,
       ),
-      _MenuItem(
+      const _MenuItem(
         icon: Icons.room_service_rounded,
         label: 'Jenis Layanan',
-        bg: const Color(0xFFF3E5F5),
+        bg: Color(0xFFF3E5F5),
         iconColor: _purple,
       ),
-      _MenuItem(
+      const _MenuItem(
         icon: Icons.groups_rounded,
         label: 'Manajemen Staff',
-        bg: const Color(0xFFF3E5F5),
+        bg: Color(0xFFF3E5F5),
         iconColor: _purple,
       ),
-      _MenuItem(
+      const _MenuItem(
         icon: Icons.description_rounded,
         label: 'Invoice',
-        bg: const Color(0xFFF3E5F5),
+        bg: Color(0xFFF3E5F5),
         iconColor: _purple,
       ),
-      _MenuItem(
+      const _MenuItem(
         icon: Icons.bar_chart_rounded,
         label: 'Laporan',
-        bg: const Color(0xFFF3E5F5),
+        bg: Color(0xFFF3E5F5),
         iconColor: _purple,
       ),
     ];

@@ -67,23 +67,23 @@ class OwnerProfilScreen extends StatelessWidget {
               _section(
                 title: 'Informasi Akun',
                 items: [
-                  _InfoItem(
+                  const _InfoItem(
                       icon: Icons.person_outline_rounded,
                       label: 'Nama',
                       value: 'Pemilik CleanGo'),
-                  _InfoItem(
+                  const _InfoItem(
                       icon: Icons.phone_outlined,
                       label: 'Telepon',
                       value: '+62 821 9876 5432'),
-                  _InfoItem(
+                  const _InfoItem(
                       icon: Icons.email_outlined,
                       label: 'Email',
                       value: 'owner@cleango.id'),
-                  _InfoItem(
+                  const _InfoItem(
                       icon: Icons.storefront_outlined,
                       label: 'Nama Usaha',
                       value: 'CleanGo Laundry'),
-                  _InfoItem(
+                  const _InfoItem(
                       icon: Icons.badge_outlined,
                       label: 'Role',
                       value: 'Owner / Pemilik'),

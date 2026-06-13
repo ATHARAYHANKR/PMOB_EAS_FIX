@@ -55,19 +55,19 @@ class ProfilScreen extends StatelessWidget {
               _section(
                 title: 'Informasi Akun',
                 items: [
-                  _InfoItem(
+                  const _InfoItem(
                       icon: Icons.person_outline_rounded,
                       label: 'Username',
                       value: 'karimah_staff'),
-                  _InfoItem(
+                  const _InfoItem(
                       icon: Icons.phone_outlined,
                       label: 'Telepon',
                       value: '+62 812 3456 7890'),
-                  _InfoItem(
+                  const _InfoItem(
                       icon: Icons.email_outlined,
                       label: 'Email',
                       value: 'karimah@cleango.id'),
-                  _InfoItem(
+                  const _InfoItem(
                       icon: Icons.badge_outlined,
                       label: 'Role',
                       value: 'Staff Laundry'),

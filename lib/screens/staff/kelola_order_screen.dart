@@ -41,33 +41,33 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
   _BadgeConfig _badgeFor(OrderStatus status) {
     switch (status) {
       case OrderStatus.diproses:
-        return _BadgeConfig(
+        return const _BadgeConfig(
           label: 'Dicuci',
-          bg: const Color(0xFFD6EEFF),
-          fg: const Color(0xFF1565C0),
+          bg: Color(0xFFD6EEFF),
+          fg: Color(0xFF1565C0),
         );
       case OrderStatus.perluTimbang:
-        return _BadgeConfig(
+        return const _BadgeConfig(
           label: 'Disetrika',
-          bg: const Color(0xFFFFF9C4),
-          fg: const Color(0xFF795548),
+          bg: Color(0xFFFFF9C4),
+          fg: Color(0xFF795548),
         );
       case OrderStatus.konfirmasiBayar:
-        return _BadgeConfig(
+        return const _BadgeConfig(
           label: 'Dikirim',
-          bg: const Color(0xFFEDD6FF),
-          fg: const Color(0xFF6A1F9F),
+          bg: Color(0xFFEDD6FF),
+          fg: Color(0xFF6A1F9F),
         );
       case OrderStatus.selesai:
-        return _BadgeConfig(
+        return const _BadgeConfig(
           label: 'Selesai',
-          bg: const Color(0xFFE8F5E9),
+          bg: Color(0xFFE8F5E9),
           fg: AppColors.primary,
         );
       default:
-        return _BadgeConfig(
+        return const _BadgeConfig(
           label: 'Order Masuk',
-          bg: const Color(0xFFFFF3E0),
+          bg: Color(0xFFFFF3E0),
           fg: AppColors.orange,
         );
     }

@@ -178,10 +178,10 @@ class CustomerDashboardScreen extends StatelessWidget {
         value: '$selesai',
         valueColor: const Color(0xFF2E7D32),
       ),
-      _StatItem(
+      const _StatItem(
         icon: Icons.monetization_on_rounded,
-        iconBg: const Color(0xFFFFF8E1),
-        iconColor: const Color(0xFFF9A825),
+        iconBg: Color(0xFFFFF8E1),
+        iconColor: Color(0xFFF9A825),
         label: 'Total Bayar',
         value: 'Rp 95.000',
         valueColor: _blue,

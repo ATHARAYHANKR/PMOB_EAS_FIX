@@ -21,21 +21,21 @@ class LanjutProsesScreen extends StatelessWidget {
   _BadgeStyle _badgeStyle() {
     switch (order.status) {
       case OrderStatus.diproses:
-        return _BadgeStyle(
-          bg: const Color(0xFFD6EEFF),
-          fg: const Color(0xFF1565C0),
+        return const _BadgeStyle(
+          bg: Color(0xFFD6EEFF),
+          fg: Color(0xFF1565C0),
           label: 'Dicuci',
         );
       case OrderStatus.perluTimbang:
-        return _BadgeStyle(
-          bg: const Color(0xFFFFF9C4),
-          fg: const Color(0xFF795548),
+        return const _BadgeStyle(
+          bg: Color(0xFFFFF9C4),
+          fg: Color(0xFF795548),
           label: 'Disetrika',
         );
       case OrderStatus.konfirmasiBayar:
-        return _BadgeStyle(
-          bg: const Color(0xFFEDD6FF),
-          fg: const Color(0xFF6A1F9F),
+        return const _BadgeStyle(
+          bg: Color(0xFFEDD6FF),
+          fg: Color(0xFF6A1F9F),
           label: 'Dikirim',
         );
       default:

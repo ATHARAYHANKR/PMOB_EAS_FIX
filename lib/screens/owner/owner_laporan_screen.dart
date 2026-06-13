@@ -30,49 +30,49 @@ class _OwnerLaporanScreenState extends State<OwnerLaporanScreen> {
 
   // Data ringkasan per bulan (dummy)
   final Map<String, _LaporanData> _dataMap = {
-    'Januari 2026': _LaporanData(
+    'Januari 2026': const _LaporanData(
         pendapatan: 3200000,
         totalOrder: 88,
         selesai: 70,
         diproses: 12,
         dibatalkan: 6),
-    'Februari 2026': _LaporanData(
+    'Februari 2026': const _LaporanData(
         pendapatan: 2800000,
         totalOrder: 76,
         selesai: 60,
         diproses: 10,
         dibatalkan: 6),
-    'Maret 2026': _LaporanData(
+    'Maret 2026': const _LaporanData(
         pendapatan: 3700000,
         totalOrder: 95,
         selesai: 78,
         diproses: 11,
         dibatalkan: 6),
-    'April 2026': _LaporanData(
+    'April 2026': const _LaporanData(
         pendapatan: 4100000,
         totalOrder: 110,
         selesai: 89,
         diproses: 14,
         dibatalkan: 7),
-    'Mei 2026': _LaporanData(
+    'Mei 2026': const _LaporanData(
         pendapatan: 3900000,
         totalOrder: 102,
         selesai: 84,
         diproses: 12,
         dibatalkan: 6),
-    'Juni 2026': _LaporanData(
+    'Juni 2026': const _LaporanData(
         pendapatan: 4500000,
         totalOrder: 120,
         selesai: 95,
         diproses: 20,
         dibatalkan: 5),
-    'Juli 2026': _LaporanData(
+    'Juli 2026': const _LaporanData(
         pendapatan: 0, totalOrder: 0, selesai: 0, diproses: 0, dibatalkan: 0),
   };
 
   _LaporanData get _current =>
       _dataMap[_selectedBulan] ??
-      _LaporanData(
+      const _LaporanData(
           pendapatan: 0, totalOrder: 0, selesai: 0, diproses: 0, dibatalkan: 0);
 
   @override

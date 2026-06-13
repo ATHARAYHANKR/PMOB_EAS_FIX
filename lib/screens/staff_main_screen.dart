@@ -77,9 +77,9 @@ class _StaffMainScreenState extends State<StaffMainScreen> {
               activeIcon: Icon(Icons.home_rounded),
               label: 'Dashboard',
             ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.inventory_2_outlined),
-              activeIcon: const Icon(Icons.inventory_2_rounded),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.inventory_2_outlined),
+              activeIcon: Icon(Icons.inventory_2_rounded),
               label: 'Order Masuk',
             ),
             BottomNavigationBarItem(

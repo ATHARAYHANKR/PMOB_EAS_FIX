@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../models/order_model.dart';
+import 'edit_order_screen.dart';
 
-class DetailOrderScreen extends StatelessWidget {
+class DetailOrderScreen extends StatefulWidget {
   const DetailOrderScreen({super.key, required this.order});
   final OrderModel order;
+
+  @override
+  State<DetailOrderScreen> createState() => _DetailOrderScreenState();
+}
+
+class _DetailOrderScreenState extends State<DetailOrderScreen> {
+  OrderModel get order => widget.order;
 
   @override
   Widget build(BuildContext context) {
@@ -17,9 +25,9 @@ class DetailOrderScreen extends StatelessWidget {
 
     switch (order.status) {
       case OrderStatus.masuk:
-        badgeBg = const Color(0xFFEBEBEB);
-        badgeFg = const Color(0xFF616161);
-        badgeLabel = 'Masuk';
+        badgeBg = const Color(0xFFEDEDF2);
+        badgeFg = const Color(0xFF555555);
+        badgeLabel = 'Menunggu';
         break;
       case OrderStatus.konfirmasi:
         badgeBg = const Color(0xFFEDEDF2);
@@ -37,13 +45,13 @@ class DetailOrderScreen extends StatelessWidget {
         badgeLabel = 'Diproses';
         break;
       case OrderStatus.perluTimbang:
-        badgeBg = const Color(0xFFFFE0B2);
-        badgeFg = const Color(0xFFE65100);
+        badgeBg = const Color(0xFFEEF6FF);
+        badgeFg = const Color(0xFF1565C0);
         badgeLabel = 'Perlu Timbang';
         break;
       case OrderStatus.konfirmasiBayar:
-        badgeBg = const Color(0xFFB2DFDB);
-        badgeFg = const Color(0xFF00695C);
+        badgeBg = const Color(0xFFFFF3C4);
+        badgeFg = const Color(0xFF8A6D1B);
         badgeLabel = 'Konfirmasi Bayar';
         break;
       case OrderStatus.selesai:
@@ -149,19 +157,26 @@ class DetailOrderScreen extends StatelessWidget {
                   ],
                 ),
                 child: Column(
-                  children: [
-                    _infoRow('Alamat', order.address),
-                    _infoRow('Layanan', order.serviceType),
-                    if (order.beratKg != null)
-                      _infoRow(
-                          'Berat', '${order.beratKg!.toStringAsFixed(0)}kg'),
-                    if (order.totalHarga != null)
-                      _infoRow('Total Harga',
-                          'Rp${NumberFormat('#,###', 'id').format(order.totalHarga)}',
-                          bold: true),
-                    _infoRow('Jemput', '$dateStr, ${order.pickupSlot}'),
-                    _infoRow('Catatan', order.catatan, isLast: true),
-                  ],
+                  children: order.status == OrderStatus.dibatalkan
+                      ? [
+                          _infoRow('Layanan', order.serviceType),
+                          _infoRow('Jemput', '$dateStr, ${order.pickupSlot}'),
+                          _infoRow('Catatan', order.catatan, isLast: true),
+                        ]
+                      : [
+                          _infoRow('Customer', order.customerName),
+                          _infoRow('Alamat', order.address),
+                          _infoRow('Layanan', order.serviceType),
+                          if (order.beratKg != null)
+                            _infoRow('Berat',
+                                '${order.beratKg!.toStringAsFixed(0)}kg'),
+                          if (order.totalHarga != null)
+                            _infoRow('Total Harga',
+                                'Rp${NumberFormat('#,###', 'id').format(order.totalHarga)}',
+                                bold: true),
+                          _infoRow('Jemput', '$dateStr, ${order.pickupSlot}'),
+                          _infoRow('Catatan', order.catatan, isLast: true),
+                        ],
                 ),
               ),
 
@@ -171,7 +186,14 @@ class DetailOrderScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => EditOrderScreen(order: order)),
+                          );
+                          setState(() {});
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFFFD23F),
                           foregroundColor: Colors.black87,
@@ -191,7 +213,7 @@ class DetailOrderScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: _showBatalkanDialog,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFE05D5D),
                           foregroundColor: Colors.white,
@@ -212,20 +234,21 @@ class DetailOrderScreen extends StatelessWidget {
                 ),
               ],
 
-              const SizedBox(height: 22),
-              Text('Status Order',
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black87,
-                  )),
-              const SizedBox(height: 12),
-
-              ...List.generate(order.steps.length, (i) {
-                final step = order.steps[i];
-                final isLast = i == order.steps.length - 1;
-                return _buildStepRow(step, isLast);
-              }),
+              if (order.status != OrderStatus.dibatalkan) ...[
+                const SizedBox(height: 22),
+                Text('Status Order',
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black87,
+                    )),
+                const SizedBox(height: 12),
+                ...List.generate(order.steps.length, (i) {
+                  final step = order.steps[i];
+                  final isLast = i == order.steps.length - 1;
+                  return _buildStepRow(step, isLast);
+                }),
+              ],
             ],
           ),
         ),
@@ -284,7 +307,7 @@ class DetailOrderScreen extends StatelessWidget {
   }
 
   Widget _buildStepRow(StatusStep step, bool isLast) {
-    final activeColor = const Color(0xFF3B5BDB);
+    const activeColor = Color(0xFF3B5BDB);
     final doneCircleColor = step.title == 'Selesai' && step.done
         ? const Color(0xFF2E7D32)
         : activeColor;
@@ -341,6 +364,86 @@ class DetailOrderScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showBatalkanDialog() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Yakin batalkan order ini?',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                  )),
+              const SizedBox(height: 16),
+              const Icon(Icons.delete_outline_rounded,
+                  size: 64, color: Color(0xFF8B4040)),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: const Color(0xFF2E7D32), width: 1.5),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text('Kembali',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF2E7D32),
+                            )),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          order.status = OrderStatus.dibatalkan;
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFC0392B),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text('Batalkan',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            )),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

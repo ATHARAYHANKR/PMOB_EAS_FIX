@@ -401,41 +401,41 @@ class DashboardScreen extends StatelessWidget {
   // ──────────────────────────────────────────────────────────
   Widget _buildMenuCepat(BuildContext context) {
     final menus = [
-      _MenuItem(
+      const _MenuItem(
           icon: Icons.inventory_2_rounded,
           label: 'Order Masuk',
           color: AppColors.orange,
-          bg: const Color(0xFFFFF3E0),
+          bg: Color(0xFFFFF3E0),
           badge: 0),
-      _MenuItem(
+      const _MenuItem(
           icon: Icons.list_alt_rounded,
           label: 'Kelola Order',
           color: AppColors.blue,
-          bg: const Color(0xFFE3F2FD),
+          bg: Color(0xFFE3F2FD),
           badge: 1),
-      _MenuItem(
+      const _MenuItem(
           icon: Icons.sync_rounded,
           label: 'Update Status',
           color: AppColors.primary,
-          bg: const Color(0xFFE8F5E9),
+          bg: Color(0xFFE8F5E9),
           badge: 0),
-      _MenuItem(
+      const _MenuItem(
           icon: Icons.credit_card_rounded,
           label: 'Konfirmasi Bayar',
           color: AppColors.blue,
-          bg: const Color(0xFFE3F2FD),
+          bg: Color(0xFFE3F2FD),
           badge: 0),
-      _MenuItem(
+      const _MenuItem(
           icon: Icons.history_rounded,
           label: 'History Selesai',
-          color: const Color(0xFF7B1FA2),
-          bg: const Color(0xFFF3E5F5),
+          color: Color(0xFF7B1FA2),
+          bg: Color(0xFFF3E5F5),
           badge: 0),
-      _MenuItem(
+      const _MenuItem(
           icon: Icons.person_rounded,
           label: 'Profil Saya',
           color: AppColors.primary,
-          bg: const Color(0xFFE8F5E9),
+          bg: Color(0xFFE8F5E9),
           badge: 0),
     ];
 
