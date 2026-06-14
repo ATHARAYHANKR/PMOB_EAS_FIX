@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../models/katalog_model.dart';
+import '../../services/firestore_service.dart';
 import '../owner/owner_kelola_screen.dart';
 import 'detail_layanan_screen.dart';
 
@@ -22,12 +24,15 @@ class _KatalogLayananScreenState extends State<KatalogLayananScreen> {
     super.dispose();
   }
 
-  List<KatalogItem> get _filtered {
-    if (_query.isEmpty) return KatalogRepository.items;
-    return KatalogRepository.items
-        .where((k) => k.nama.toLowerCase().contains(_query.toLowerCase()))
-        .toList();
-  }
+  /// Konversi KatalogModel → KatalogItem agar kompatibel dengan DetailLayananScreen
+  KatalogItem _toKatalogItem(KatalogModel m) => KatalogItem(
+        nama: m.nama,
+        satuan: m.satuan,
+        harga: m.harga,
+        estimasi: m.estimasi,
+        deskripsi: m.deskripsi,
+        aktif: m.aktif,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -59,8 +64,8 @@ class _KatalogLayananScreenState extends State<KatalogLayananScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        border:
-                            Border.all(color: const Color(0xFFEEEEEE), width: 1),
+                        border: Border.all(
+                            color: const Color(0xFFEEEEEE), width: 1),
                       ),
                       child: TextField(
                         controller: _searchCtrl,
@@ -98,18 +103,52 @@ class _KatalogLayananScreenState extends State<KatalogLayananScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ── Grid ─────────────────────────────────────
+            // ── Grid dari Firestore ───────────────────────
             Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                itemCount: _filtered.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 14,
-                  crossAxisSpacing: 14,
-                  childAspectRatio: 0.78,
-                ),
-                itemBuilder: (_, i) => _buildCatalogCard(context, _filtered[i]),
+              child: StreamBuilder<List<Map<String, dynamic>>>(
+                stream: FirestoreService.streamKatalogRaw(),
+                builder: (context, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final allItems = (snap.data ?? [])
+                      .map((m) => KatalogModel.fromMap(m['id'] ?? '', m))
+                      .where((k) => k.aktif)
+                      .toList();
+
+                  final filtered = _query.isEmpty
+                      ? allItems
+                      : allItems
+                          .where((k) => k.nama
+                              .toLowerCase()
+                              .contains(_query.toLowerCase()))
+                          .toList();
+
+                  if (filtered.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'Tidak ada layanan ditemukan',
+                        style: GoogleFonts.inter(
+                            fontSize: 14, color: Colors.black45),
+                      ),
+                    );
+                  }
+
+                  return GridView.builder(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    itemCount: filtered.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 14,
+                      crossAxisSpacing: 14,
+                      childAspectRatio: 0.78,
+                    ),
+                    itemBuilder: (_, i) =>
+                        _buildCatalogCard(context, filtered[i]),
+                  );
+                },
               ),
             ),
           ],
@@ -118,13 +157,13 @@ class _KatalogLayananScreenState extends State<KatalogLayananScreen> {
     );
   }
 
-  Widget _buildCatalogCard(BuildContext context, KatalogItem item) {
+  Widget _buildCatalogCard(BuildContext context, KatalogModel item) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => DetailLayananScreen(item: item),
+            builder: (_) => DetailLayananScreen(item: _toKatalogItem(item)),
           ),
         );
       },
@@ -167,7 +206,8 @@ class _KatalogLayananScreenState extends State<KatalogLayananScreen> {
                         color: Colors.black87,
                       )),
                   const SizedBox(height: 2),
-                  Text('Rp${_formatHarga(item.harga)}/${item.satuan.toLowerCase()}',
+                  Text(
+                      'Rp${_formatHarga(item.harga)}/${item.satuan.toLowerCase()}',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
