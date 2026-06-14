@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../app_theme.dart';
 import '../../models/order_model.dart';
-import '../../services/order_service.dart';
+import '../../services/firestore_service.dart';
 import 'verifikasi_berat_screen.dart';
 
 class OrderMasukScreen extends StatefulWidget {
@@ -17,13 +17,8 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
   // 0 = Ambil, 1 = Timbang
   int _tabIndex = 0;
 
-  List<OrderModel> get _displayedOrders {
-    if (_tabIndex == 0) {
-      return OrderRepository.byStatus(OrderStatus.masuk);
-    } else {
-      return OrderRepository.byStatus(OrderStatus.perluTimbang);
-    }
-  }
+  OrderStatus get _activeStatus =>
+      _tabIndex == 0 ? OrderStatus.masuk : OrderStatus.perluTimbang;
 
   @override
   Widget build(BuildContext context) {
@@ -55,15 +50,39 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
 
             // ── Order List ────────────────────────────────
             Expanded(
-              child: _displayedOrders.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _displayedOrders.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (ctx, i) =>
-                          _buildOrderCard(_displayedOrders[i]),
-                    ),
+              child: StreamBuilder<List<OrderModel>>(
+                stream: FirestoreService.streamOrdersByStatus(_activeStatus),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Gagal memuat data: ${snapshot.error}',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: Colors.redAccent,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  }
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final orders = snapshot.data!;
+
+                  if (orders.isEmpty) {
+                    return _buildEmptyState();
+                  }
+
+                  return ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: orders.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (ctx, i) => _buildOrderCard(orders[i]),
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -317,11 +336,17 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        setState(() => OrderRepository.updateStatus(
-                            order, OrderStatus.diproses));
+                      onPressed: () async {
                         Navigator.pop(context);
-                        _showSnack('Order ${order.id} berhasil diambil');
+                        try {
+                          await FirestoreService.updateStatus(
+                              order.id, OrderStatus.diproses);
+                          if (!mounted) return;
+                          _showSnack('Order ${order.id} berhasil diambil');
+                        } catch (e) {
+                          if (!mounted) return;
+                          _showSnack('Gagal memperbarui status: $e');
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,

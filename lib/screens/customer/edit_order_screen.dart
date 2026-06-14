@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/order_model.dart';
-import '../../services/order_service.dart';
+import '../../services/firestore_service.dart';
 import '../owner/owner_kelola_screen.dart';
 
 class EditOrderScreen extends StatefulWidget {
@@ -434,12 +434,34 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        OrderRepository.cancel(widget.order);
-                      });
+                    onTap: () async {
                       Navigator.pop(context); // close dialog
-                      Navigator.pop(context); // close edit screen
+
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (_) =>
+                            const Center(child: CircularProgressIndicator()),
+                      );
+
+                      try {
+                        await FirestoreService.cancelOrder(widget.order.id);
+                        if (!mounted) return;
+                        Navigator.pop(context); // close loading
+                        Navigator.pop(context); // close edit screen
+                      } catch (e) {
+                        if (!mounted) return;
+                        Navigator.pop(context); // close loading
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text('Gagal membatalkan order: $e',
+                              style: GoogleFonts.inter(fontSize: 13)),
+                          backgroundColor: Colors.redAccent,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          margin: const EdgeInsets.all(16),
+                        ));
+                      }
                     },
                     child: Container(
                       height: 46,

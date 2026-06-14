@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../app_theme.dart';
 import '../../models/order_model.dart';
-import '../../services/order_service.dart';
+import '../../services/firestore_service.dart';
 
 class KonfirmasiBayarScreen extends StatefulWidget {
   const KonfirmasiBayarScreen({super.key});
@@ -13,9 +13,6 @@ class KonfirmasiBayarScreen extends StatefulWidget {
 }
 
 class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
-  List<OrderModel> get _orders =>
-      OrderRepository.byStatus(OrderStatus.konfirmasiBayar);
-
   String _formatDate(DateTime dt) => DateFormat('d MMMM yyyy', 'id').format(dt);
 
   @override
@@ -39,16 +36,42 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
               ),
             ),
 
-            // ── List / Empty ─────────────────────────────
+            // ── List / Empty / Loading / Error ───────────
             Expanded(
-              child: _orders.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                      itemCount: _orders.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (_, i) => _buildCard(_orders[i]),
-                    ),
+              child: StreamBuilder<List<OrderModel>>(
+                stream: FirestoreService.streamOrdersByStatus(
+                    OrderStatus.konfirmasiBayar),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Gagal memuat data: ${snapshot.error}',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: Colors.redAccent,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  }
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final orders = snapshot.data!;
+
+                  if (orders.isEmpty) {
+                    return _buildEmptyState();
+                  }
+
+                  return ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                    itemCount: orders.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (_, i) => _buildCard(orders[i]),
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -232,11 +255,17 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        setState(() => OrderRepository.updateStatus(
-                            order, OrderStatus.selesai));
+                      onPressed: () async {
                         Navigator.pop(context);
-                        _showSnack('${order.id} berhasil dikonfirmasi lunas');
+                        try {
+                          await FirestoreService.updateStatus(
+                              order.id, OrderStatus.selesai);
+                          if (!mounted) return;
+                          _showSnack('${order.id} berhasil dikonfirmasi lunas');
+                        } catch (e) {
+                          if (!mounted) return;
+                          _showSnack('Gagal memperbarui status: $e');
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,

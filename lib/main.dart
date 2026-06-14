@@ -1,16 +1,17 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'screens/auth/login_screen.dart';
 import 'app_theme.dart';
+import 'services/firestore_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
 
   // Inisialisasi locale Indonesia untuk intl
   await initializeDateFormatting('id', null);
+  // FirestoreService.initialize() is currently skipped on mobile when native Firebase configuration is unavailable.
+  await FirestoreService.initialize();
 
   // Status bar transparan
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(

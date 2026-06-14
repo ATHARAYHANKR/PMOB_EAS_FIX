@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../app_theme.dart';
 import '../../models/order_model.dart';
-import '../../services/order_service.dart';
+import '../../services/firestore_service.dart';
 
 class VerifikasiBeratScreen extends StatefulWidget {
   final OrderModel order;
@@ -205,7 +205,7 @@ class _VerifikasiBeratScreenState extends State<VerifikasiBeratScreen> {
     );
   }
 
-  void _onSimpan() {
+  Future<void> _onSimpan() async {
     final kg = double.tryParse(_beratController.text);
     if (kg == null || kg <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -219,12 +219,35 @@ class _VerifikasiBeratScreenState extends State<VerifikasiBeratScreen> {
       return;
     }
 
-    // Simpan berat & update status
-    OrderRepository.updateWeightAndConfirm(widget.order, kg);
-    widget.onKonfirmasi?.call();
+    // Tampilkan loading sementara menyimpan ke Firestore
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
 
-    // Tampilkan dialog sukses
-    _showBerhasilDialog();
+    try {
+      // Simpan berat & update status ke Firestore
+      await FirestoreService.updateWeightAndConfirm(widget.order.id, kg);
+      widget.onKonfirmasi?.call();
+
+      if (!mounted) return;
+      Navigator.pop(context); // tutup loading
+
+      // Tampilkan dialog sukses
+      _showBerhasilDialog();
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // tutup loading
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Gagal menyimpan: $e',
+            style: GoogleFonts.inter(fontSize: 13)),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ));
+    }
   }
 
   // ── Dialog "Berhasil Konfirmasi!" ──────────────────────────

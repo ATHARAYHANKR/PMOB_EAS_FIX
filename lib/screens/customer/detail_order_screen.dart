@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../models/order_model.dart';
-import '../../services/order_service.dart';
+import '../../services/firestore_service.dart';
 import 'edit_order_screen.dart';
 
 class DetailOrderScreen extends StatefulWidget {
@@ -459,11 +459,34 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          OrderRepository.cancel(order);
-                        });
-                        Navigator.pop(context);
+                      onTap: () async {
+                        Navigator.pop(context); // close dialog
+
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (_) => const Center(
+                              child: CircularProgressIndicator()),
+                        );
+
+                        try {
+                          await FirestoreService.cancelOrder(order.id);
+                          if (!mounted) return;
+                          Navigator.pop(context); // close loading
+                          Navigator.pop(context); // close detail screen
+                        } catch (e) {
+                          if (!mounted) return;
+                          Navigator.pop(context); // close loading
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text('Gagal membatalkan order: $e',
+                                style: GoogleFonts.inter(fontSize: 13)),
+                            backgroundColor: Colors.redAccent,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            margin: const EdgeInsets.all(16),
+                          ));
+                        }
                       },
                       child: Container(
                         height: 46,

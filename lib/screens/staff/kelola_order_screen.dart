@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../app_theme.dart';
 import '../../models/order_model.dart';
-import '../../services/order_service.dart';
+import '../../services/firestore_service.dart';
 import 'lanjut_proses_screen.dart';
 
 class KelolaOrderScreen extends StatefulWidget {
@@ -19,22 +19,22 @@ enum _FilterTab { semua, cuci, setrika, kirim, selesai }
 class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
   _FilterTab _activeFilter = _FilterTab.semua;
 
-  // Mapping filter → status order
-  List<OrderModel> get _filtered {
+  // Mapping filter → status order, dijalankan di atas data Firestore
+  List<OrderModel> _applyFilter(List<OrderModel> all) {
     switch (_activeFilter) {
       case _FilterTab.semua:
         // Tampilkan semua kecuali "masuk" (belum diambil)
-        return OrderRepository.all
-            .where((o) => o.status != OrderStatus.masuk)
-            .toList();
+        return all.where((o) => o.status != OrderStatus.masuk).toList();
       case _FilterTab.cuci:
-        return OrderRepository.byStatus(OrderStatus.diproses);
+        return all.where((o) => o.status == OrderStatus.diproses).toList();
       case _FilterTab.setrika:
-        return OrderRepository.byStatus(OrderStatus.perluTimbang);
+        return all.where((o) => o.status == OrderStatus.perluTimbang).toList();
       case _FilterTab.kirim:
-        return OrderRepository.byStatus(OrderStatus.konfirmasiBayar);
+        return all
+            .where((o) => o.status == OrderStatus.konfirmasiBayar)
+            .toList();
       case _FilterTab.selesai:
-        return OrderRepository.byStatus(OrderStatus.selesai);
+        return all.where((o) => o.status == OrderStatus.selesai).toList();
     }
   }
 
@@ -130,14 +130,39 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
 
             // ── List ──────────────────────────────────────
             Expanded(
-              child: _filtered.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                      itemCount: _filtered.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
-                      itemBuilder: (_, i) => _buildCard(_filtered[i]),
-                    ),
+              child: StreamBuilder<List<OrderModel>>(
+                stream: FirestoreService.streamAllOrders(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Gagal memuat data: ${snapshot.error}',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: Colors.redAccent,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  }
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final filtered = _applyFilter(snapshot.data!);
+
+                  if (filtered.isEmpty) {
+                    return _buildEmptyState();
+                  }
+
+                  return ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (_, i) => _buildCard(filtered[i]),
+                  );
+                },
+              ),
             ),
           ],
         ),

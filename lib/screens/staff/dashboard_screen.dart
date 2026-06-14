@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../app_theme.dart';
 import '../../models/order_model.dart';
-import '../../services/order_service.dart';
+import '../../services/firestore_service.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -13,39 +13,65 @@ class DashboardScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bgPage,
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            // ── Top App Bar ───────────────────────────────
-            SliverToBoxAdapter(child: _buildAppBar(context)),
-            // ── Greeting ─────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                child: _buildGreeting(),
-              ),
-            ),
-            // ── Stat Cards ────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: _buildStatGrid(),
-              ),
-            ),
-            // ── Aktivitas Terbaru ─────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-                child: _buildAktivitasTerbaru(context),
-              ),
-            ),
-            // ── Menu Cepat ────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-                child: _buildMenuCepat(context),
-              ),
-            ),
-          ],
+        child: StreamBuilder<List<OrderModel>>(
+          stream: FirestoreService.streamAllOrders(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    'Gagal memuat data: ${snapshot.error}',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: Colors.redAccent,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              );
+            }
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final orders = snapshot.data!;
+
+            return CustomScrollView(
+              slivers: [
+                // ── Top App Bar ───────────────────────────────
+                SliverToBoxAdapter(child: _buildAppBar(context)),
+                // ── Greeting ─────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                    child: _buildGreeting(),
+                  ),
+                ),
+                // ── Stat Cards ────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    child: _buildStatGrid(orders),
+                  ),
+                ),
+                // ── Aktivitas Terbaru ─────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                    child: _buildAktivitasTerbaru(context, orders),
+                  ),
+                ),
+                // ── Menu Cepat ────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                    child: _buildMenuCepat(context),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -143,32 +169,35 @@ class DashboardScreen extends StatelessWidget {
   // ──────────────────────────────────────────────────────────
   //  STAT GRID  2×2
   // ──────────────────────────────────────────────────────────
-  Widget _buildStatGrid() {
+  Widget _buildStatGrid(List<OrderModel> orders) {
+    int countByStatus(OrderStatus s) =>
+        orders.where((o) => o.status == s).length;
+
     final stats = [
       _StatItem(
         label: 'Order Masuk',
-        count: OrderRepository.countByStatus(OrderStatus.masuk),
+        count: countByStatus(OrderStatus.masuk),
         icon: Icons.inventory_2_outlined,
         iconBg: const Color(0xFFFFF3E0),
         iconColor: AppColors.orange,
       ),
       _StatItem(
         label: 'Diproses',
-        count: OrderRepository.countByStatus(OrderStatus.diproses),
+        count: countByStatus(OrderStatus.diproses),
         icon: Icons.sync_rounded,
         iconBg: const Color(0xFFE3F2FD),
         iconColor: AppColors.blue,
       ),
       _StatItem(
         label: 'Perlu Timbang',
-        count: OrderRepository.countByStatus(OrderStatus.perluTimbang),
+        count: countByStatus(OrderStatus.perluTimbang),
         icon: Icons.balance_outlined,
         iconBg: const Color(0xFFFFF3E0),
         iconColor: AppColors.orange,
       ),
       _StatItem(
         label: 'Konfirmasi Bayar',
-        count: OrderRepository.countByStatus(OrderStatus.konfirmasiBayar),
+        count: countByStatus(OrderStatus.konfirmasiBayar),
         icon: Icons.credit_card_outlined,
         iconBg: const Color(0xFFE3F2FD),
         iconColor: AppColors.blue,
@@ -245,8 +274,8 @@ class DashboardScreen extends StatelessWidget {
   // ──────────────────────────────────────────────────────────
   //  AKTIVITAS TERBARU
   // ──────────────────────────────────────────────────────────
-  Widget _buildAktivitasTerbaru(BuildContext context) {
-    final recent = OrderRepository.all.take(3).toList();
+  Widget _buildAktivitasTerbaru(BuildContext context, List<OrderModel> orders) {
+    final recent = orders.take(3).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -288,19 +317,30 @@ class DashboardScreen extends StatelessWidget {
               ),
             ],
           ),
-          child: Column(
-            children: recent.asMap().entries.map((entry) {
-              final i = entry.key;
-              final order = entry.value;
-              return Column(
-                children: [
-                  _buildAktivitasItem(order),
-                  if (i < recent.length - 1)
-                    const Divider(height: 1, indent: 16, endIndent: 16),
-                ],
-              );
-            }).toList(),
-          ),
+          child: recent.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Belum ada aktivitas order',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
+                )
+              : Column(
+                  children: recent.asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final order = entry.value;
+                    return Column(
+                      children: [
+                        _buildAktivitasItem(order),
+                        if (i < recent.length - 1)
+                          const Divider(height: 1, indent: 16, endIndent: 16),
+                      ],
+                    );
+                  }).toList(),
+                ),
         ),
       ],
     );

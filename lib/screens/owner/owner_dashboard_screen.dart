@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/order_model.dart';
-import '../../services/order_service.dart';
+import '../../services/firestore_service.dart';
 
 class OwnerDashboardScreen extends StatelessWidget {
   const OwnerDashboardScreen({super.key});
@@ -13,56 +13,82 @@ class OwnerDashboardScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8FB),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── App Bar ───────────────────────────────
-              _buildAppBar(),
-              const SizedBox(height: 20),
-
-              // ── Greeting + Avatar ─────────────────────
-              _buildGreeting(),
-              const SizedBox(height: 20),
-
-              // ── Stat Cards 2x2 ─────────────────────────
-              _buildStatGrid(),
-              const SizedBox(height: 20),
-
-              // ── Order Terbaru ──────────────────────────
-              _buildSectionCard(
-                title: 'Order Terbaru',
-                actionLabel: 'Lihat semua',
-                onAction: () {},
-                child: Column(
-                  children: _buildRecentOrders(),
+        child: StreamBuilder<List<OrderModel>>(
+          stream: FirestoreService.streamAllOrders(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    'Gagal memuat data: ${snapshot.error}',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: Colors.redAccent,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
+              );
+            }
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-              // ── Daftar Staff ───────────────────────────
-              _buildSectionCard(
-                title: 'Daftar Staff',
-                actionLabel: 'Kelola',
-                onAction: () {},
-                child: Column(
-                  children: _buildStaffList(),
-                ),
-              ),
-              const SizedBox(height: 20),
+            final orders = snapshot.data!;
 
-              // ── Menu Cepat ─────────────────────────────
-              Text('Menu Cepat',
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                  )),
-              const SizedBox(height: 12),
-              _buildQuickMenu(context),
-            ],
-          ),
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── App Bar ───────────────────────────────
+                  _buildAppBar(),
+                  const SizedBox(height: 20),
+
+                  // ── Greeting + Avatar ─────────────────────
+                  _buildGreeting(),
+                  const SizedBox(height: 20),
+
+                  // ── Stat Cards 2x2 ─────────────────────────
+                  _buildStatGrid(orders),
+                  const SizedBox(height: 20),
+
+                  // ── Order Terbaru ──────────────────────────
+                  _buildSectionCard(
+                    title: 'Order Terbaru',
+                    actionLabel: 'Lihat semua',
+                    onAction: () {},
+                    child: Column(
+                      children: _buildRecentOrders(orders),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Daftar Staff ───────────────────────────
+                  _buildSectionCard(
+                    title: 'Daftar Staff',
+                    actionLabel: 'Kelola',
+                    onAction: () {},
+                    child: Column(
+                      children: _buildStaffList(),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ── Menu Cepat ─────────────────────────────
+                  Text('Menu Cepat',
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      )),
+                  const SizedBox(height: 12),
+                  _buildQuickMenu(context),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -160,12 +186,14 @@ class OwnerDashboardScreen extends StatelessWidget {
   }
 
   // ── Stat Grid 2x2 ──────────────────────────────────────────
-  Widget _buildStatGrid() {
-    final totalOrder = OrderRepository.all.length;
-    final aktif = OrderRepository.all
-        .where((o) => o.status != OrderStatus.selesai)
-        .length;
-    final selesai = OrderRepository.countByStatus(OrderStatus.selesai);
+  Widget _buildStatGrid(List<OrderModel> orders) {
+    final totalOrder = orders.length;
+    final aktif = orders.where((o) => o.status != OrderStatus.selesai).length;
+    final selesai =
+        orders.where((o) => o.status == OrderStatus.selesai).length;
+    final totalOmzet = orders
+        .where((o) => o.status == OrderStatus.selesai)
+        .fold<double>(0, (sum, o) => sum + (o.totalHarga ?? 0));
 
     final stats = [
       _StatItem(
@@ -192,12 +220,12 @@ class OwnerDashboardScreen extends StatelessWidget {
         value: '$selesai',
         valueColor: const Color(0xFF2E7D32),
       ),
-      const _StatItem(
+      _StatItem(
         icon: Icons.monetization_on_rounded,
-        iconBg: Color(0xFFFFF8E1),
-        iconColor: Color(0xFFF9A825),
+        iconBg: const Color(0xFFFFF8E1),
+        iconColor: const Color(0xFFF9A825),
         label: 'Total Omzet',
-        value: 'Rp 24.000',
+        value: 'Rp ${_formatHarga(totalOmzet.toInt())}',
         valueColor: _purple,
       ),
     ];
@@ -309,9 +337,28 @@ class OwnerDashboardScreen extends StatelessWidget {
   }
 
   // ── Recent Orders ────────────────────────────────────────────
-  List<Widget> _buildRecentOrders() {
-    final recents = OrderRepository.all.take(2).toList();
+  List<Widget> _buildRecentOrders(List<OrderModel> orders) {
+    final recents = orders.take(2).toList();
+    if (recents.isEmpty) {
+      return [
+        Text(
+          'Belum ada order',
+          style: GoogleFonts.inter(fontSize: 12, color: Colors.black45),
+        ),
+      ];
+    }
     return recents.map((o) => _buildOrderRow(o)).toList();
+  }
+
+  String _formatHarga(int h) {
+    if (h == 0) return '0';
+    final s = h.toString();
+    final buf = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+      buf.write(s[i]);
+    }
+    return buf.toString();
   }
 
   Widget _buildOrderRow(OrderModel order) {

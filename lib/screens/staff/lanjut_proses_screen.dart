@@ -3,9 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../app_theme.dart';
 import '../../models/order_model.dart';
-import '../../services/order_service.dart';
+import '../../services/firestore_service.dart';
 
-class LanjutProsesScreen extends StatelessWidget {
+class LanjutProsesScreen extends StatefulWidget {
   final OrderModel order;
   final VoidCallback? onUpdated;
 
@@ -14,6 +14,14 @@ class LanjutProsesScreen extends StatelessWidget {
     required this.order,
     this.onUpdated,
   });
+
+  @override
+  State<LanjutProsesScreen> createState() => _LanjutProsesScreenState();
+}
+
+class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
+  OrderModel get order => widget.order;
+  VoidCallback? get onUpdated => widget.onUpdated;
 
   String _formatDate(DateTime dt) => DateFormat('d MMMM yyyy', 'id').format(dt);
 
@@ -277,26 +285,45 @@ class LanjutProsesScreen extends StatelessWidget {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: _canContinue
-                          ? () {
+                          ? () async {
                               if (order.nextStatus != null) {
                                 final updatedStatus = order.nextStatus!;
-                                OrderRepository.advanceStatus(order);
-                                onUpdated?.call();
-                                Navigator.pop(context);
-                                Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Order ${order.id} berhasil dipindah ke ${updatedStatus.stepTitle}',
-                                      style: GoogleFonts.inter(fontSize: 13),
+                                Navigator.pop(context); // tutup dialog
+                                try {
+                                  await FirestoreService.advanceStatus(order);
+                                  onUpdated?.call();
+                                  if (!mounted) return;
+                                  Navigator.pop(context); // kembali
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Order ${order.id} berhasil dipindah ke ${updatedStatus.stepTitle}',
+                                        style: GoogleFonts.inter(fontSize: 13),
+                                      ),
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      margin: const EdgeInsets.all(16),
                                     ),
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10)),
-                                    margin: const EdgeInsets.all(16),
-                                  ),
-                                );
+                                  );
+                                } catch (e) {
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Gagal memperbarui status: $e',
+                                        style: GoogleFonts.inter(fontSize: 13),
+                                      ),
+                                      backgroundColor: Colors.redAccent,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      margin: const EdgeInsets.all(16),
+                                    ),
+                                  );
+                                }
                               }
                             }
                           : null,

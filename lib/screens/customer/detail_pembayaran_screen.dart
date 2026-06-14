@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/order_model.dart';
-import '../../services/order_service.dart';
+import '../../services/firestore_service.dart';
 import 'customer_main_screen.dart';
 
 class DetailPembayaranScreen extends StatefulWidget {
@@ -291,15 +291,32 @@ class _DetailPembayaranScreenState extends State<DetailPembayaranScreen> {
             ),
             const SizedBox(height: 20),
             GestureDetector(
-              onTap: () {
-                OrderRepository.updateStatus(order, OrderStatus.selesai);
-                Navigator.of(context).popUntil((route) => route.isFirst);
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const CustomerMainScreen(initialIndex: 3),
-                  ),
-                );
+              onTap: () async {
+                try {
+                  await FirestoreService.updateStatus(
+                      order.id, OrderStatus.selesai);
+                  if (!mounted) return;
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          const CustomerMainScreen(initialIndex: 3),
+                    ),
+                  );
+                } catch (e) {
+                  if (!mounted) return;
+                  Navigator.pop(context); // close success dialog
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('Gagal memperbarui status: $e',
+                        style: GoogleFonts.inter(fontSize: 13)),
+                    backgroundColor: Colors.redAccent,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    margin: const EdgeInsets.all(16),
+                  ));
+                }
               },
               child: Container(
                 width: double.infinity,
