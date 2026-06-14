@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 enum OrderStatus {
   masuk,
   diproses,
@@ -29,6 +31,52 @@ extension OrderStatusX on OrderStatus {
       case OrderStatus.dibatalkan:
         return 'Dibatalkan';
     }
+  }
+}
+
+String orderStatusToString(OrderStatus status) {
+  switch (status) {
+    case OrderStatus.masuk:
+      return 'masuk';
+    case OrderStatus.diproses:
+      return 'diproses';
+    case OrderStatus.perluTimbang:
+      return 'perluTimbang';
+    case OrderStatus.selesai:
+      return 'selesai';
+    case OrderStatus.konfirmasiBayar:
+      return 'konfirmasiBayar';
+    case OrderStatus.konfirmasi:
+      return 'konfirmasi';
+    case OrderStatus.dijemput:
+      return 'dijemput';
+    case OrderStatus.dibatalkan:
+      return 'dibatalkan';
+  }
+}
+
+OrderStatus orderStatusFromString(String? value) {
+  switch (value?.toLowerCase()) {
+    case 'diproses':
+      return OrderStatus.diproses;
+    case 'perlu timbang':
+    case 'perlu_timbang':
+    case 'perluTimbang':
+      return OrderStatus.perluTimbang;
+    case 'selesai':
+      return OrderStatus.selesai;
+    case 'konfirmasi bayar':
+    case 'konfirmasibayar':
+    case 'konfirmasiBayar':
+      return OrderStatus.konfirmasiBayar;
+    case 'konfirmasi':
+      return OrderStatus.konfirmasi;
+    case 'dijemput':
+      return OrderStatus.dijemput;
+    case 'dibatalkan':
+      return OrderStatus.dibatalkan;
+    default:
+      return OrderStatus.masuk;
   }
 }
 
@@ -130,4 +178,74 @@ class OrderModel {
   }
 
   List<StatusStep> get computedSteps => steps.isNotEmpty ? steps : statusSteps;
+
+  Map<String, dynamic> toMap() {
+    return {
+      'customerName': customerName,
+      'phone': phone,
+      'serviceType': serviceType,
+      'pickupDate': Timestamp.fromDate(pickupDate),
+      'pickupSlot': pickupSlot,
+      'status': orderStatusToString(status),
+      if (beratKg != null) 'beratKg': beratKg,
+      if (totalHarga != null) 'totalHarga': totalHarga,
+      'address': address,
+      'catatan': catatan,
+      if (steps.isNotEmpty)
+        'steps': steps
+            .map((step) => {
+                  'title': step.title,
+                  'date': step.date,
+                  'done': step.done,
+                })
+            .toList(),
+    };
+  }
+
+  static OrderModel fromMap(String id, Map<String, dynamic> map) {
+    DateTime pickupDate = DateTime.now();
+    final rawDate = map['pickupDate'];
+    if (rawDate is Timestamp) {
+      pickupDate = rawDate.toDate();
+    } else if (rawDate is String) {
+      pickupDate = DateTime.tryParse(rawDate) ?? pickupDate;
+    } else if (rawDate is int) {
+      pickupDate = DateTime.fromMillisecondsSinceEpoch(rawDate);
+    }
+
+    double? parseDouble(dynamic value) {
+      if (value == null) return null;
+      if (value is num) return value.toDouble();
+      return double.tryParse(value.toString());
+    }
+
+    final stepsData = map['steps'];
+    final steps = <StatusStep>[];
+    if (stepsData is List) {
+      for (final item in stepsData) {
+        if (item is Map<String, dynamic>) {
+          steps.add(StatusStep(
+            title: item['title']?.toString() ?? '',
+            date: item['date']?.toString(),
+            done: item['done'] == true,
+          ));
+        }
+      }
+    }
+
+    return OrderModel(
+      id: id,
+      customerName: map['customerName']?.toString() ?? '',
+      phone: map['phone']?.toString() ?? '',
+      serviceType: map['serviceType']?.toString() ?? '',
+      pickupDate: pickupDate,
+      pickupSlot: map['pickupSlot']?.toString() ?? '',
+      status: orderStatusFromString(map['status']?.toString()),
+      beratKg: parseDouble(map['beratKg']),
+      totalHarga: parseDouble(map['totalHarga']),
+      address: map['address']?.toString() ?? '',
+      catatan: map['catatan']?.toString() ?? '-',
+      steps: steps,
+    );
+  }
 }

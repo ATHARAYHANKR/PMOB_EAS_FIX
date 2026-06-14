@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../models/katalog_model.dart';
 import '../owner/owner_kelola_screen.dart';
 import 'booking_laundry_screen.dart';
 
@@ -118,8 +119,16 @@ class DetailLayananScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          BookingLaundryScreen(selectedItem: item),
+                      builder: (_) => BookingLaundryScreen(
+                        selectedItem: KatalogModel(
+                          id: item.nama,
+                          nama: item.nama,
+                          satuan: item.satuan,
+                          harga: item.harga,
+                          estimasi: item.estimasi,
+                          deskripsi: item.deskripsi,
+                        ),
+                      ),
                     ),
                   );
                 },
