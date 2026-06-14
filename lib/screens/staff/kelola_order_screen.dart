@@ -14,7 +14,7 @@ class KelolaOrderScreen extends StatefulWidget {
 }
 
 // Filter yang ditampilkan di chip
-enum _FilterTab { semua, cuci, setrika, kirim, selesai }
+enum _FilterTab { semua, diambil, timbang, cuci, pembayaran, selesai }
 
 class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
   _FilterTab _activeFilter = _FilterTab.semua;
@@ -25,11 +25,13 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
       case _FilterTab.semua:
         // Tampilkan semua kecuali "masuk" (belum diambil)
         return all.where((o) => o.status != OrderStatus.masuk).toList();
-      case _FilterTab.cuci:
+      case _FilterTab.diambil:
         return all.where((o) => o.status == OrderStatus.diproses).toList();
-      case _FilterTab.setrika:
+      case _FilterTab.timbang:
         return all.where((o) => o.status == OrderStatus.perluTimbang).toList();
-      case _FilterTab.kirim:
+      case _FilterTab.cuci:
+        return all.where((o) => o.status == OrderStatus.konfirmasi).toList();
+      case _FilterTab.pembayaran:
         return all
             .where((o) => o.status == OrderStatus.konfirmasiBayar)
             .toList();
@@ -43,19 +45,19 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
     switch (status) {
       case OrderStatus.diproses:
         return const _BadgeConfig(
-          label: 'Dicuci',
+          label: 'Diambil',
           bg: Color(0xFFD6EEFF),
           fg: Color(0xFF1565C0),
         );
       case OrderStatus.perluTimbang:
         return const _BadgeConfig(
-          label: 'Disetrika',
+          label: 'Timbang',
           bg: Color(0xFFFFF9C4),
           fg: Color(0xFF795548),
         );
       case OrderStatus.konfirmasiBayar:
         return const _BadgeConfig(
-          label: 'Dikirim',
+          label: 'Konfirmasi Bayar',
           bg: Color(0xFFEDD6FF),
           fg: Color(0xFF6A1F9F),
         );
@@ -79,12 +81,14 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
     switch (_activeFilter) {
       case _FilterTab.selesai:
         return 'Belum ada pesenan yang selesai';
+      case _FilterTab.diambil:
+        return 'Tidak ada order yang sedang diambil';
+      case _FilterTab.timbang:
+        return 'Tidak ada order yang perlu ditimbang';
       case _FilterTab.cuci:
-        return 'Tidak ada order yang sedang dicuci';
-      case _FilterTab.setrika:
-        return 'Tidak ada order yang sedang disetrika';
-      case _FilterTab.kirim:
-        return 'Tidak ada order yang sedang dikirim';
+        return 'Tidak ada order yang sedang dicuci & disetrika';
+      case _FilterTab.pembayaran:
+        return 'Tidak ada order yang menunggu konfirmasi bayar';
       default:
         return 'Tidak ada order';
     }
@@ -119,9 +123,10 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
                 child: Row(
                   children: [
                     _chip('Semua', _FilterTab.semua),
-                    _chip('Cuci', _FilterTab.cuci),
-                    _chip('Setrika', _FilterTab.setrika),
-                    _chip('Kirim', _FilterTab.kirim),
+                    _chip('Diambil', _FilterTab.diambil),
+                    _chip('Timbang', _FilterTab.timbang),
+                    _chip('Dicuci & Disetrika', _FilterTab.cuci),
+                    _chip('Pembayaran', _FilterTab.pembayaran),
                     _chip('Selesai', _FilterTab.selesai),
                   ],
                 ),
@@ -213,7 +218,9 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
 
     // Apakah bisa dilanjut proses (bukan selesai / konfirmasi bayar)
     final bisa = order.status == OrderStatus.diproses ||
-        order.status == OrderStatus.perluTimbang;
+        order.status == OrderStatus.perluTimbang ||
+        order.status == OrderStatus.konfirmasi ||
+        order.status == OrderStatus.dijemput;
 
     return GestureDetector(
       onTap: bisa

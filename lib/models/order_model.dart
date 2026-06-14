@@ -17,13 +17,13 @@ extension OrderStatusX on OrderStatus {
       case OrderStatus.masuk:
         return 'Menunggu Konfirmasi';
       case OrderStatus.konfirmasi:
-        return 'Berhasil Konfirmasi';
+        return 'Dicuci & Disetrika';
       case OrderStatus.dijemput:
         return 'Dijemput';
       case OrderStatus.diproses:
-        return 'Dicuci';
+        return 'Diambil';
       case OrderStatus.perluTimbang:
-        return 'Disetrika';
+        return 'Timbang';
       case OrderStatus.konfirmasiBayar:
         return 'Konfirmasi Pembayaran';
       case OrderStatus.selesai:
@@ -58,6 +58,7 @@ String orderStatusToString(OrderStatus status) {
 OrderStatus orderStatusFromString(String? value) {
   switch (value?.toLowerCase()) {
     case 'diproses':
+    case 'diambil':
       return OrderStatus.diproses;
     case 'perlu timbang':
     case 'perlu_timbang':
@@ -70,6 +71,9 @@ OrderStatus orderStatusFromString(String? value) {
     case 'konfirmasiBayar':
       return OrderStatus.konfirmasiBayar;
     case 'konfirmasi':
+    case 'dicuci & disetrika':
+    case 'dicuci':
+    case 'disetrika':
       return OrderStatus.konfirmasi;
     case 'dijemput':
       return OrderStatus.dijemput;
@@ -121,7 +125,7 @@ class OrderModel {
       case OrderStatus.masuk:
         return 'Order Masuk';
       case OrderStatus.diproses:
-        return 'Diproses';
+        return 'Diambil';
       case OrderStatus.perluTimbang:
         return 'Perlu Timbang';
       case OrderStatus.selesai:
@@ -129,7 +133,7 @@ class OrderModel {
       case OrderStatus.konfirmasiBayar:
         return 'Konfirmasi Bayar';
       case OrderStatus.konfirmasi:
-        return 'Konfirmasi';
+        return 'Dicuci & Disetrika';
       case OrderStatus.dijemput:
         return 'Dijemput';
       case OrderStatus.dibatalkan:
@@ -139,10 +143,9 @@ class OrderModel {
 
   static const List<OrderStatus> workflowStatuses = [
     OrderStatus.masuk,
-    OrderStatus.konfirmasi,
-    OrderStatus.dijemput,
     OrderStatus.diproses,
     OrderStatus.perluTimbang,
+    OrderStatus.konfirmasi,
     OrderStatus.konfirmasiBayar,
     OrderStatus.selesai,
   ];
@@ -156,6 +159,9 @@ class OrderModel {
   }
 
   OrderStatus? get nextStatus {
+    if (status == OrderStatus.dijemput) {
+      return OrderStatus.diproses;
+    }
     final index = workflowIndex;
     if (index < 0 || index >= workflowStatuses.length - 1) return null;
     return workflowStatuses[index + 1];

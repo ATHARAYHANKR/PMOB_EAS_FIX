@@ -182,7 +182,7 @@ class DashboardScreen extends StatelessWidget {
         iconColor: AppColors.orange,
       ),
       _StatItem(
-        label: 'Diproses',
+        label: 'Diambil',
         count: countByStatus(OrderStatus.diproses),
         icon: Icons.sync_rounded,
         iconBg: const Color(0xFFE3F2FD),

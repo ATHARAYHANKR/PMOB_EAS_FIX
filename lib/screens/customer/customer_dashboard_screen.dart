@@ -71,6 +71,18 @@ class CustomerDashboardScreen extends StatelessWidget {
               StreamBuilder<List<OrderModel>>(
                 stream: FirestoreService.streamOrdersForCurrentCustomer(),
                 builder: (context, snap) {
+                  if (snap.hasError) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Text(
+                        'Gagal memuat order: ${snap.error}',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: Colors.redAccent,
+                        ),
+                      ),
+                    );
+                  }
                   if (snap.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
@@ -202,6 +214,30 @@ class CustomerDashboardScreen extends StatelessWidget {
     return StreamBuilder<List<OrderModel>>(
       stream: FirestoreService.streamOrdersForCurrentCustomer(),
       builder: (context, snap) {
+        if (snap.hasError) {
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFDEDED),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFF5C2C2)),
+            ),
+            child: Text(
+              'Gagal memuat statistik: ${snap.error}',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: Colors.redAccent,
+              ),
+            ),
+          );
+        }
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
         final all = snap.data ?? [];
         final aktif = all.where((o) => o.status != OrderStatus.selesai).length;
         final selesai =

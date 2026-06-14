@@ -72,7 +72,7 @@ class _VerifikasiBeratScreenState extends State<VerifikasiBeratScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              'Dikirim',
+              'Timbang',
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -240,8 +240,8 @@ class _VerifikasiBeratScreenState extends State<VerifikasiBeratScreen> {
       if (!mounted) return;
       Navigator.pop(context); // tutup loading
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Gagal menyimpan: $e',
-            style: GoogleFonts.inter(fontSize: 13)),
+        content:
+            Text('Gagal menyimpan: $e', style: GoogleFonts.inter(fontSize: 13)),
         backgroundColor: Colors.redAccent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

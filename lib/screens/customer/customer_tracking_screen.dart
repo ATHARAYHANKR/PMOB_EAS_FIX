@@ -15,6 +15,21 @@ class CustomerTrackingScreen extends StatelessWidget {
         child: StreamBuilder<List<OrderModel>>(
           stream: FirestoreService.streamOrdersForCurrentCustomer(),
           builder: (context, snap) {
+            if (snap.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    'Gagal memuat data tracking: ${snap.error}',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: Colors.redAccent,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              );
+            }
             if (snap.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
@@ -159,9 +174,11 @@ class CustomerTrackingScreen extends StatelessWidget {
       case OrderStatus.masuk:
         return 'Order Diterima';
       case OrderStatus.diproses:
-        return 'Dijemput & Diproses';
+        return 'Diambil';
       case OrderStatus.perluTimbang:
         return 'Penimbangan';
+      case OrderStatus.konfirmasi:
+        return 'Dicuci & Disetrika';
       case OrderStatus.konfirmasiBayar:
         return 'Konfirmasi Pembayaran';
       case OrderStatus.selesai:

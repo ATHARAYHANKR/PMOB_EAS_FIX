@@ -38,7 +38,7 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
       case OrderStatus.konfirmasi:
         badgeBg = const Color(0xFFEDEDF2);
         badgeFg = const Color(0xFF555555);
-        badgeLabel = 'Konfirmasi';
+        badgeLabel = 'Dicuci & Disetrika';
         break;
       case OrderStatus.dijemput:
         badgeBg = const Color(0xFFD6F0F7);
@@ -48,7 +48,7 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
       case OrderStatus.diproses:
         badgeBg = const Color(0xFFFFF3C4);
         badgeFg = const Color(0xFF8A6D1B);
-        badgeLabel = 'Diproses';
+        badgeLabel = 'Diambil';
         break;
       case OrderStatus.perluTimbang:
         badgeBg = const Color(0xFFEEF6FF);
@@ -336,7 +336,10 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
       case 'Konfirmasi Pembayaran':
         return '💳';
       case 'Dicuci':
+      case 'Dicuci & Disetrika':
         return '🧺';
+      case 'Timbang':
+        return '⚖️';
       case 'Disetrika':
         return '✨';
       case 'Dikirim':
@@ -465,8 +468,8 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
                         showDialog(
                           context: context,
                           barrierDismissible: false,
-                          builder: (_) => const Center(
-                              child: CircularProgressIndicator()),
+                          builder: (_) =>
+                              const Center(child: CircularProgressIndicator()),
                         );
 
                         try {

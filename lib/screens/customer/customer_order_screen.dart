@@ -13,14 +13,14 @@ class CustomerOrderScreen extends StatefulWidget {
 }
 
 class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
-  int _filterIndex = 0; // 0 Semua,1 Konfirmasi,2 Dijemput,3 Diproses,4 Selesai
+  int _filterIndex = 0; // 0 Semua,1 Diambil,2 Timbang,3 Dicuci,4 Selesai
   int _selesaiSub = 0; // 0 Diterima, 1 Dibatalkan
 
   static const _filters = [
     'Semua',
-    'Konfirmasi',
-    'Dijemput',
-    'Diproses',
+    'Diambil',
+    'Timbang',
+    'Dicuci & Disetrika',
     'Selesai'
   ];
   static const Color _blue = Color(0xFF3B5BDB);
@@ -48,6 +48,21 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
               child: StreamBuilder<List<OrderModel>>(
                 stream: FirestoreService.streamOrdersForCurrentCustomer(),
                 builder: (context, snap) {
+                  if (snap.hasError) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Text(
+                          'Gagal memuat data order: ${snap.error}',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: Colors.redAccent,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    );
+                  }
                   if (snap.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
@@ -56,17 +71,17 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
                   switch (_filterIndex) {
                     case 1:
                       orders = all
-                          .where((o) => o.status == OrderStatus.konfirmasi)
+                          .where((o) => o.status == OrderStatus.diproses)
                           .toList();
                       break;
                     case 2:
                       orders = all
-                          .where((o) => o.status == OrderStatus.dijemput)
+                          .where((o) => o.status == OrderStatus.perluTimbang)
                           .toList();
                       break;
                     case 3:
                       orders = all
-                          .where((o) => o.status == OrderStatus.diproses)
+                          .where((o) => o.status == OrderStatus.konfirmasi)
                           .toList();
                       break;
                     case 4:
@@ -196,7 +211,7 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
       case OrderStatus.konfirmasi:
         badgeBg = const Color(0xFFEDEDF2);
         badgeFg = const Color(0xFF555555);
-        badgeLabel = 'Konfirmasi';
+        badgeLabel = 'Dicuci & Disetrika';
         break;
       case OrderStatus.dijemput:
         badgeBg = const Color(0xFFD6F0F7);
@@ -206,7 +221,7 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
       case OrderStatus.diproses:
         badgeBg = const Color(0xFFFFF3C4);
         badgeFg = const Color(0xFF8A6D1B);
-        badgeLabel = 'Diproses';
+        badgeLabel = 'Diambil';
         break;
       case OrderStatus.perluTimbang:
         badgeBg = const Color(0xFFFFE0B2);

@@ -170,6 +170,37 @@ class _BookingLaundryScreenState extends State<BookingLaundryScreen> {
                 StreamBuilder<List<Map<String, dynamic>>>(
                   stream: FirestoreService.streamKatalogRaw(),
                   builder: (context, snap) {
+                    if (snap.hasError) {
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFDEDED),
+                          borderRadius: BorderRadius.circular(12),
+                          border:
+                              Border.all(color: const Color(0xFFF5C2C2)),
+                        ),
+                        child: Text(
+                          'Gagal memuat data layanan: ${snap.error}',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: Colors.redAccent,
+                          ),
+                        ),
+                      );
+                    }
+                    if (!snap.hasData) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Center(
+                          child: SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      );
+                    }
                     final list = (snap.data ?? [])
                         .map((m) => KatalogModel.fromMap(m['id'], m))
                         .where((k) => k.aktif)
@@ -383,6 +414,25 @@ class _BookingLaundryScreenState extends State<BookingLaundryScreen> {
           child: StreamBuilder<List<Map<String, dynamic>>>(
             stream: FirestoreService.streamKatalogRaw(),
             builder: (context, snap) {
+              if (snap.hasError) {
+                return Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    'Gagal memuat data layanan: ${snap.error}',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: Colors.redAccent,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                );
+              }
+              if (!snap.hasData) {
+                return const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
               final items = (snap.data ?? [])
                   .map((m) => KatalogModel.fromMap(m['id'], m))
                   .where((k) => k.aktif)

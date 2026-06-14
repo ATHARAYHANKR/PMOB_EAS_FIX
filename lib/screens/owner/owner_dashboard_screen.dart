@@ -189,8 +189,7 @@ class OwnerDashboardScreen extends StatelessWidget {
   Widget _buildStatGrid(List<OrderModel> orders) {
     final totalOrder = orders.length;
     final aktif = orders.where((o) => o.status != OrderStatus.selesai).length;
-    final selesai =
-        orders.where((o) => o.status == OrderStatus.selesai).length;
+    final selesai = orders.where((o) => o.status == OrderStatus.selesai).length;
     final totalOmzet = orders
         .where((o) => o.status == OrderStatus.selesai)
         .fold<double>(0, (sum, o) => sum + (o.totalHarga ?? 0));
@@ -370,7 +369,7 @@ class OwnerDashboardScreen extends StatelessWidget {
       case OrderStatus.diproses:
         badgeBg = const Color(0xFFEDD6FF);
         badgeFg = const Color(0xFF6A1F9F);
-        badgeLabel = 'Dijemput';
+        badgeLabel = 'Diambil';
         break;
       case OrderStatus.selesai:
         badgeBg = const Color(0xFFE8F5E9);
@@ -380,12 +379,22 @@ class OwnerDashboardScreen extends StatelessWidget {
       case OrderStatus.perluTimbang:
         badgeBg = const Color(0xFFFFF9C4);
         badgeFg = const Color(0xFF795548);
-        badgeLabel = 'Disetrika';
+        badgeLabel = 'Timbang';
+        break;
+      case OrderStatus.konfirmasi:
+        badgeBg = const Color(0xFFFFF9C4);
+        badgeFg = const Color(0xFF795548);
+        badgeLabel = 'Dicuci & Disetrika';
+        break;
+      case OrderStatus.dijemput:
+        badgeBg = const Color(0xFFD6EEFF);
+        badgeFg = const Color(0xFF1565C0);
+        badgeLabel = 'Dijemput';
         break;
       case OrderStatus.konfirmasiBayar:
         badgeBg = const Color(0xFFE3F2FD);
         badgeFg = const Color(0xFF1565C0);
-        badgeLabel = 'Dikirim';
+        badgeLabel = 'Konfirmasi Bayar';
         break;
       default:
         badgeBg = const Color(0xFFFFF3E0);

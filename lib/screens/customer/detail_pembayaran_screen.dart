@@ -300,8 +300,7 @@ class _DetailPembayaranScreenState extends State<DetailPembayaranScreen> {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          const CustomerMainScreen(initialIndex: 3),
+                      builder: (_) => const CustomerMainScreen(initialIndex: 3),
                     ),
                   );
                 } catch (e) {

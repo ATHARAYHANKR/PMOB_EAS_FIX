@@ -35,6 +35,21 @@ class CustomerPembayaranScreen extends StatelessWidget {
               StreamBuilder<List<OrderModel>>(
                 stream: FirestoreService.streamOrdersForCurrentCustomer(),
                 builder: (context, snap) {
+                  if (snap.hasError) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Text(
+                          'Gagal memuat data pembayaran: ${snap.error}',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: Colors.redAccent,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    );
+                  }
                   if (snap.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }

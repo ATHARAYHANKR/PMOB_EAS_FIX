@@ -108,6 +108,21 @@ class _KatalogLayananScreenState extends State<KatalogLayananScreen> {
               child: StreamBuilder<List<Map<String, dynamic>>>(
                 stream: FirestoreService.streamKatalogRaw(),
                 builder: (context, snap) {
+                  if (snap.hasError) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Text(
+                          'Gagal memuat katalog layanan: ${snap.error}',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: Colors.redAccent,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    );
+                  }
                   if (snap.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }

@@ -32,19 +32,19 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
         return const _BadgeStyle(
           bg: Color(0xFFD6EEFF),
           fg: Color(0xFF1565C0),
-          label: 'Dicuci',
+          label: 'Diambil',
         );
       case OrderStatus.perluTimbang:
         return const _BadgeStyle(
           bg: Color(0xFFFFF9C4),
           fg: Color(0xFF795548),
-          label: 'Disetrika',
+          label: 'Timbang',
         );
       case OrderStatus.konfirmasiBayar:
         return const _BadgeStyle(
           bg: Color(0xFFEDD6FF),
           fg: Color(0xFF6A1F9F),
-          label: 'Dikirim',
+          label: 'Konfirmasi Bayar',
         );
       default:
         return _BadgeStyle(
@@ -63,16 +63,16 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
     switch (order.status) {
       case OrderStatus.masuk:
         return 'Terima order untuk memulai proses laundry.';
+      case OrderStatus.diproses:
+        return 'Terima order dan lanjutkan ke penimbangan.';
+      case OrderStatus.perluTimbang:
+        return 'Lanjutkan ke proses pembayaran setelah penimbangan.';
+      case OrderStatus.konfirmasiBayar:
+        return 'Pastikan pembayaran diterima sebelum memproses cuci & setrika.';
       case OrderStatus.konfirmasi:
-        return 'Ambil pakaian dan kirim ke proses cucian.';
+        return 'Order sedang dicuci & disetrika. Tandai selesai setelah proses cucian selesai.';
       case OrderStatus.dijemput:
         return 'Pakaian sudah dijemput, lanjutkan ke proses selanjutnya.';
-      case OrderStatus.diproses:
-        return 'Lanjut setrika jika pakaian siap disetrika.';
-      case OrderStatus.perluTimbang:
-        return 'Lanjut kirim jika pakaian sudah siap dikirim.';
-      case OrderStatus.konfirmasiBayar:
-        return 'Pastikan pembayaran diterima sebelum menutup order.';
       default:
         return 'Lanjutkan proses pesanan ini.';
     }
@@ -83,16 +83,16 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
     switch (order.status) {
       case OrderStatus.masuk:
         return 'Terima Order';
+      case OrderStatus.konfirmasiBayar:
+        return 'Mulai Cuci';
       case OrderStatus.konfirmasi:
-        return 'Mulai Proses';
+        return 'Selesai';
       case OrderStatus.dijemput:
         return 'Masuk Cucian';
       case OrderStatus.diproses:
-        return 'Lanjut Setrika';
+        return 'Lanjut Timbang';
       case OrderStatus.perluTimbang:
-        return 'Lanjut Kirim';
-      case OrderStatus.konfirmasiBayar:
-        return 'Selesai';
+        return 'Kirim ke Cuci';
       default:
         return 'Lanjut Proses';
     }
@@ -288,13 +288,15 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
                           ? () async {
                               if (order.nextStatus != null) {
                                 final updatedStatus = order.nextStatus!;
+                                final navigator = Navigator.of(context);
+                                final messenger = ScaffoldMessenger.of(context);
                                 Navigator.pop(context); // tutup dialog
                                 try {
                                   await FirestoreService.advanceStatus(order);
                                   onUpdated?.call();
                                   if (!mounted) return;
-                                  Navigator.pop(context); // kembali
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  navigator.pop(); // kembali
+                                  messenger.showSnackBar(
                                     SnackBar(
                                       content: Text(
                                         'Order ${order.id} berhasil dipindah ke ${updatedStatus.stepTitle}',
@@ -309,7 +311,7 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
                                   );
                                 } catch (e) {
                                   if (!mounted) return;
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  messenger.showSnackBar(
                                     SnackBar(
                                       content: Text(
                                         'Gagal memperbarui status: $e',
