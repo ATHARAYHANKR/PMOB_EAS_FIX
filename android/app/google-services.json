@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "48359423210",
+    "firebase_url": "https://cleango-pmob-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "cleango-pmob",
+    "storage_bucket": "cleango-pmob.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:48359423210:android:dcb55b805d51e440846b93",
+        "android_client_info": {
+          "package_name": "com.example.cleango"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvZgpicPkMWFiApjhtbeA5o61RNjxmyt4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

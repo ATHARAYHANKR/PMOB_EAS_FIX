@@ -1,7 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import '../models/order_model.dart';
 
 class FirestoreService {
@@ -74,25 +71,9 @@ class FirestoreService {
           : null;
 
   static Future<void> initialize() async {
-    if (!kIsWeb &&
-        (defaultTargetPlatform == TargetPlatform.android ||
-            defaultTargetPlatform == TargetPlatform.iOS)) {
-      firebaseAvailable = false;
-      // ignore: avoid_print
-      print(
-          'Firebase initialization skipped for mobile due missing native config.');
-      return;
-    }
-
     try {
-      if (!kIsWeb) {
-        await Firebase.initializeApp();
-      } else {
-        firebaseAvailable = false;
-        // ignore: avoid_print
-        print('Firebase initialization skipped for web due missing config.');
-        return;
-      }
+      // Firebase.initializeApp() sudah dipanggil di main.dart dengan
+      // DefaultFirebaseOptions hasil `flutterfire configure`.
       _db = FirebaseFirestore.instance;
       firebaseAvailable = true;
       // ignore: avoid_print

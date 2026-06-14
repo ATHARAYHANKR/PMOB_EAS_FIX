@@ -305,7 +305,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (role == 'customer') {
         FirestoreService.currentUser = {
           'id': 'demo_customer',
-          'name': 'Customer Demo',
+          'name': 'Dhira Putri',
+          'phone': '081323230001',
           'role': 'customer',
         };
       }
