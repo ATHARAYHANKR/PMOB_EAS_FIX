@@ -2,13 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../models/order_model.dart';
-import '../../services/order_service.dart';
+import '../../services/firestore_service.dart';
 import 'booking_laundry_screen.dart';
+import 'detail_order_screen.dart';
 
 class CustomerDashboardScreen extends StatelessWidget {
   const CustomerDashboardScreen({super.key});
 
   static const Color _blue = Color(0xFF3B5BDB);
+
+  String _displayName() {
+    final user = FirestoreService.currentUser;
+    final name = user?['name']?.toString().trim();
+    if (name != null && name.isNotEmpty) {
+      return name;
+    }
+    final email = user?['email']?.toString().trim();
+    if (email != null && email.isNotEmpty) {
+      return email.split('@').first;
+    }
+    return 'Pengguna';
+  }
+
+  String _displayInitial() {
+    final name = _displayName();
+    return name.isNotEmpty ? name[0].toUpperCase() : 'C';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +68,27 @@ class CustomerDashboardScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              ..._buildRecentOrders(),
+              StreamBuilder<List<OrderModel>>(
+                stream: FirestoreService.streamOrdersForCurrentCustomer(),
+                builder: (context, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final all = snap.data ?? [];
+                  var recents = all
+                      .where((o) => o.status == OrderStatus.selesai)
+                      .take(2)
+                      .toList();
+                  if (recents.isEmpty) {
+                    recents = all.take(2).toList();
+                  }
+                  return Column(
+                    children: recents
+                        .map((o) => _buildOrderCard(context, o))
+                        .toList(),
+                  );
+                },
+              ),
               const SizedBox(height: 16),
               _buildPromoBanner(),
             ],
@@ -63,21 +102,24 @@ class CustomerDashboardScreen extends StatelessWidget {
   Widget _buildAppBar() {
     return Row(
       children: [
-        const Icon(Icons.menu_rounded, size: 26, color: Colors.black87),
-        const Spacer(),
-        Row(
-          children: [
-            const Icon(Icons.checkroom_rounded, color: _blue, size: 22),
-            const SizedBox(width: 6),
-            Text('CleanGo',
-                style: GoogleFonts.inter(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: _blue,
-                )),
-          ],
+        // menu icon removed per request; keep title centered
+        Expanded(
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.checkroom_rounded, color: _blue, size: 22),
+                const SizedBox(width: 6),
+                Text('CleanGo',
+                    style: GoogleFonts.inter(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: _blue,
+                    )),
+              ],
+            ),
+          ),
         ),
-        const Spacer(),
         Stack(
           children: [
             const Icon(Icons.notifications_outlined,
@@ -116,7 +158,7 @@ class CustomerDashboardScreen extends StatelessWidget {
                   )),
               Row(
                 children: [
-                  Text('Dhira Cust!',
+                  Text('${_displayName()}!',
                       style: GoogleFonts.inter(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
@@ -144,7 +186,7 @@ class CustomerDashboardScreen extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Text('D',
+          child: Text(_displayInitial(),
               style: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
@@ -157,88 +199,94 @@ class CustomerDashboardScreen extends StatelessWidget {
 
   // ── Stat Row 3 cards ────────────────────────────────────────
   Widget _buildStatRow() {
-    final aktif = OrderRepository.all
-        .where((o) => o.status != OrderStatus.selesai)
-        .length;
-    final selesai = OrderRepository.countByStatus(OrderStatus.selesai);
+    return StreamBuilder<List<OrderModel>>(
+      stream: FirestoreService.streamOrdersForCurrentCustomer(),
+      builder: (context, snap) {
+        final all = snap.data ?? [];
+        final aktif = all.where((o) => o.status != OrderStatus.selesai).length;
+        final selesai =
+            all.where((o) => o.status == OrderStatus.selesai).length;
 
-    final stats = [
-      _StatItem(
-        icon: Icons.local_shipping_rounded,
-        iconBg: const Color(0xFFFFF3E0),
-        iconColor: const Color(0xFFFF8C00),
-        label: 'Order Aktif',
-        value: '$aktif',
-        valueColor: const Color(0xFF1565C0),
-      ),
-      _StatItem(
-        icon: Icons.check_circle_rounded,
-        iconBg: const Color(0xFFE8F5E9),
-        iconColor: const Color(0xFF2E7D32),
-        label: 'Selesai',
-        value: '$selesai',
-        valueColor: const Color(0xFF2E7D32),
-      ),
-      const _StatItem(
-        icon: Icons.monetization_on_rounded,
-        iconBg: Color(0xFFFFF8E1),
-        iconColor: Color(0xFFF9A825),
-        label: 'Total Bayar',
-        value: 'Rp 95.000',
-        valueColor: _blue,
-      ),
-    ];
-
-    return Row(
-      children: stats.asMap().entries.map((entry) {
-        final i = entry.key;
-        final item = entry.value;
-        return Expanded(
-          child: Container(
-            margin: EdgeInsets.only(right: i < stats.length - 1 ? 10 : 0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(10),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-            child: Column(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: item.iconBg,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(item.icon, color: item.iconColor, size: 18),
-                ),
-                const SizedBox(height: 8),
-                Text(item.label,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      color: Colors.black45,
-                    )),
-                const SizedBox(height: 4),
-                Text(item.value,
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: item.valueColor,
-                    )),
-              ],
-            ),
+        final stats = [
+          _StatItem(
+            icon: Icons.local_shipping_rounded,
+            iconBg: const Color(0xFFFFF3E0),
+            iconColor: const Color(0xFFFF8C00),
+            label: 'Order Aktif',
+            value: '$aktif',
+            valueColor: const Color(0xFF1565C0),
           ),
+          _StatItem(
+            icon: Icons.check_circle_rounded,
+            iconBg: const Color(0xFFE8F5E9),
+            iconColor: const Color(0xFF2E7D32),
+            label: 'Selesai',
+            value: '$selesai',
+            valueColor: const Color(0xFF2E7D32),
+          ),
+          const _StatItem(
+            icon: Icons.monetization_on_rounded,
+            iconBg: Color(0xFFFFF8E1),
+            iconColor: Color(0xFFF9A825),
+            label: 'Total Bayar',
+            value: 'Rp 95.000',
+            valueColor: _blue,
+          ),
+        ];
+
+        return Row(
+          children: stats.asMap().entries.map((entry) {
+            final i = entry.key;
+            final item = entry.value;
+            return Expanded(
+              child: Container(
+                margin: EdgeInsets.only(right: i < stats.length - 1 ? 10 : 0),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(10),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: item.iconBg,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(item.icon, color: item.iconColor, size: 18),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(item.label,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: Colors.black45,
+                        )),
+                    const SizedBox(height: 4),
+                    Text(item.value,
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: item.valueColor,
+                        )),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
         );
-      }).toList(),
+      },
     );
   }
 
@@ -284,18 +332,8 @@ class CustomerDashboardScreen extends StatelessWidget {
   }
 
   // ── Recent Orders ────────────────────────────────────────────
-  List<Widget> _buildRecentOrders() {
-    final recents = OrderRepository.all
-        .where((o) => o.status == OrderStatus.selesai)
-        .take(2)
-        .toList();
-    if (recents.isEmpty) {
-      recents.addAll(OrderRepository.all.take(2));
-    }
-    return recents.map((o) => _buildOrderCard(o)).toList();
-  }
 
-  Widget _buildOrderCard(OrderModel order) {
+  Widget _buildOrderCard(BuildContext context, OrderModel order) {
     final dateStr =
         DateFormat('d MMM yyyy HH:mm', 'id').format(order.pickupDate);
 
@@ -374,19 +412,28 @@ class CustomerDashboardScreen extends StatelessWidget {
                     color: const Color(0xFF2E7D32),
                   )),
               const Spacer(),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                decoration: BoxDecoration(
-                  border: Border.all(color: _blue, width: 1.2),
-                  borderRadius: BorderRadius.circular(8),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => DetailOrderScreen(order: order)),
+                  );
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: _blue, width: 1.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text('Detail',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _blue,
+                      )),
                 ),
-                child: Text('Detail',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: _blue,
-                    )),
               ),
             ],
           ),

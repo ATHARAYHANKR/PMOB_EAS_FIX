@@ -1,11 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../services/firestore_service.dart';
 import '../auth/login_screen.dart';
 
 class CustomerProfilScreen extends StatelessWidget {
   const CustomerProfilScreen({super.key});
 
   static const Color _blue = Color(0xFF3B5BDB);
+
+  String _displayName() {
+    final user = FirestoreService.currentUser;
+    final name = user?['name']?.toString().trim();
+    if (name != null && name.isNotEmpty) {
+      return name;
+    }
+    final email = user?['email']?.toString().trim();
+    if (email != null && email.isNotEmpty) {
+      return email.split('@').first;
+    }
+    return 'Pengguna';
+  }
+
+  String _displayPhone() {
+    final user = FirestoreService.currentUser;
+    final phone = user?['phone']?.toString().trim();
+    return (phone != null && phone.isNotEmpty) ? phone : 'Tidak ada nomor';
+  }
+
+  String _displayInitial() {
+    final name = _displayName();
+    return name.isNotEmpty ? name[0].toUpperCase() : 'C';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +75,7 @@ class CustomerProfilScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       alignment: Alignment.center,
-                      child: Text('D',
+                      child: Text(_displayInitial(),
                           style: GoogleFonts.inter(
                             fontSize: 24,
                             fontWeight: FontWeight.w800,
@@ -62,13 +87,13 @@ class CustomerProfilScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Dhira Cust',
+                          Text(_displayName(),
                               style: GoogleFonts.inter(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.black87,
                               )),
-                          Text('081323232 32',
+                          Text(_displayPhone(),
                               style: GoogleFonts.inter(
                                 fontSize: 12,
                                 color: Colors.black45,

@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../staff_main_screen.dart';
 import '../owner_main_screen.dart';
 import '../customer/customer_main_screen.dart';
+import '../../services/firestore_service.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -142,12 +144,12 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 20),
 
-          // Username
-          _label('USERNAME'),
+          // Email / Telepon / Nama
+          _label('EMAIL / TELEPON / NAMA'),
           const SizedBox(height: 8),
           _field(
             controller: _usernameCtrl,
-            hint: 'Masukkan username',
+            hint: 'Masukkan email, telepon, atau nama',
             prefix: Icons.person_outline_rounded,
           ),
           const SizedBox(height: 18),
@@ -201,7 +203,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
               GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const RegisterScreen()));
+                },
                 child: Text('Daftar akun baru',
                     style: GoogleFonts.inter(
                         fontSize: 13,
@@ -278,7 +285,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _login() {
+  Future<void> _login() async {
     final u = _usernameCtrl.text.trim().toLowerCase();
     final p = _passwordCtrl.text.trim();
 
@@ -287,28 +294,66 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    // First try demo accounts
     final account = _accounts[u];
-    if (account == null || account.$1 != p) {
-      _showSnack('Username atau password salah.', Colors.redAccent);
+    if (account != null) {
+      if (account.$1 != p) {
+        _showSnack('Username atau password salah.', Colors.redAccent);
+        return;
+      }
+      final role = account.$2;
+      if (role == 'customer') {
+        FirestoreService.currentUser = {
+          'id': 'demo_customer',
+          'name': 'Customer Demo',
+          'role': 'customer',
+        };
+      }
+      Widget target;
+      switch (role) {
+        case 'owner':
+          target = const OwnerMainScreen();
+          break;
+        case 'customer':
+          target = const CustomerMainScreen();
+          break;
+        default:
+          target = const StaffMainScreen();
+      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => target),
+      );
       return;
     }
 
-    final role = account.$2;
-    Widget target;
-    switch (role) {
-      case 'owner':
-        target = const OwnerMainScreen();
-        break;
-      case 'customer':
-        target = const CustomerMainScreen();
-        break;
-      default:
-        target = const StaffMainScreen();
+    // else try Firestore users
+    try {
+      final user = await FirestoreService.findUserByCredential(
+          usernameOrEmail: u, password: p);
+      if (user == null) {
+        _showSnack('Username atau password salah.', Colors.redAccent);
+        return;
+      }
+      final role = (user['role'] ?? 'customer').toString();
+      FirestoreService.currentUser = user;
+      Widget target;
+      switch (role) {
+        case 'owner':
+          target = const OwnerMainScreen();
+          break;
+        case 'staff':
+          target = const StaffMainScreen();
+          break;
+        default:
+          target = const CustomerMainScreen();
+      }
+      if (!mounted) return;
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (_) => target));
+    } catch (e) {
+      _showSnack('Gagal login: $e', Colors.redAccent);
     }
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => target),
-    );
   }
 
   void _showSnack(String msg, Color color) {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../models/order_model.dart';
-import '../../services/order_service.dart';
+import '../../services/firestore_service.dart';
 import 'detail_pembayaran_screen.dart';
 
 class CustomerPembayaranScreen extends StatelessWidget {
@@ -12,10 +12,6 @@ class CustomerPembayaranScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tagihan = OrderRepository.all
-        .where((o) => o.status == OrderStatus.konfirmasiBayar)
-        .toList();
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8FB),
       body: SafeArea(
@@ -33,38 +29,34 @@ class CustomerPembayaranScreen extends StatelessWidget {
                   )),
               const SizedBox(height: 14),
 
-              // ── Info banner ──────────────────────────────
-              if (tagihan.isNotEmpty)
-                Container(
-                  width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFDECEC),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'Bayar tagihan untuk melanjutkan ke proses berikutnya!',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: const Color(0xFFC0392B),
-                    ),
-                  ),
-                ),
               const SizedBox(height: 16),
 
-              // ── Tagihan list ─────────────────────────────
-              if (tagihan.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 60),
-                  child: Center(
-                    child: Text('Tidak ada tagihan saat ini',
-                        style: GoogleFonts.inter(
-                            fontSize: 13, color: Colors.black38)),
-                  ),
-                )
-              else
-                ...tagihan.map((o) => _buildTagihanCard(context, o)),
+              // ── Tagihan list (dari Firestore) ─────────────
+              StreamBuilder<List<OrderModel>>(
+                stream: FirestoreService.streamOrdersForCurrentCustomer(),
+                builder: (context, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final tagihan = (snap.data ?? [])
+                      .where((o) => o.status == OrderStatus.konfirmasiBayar)
+                      .toList();
+                  if (tagihan.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 60),
+                      child: Center(
+                        child: Text('Tidak ada tagihan saat ini',
+                            style: GoogleFonts.inter(
+                                fontSize: 13, color: Colors.black38)),
+                      ),
+                    );
+                  }
+                  return Column(
+                      children: tagihan
+                          .map((o) => _buildTagihanCard(context, o))
+                          .toList());
+                },
+              ),
             ],
           ),
         ),

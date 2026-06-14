@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../models/order_model.dart';
-import '../../services/order_service.dart';
+import '../../services/firestore_service.dart';
 import 'detail_order_screen.dart';
 
 class CustomerOrderScreen extends StatefulWidget {
@@ -27,8 +27,6 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final orders = _filteredOrders();
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8FB),
       body: SafeArea(
@@ -47,46 +45,67 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
             if (_filterIndex == 4) _buildSelesaiSubTabs(),
             const SizedBox(height: 10),
             Expanded(
-              child: orders.isEmpty
-                  ? Center(
+              child: StreamBuilder<List<OrderModel>>(
+                stream: FirestoreService.streamOrdersForCurrentCustomer(),
+                builder: (context, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final all = snap.data ?? [];
+                  List<OrderModel> orders = all;
+                  switch (_filterIndex) {
+                    case 1:
+                      orders = all
+                          .where((o) => o.status == OrderStatus.konfirmasi)
+                          .toList();
+                      break;
+                    case 2:
+                      orders = all
+                          .where((o) => o.status == OrderStatus.dijemput)
+                          .toList();
+                      break;
+                    case 3:
+                      orders = all
+                          .where((o) => o.status == OrderStatus.diproses)
+                          .toList();
+                      break;
+                    case 4:
+                      if (_selesaiSub == 0) {
+                        orders = all
+                            .where((o) => o.status == OrderStatus.selesai)
+                            .toList();
+                      } else {
+                        orders = all
+                            .where((o) => o.status == OrderStatus.dibatalkan)
+                            .toList();
+                      }
+                      break;
+                    default:
+                      orders = all;
+                  }
+
+                  if (orders.isEmpty) {
+                    return Center(
                       child: Text('Belum ada order',
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             color: Colors.black45,
                           )),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                      itemCount: orders.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
-                      itemBuilder: (_, i) =>
-                          _buildOrderCard(context, orders[i]),
-                    ),
+                    );
+                  }
+                  return ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    itemCount: orders.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (_, i) => _buildOrderCard(context, orders[i]),
+                  );
+                },
+              ),
             ),
           ],
         ),
       ),
     );
-  }
-
-  List<OrderModel> _filteredOrders() {
-    final all = OrderRepository.riwayat;
-    switch (_filterIndex) {
-      case 1:
-        return all.where((o) => o.status == OrderStatus.konfirmasi).toList();
-      case 2:
-        return all.where((o) => o.status == OrderStatus.dijemput).toList();
-      case 3:
-        return all.where((o) => o.status == OrderStatus.diproses).toList();
-      case 4:
-        if (_selesaiSub == 0) {
-          return all.where((o) => o.status == OrderStatus.selesai).toList();
-        } else {
-          return all.where((o) => o.status == OrderStatus.dibatalkan).toList();
-        }
-      default:
-        return all;
-    }
   }
 
   Widget _buildFilterRow() {

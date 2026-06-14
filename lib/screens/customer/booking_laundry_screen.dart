@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../owner/owner_kelola_screen.dart';
+import 'package:intl/intl.dart';
+import '../../models/order_model.dart';
+import '../../services/firestore_service.dart';
+import '../../models/katalog_model.dart';
 import 'customer_main_screen.dart';
 
 class BookingLaundryScreen extends StatefulWidget {
   const BookingLaundryScreen({super.key, this.selectedItem});
 
-  final KatalogItem? selectedItem;
+  final KatalogModel? selectedItem;
 
   @override
   State<BookingLaundryScreen> createState() => _BookingLaundryScreenState();
@@ -15,11 +18,17 @@ class BookingLaundryScreen extends StatefulWidget {
 class _BookingLaundryScreenState extends State<BookingLaundryScreen> {
   static const Color _blue = Color(0xFF3B5BDB);
 
-  late KatalogItem _selectedLayanan;
+  final _formKey = GlobalKey<FormState>();
+
+  KatalogModel? _selectedLayanan;
+  final _namaCtrl = TextEditingController(text: 'Dhira Putri');
+  final _teleponCtrl = TextEditingController(text: '081323230001');
   final _alamatCtrl = TextEditingController(text: 'Jl. Mawar No. 10');
   final _catatanCtrl = TextEditingController();
   DateTime? _tanggalJemput;
   String _sesiJemput = '08.00 - 10.00 (Pagi)';
+  bool _dateError = false;
+  bool _isSaving = false;
 
   final _sesiOptions = const [
     '08.00 - 10.00 (Pagi)',
@@ -31,23 +40,42 @@ class _BookingLaundryScreenState extends State<BookingLaundryScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedLayanan = widget.selectedItem ??
-        (KatalogRepository.items.isNotEmpty
-            ? KatalogRepository.items.first
-            : KatalogItem(
-                nama: 'Cuci Kering',
-                satuan: 'Kg',
-                harga: 7000,
-                estimasi: '2 hari',
-                deskripsi: 'Cuci Kering',
-              ));
+    final currentName = FirestoreService.currentUserName;
+    final currentPhone = FirestoreService.currentUserPhone;
+    if (currentName != null && currentName.isNotEmpty) {
+      _namaCtrl.text = currentName;
+    }
+    if (currentPhone != null && currentPhone.isNotEmpty) {
+      _teleponCtrl.text = currentPhone;
+    }
+
+    // initial selection will be resolved from Firestore stream in build
+    if (widget.selectedItem != null) {
+      _selectedLayanan = KatalogModel(
+        id: 'local',
+        nama: widget.selectedItem!.nama,
+        satuan: widget.selectedItem!.satuan,
+        harga: widget.selectedItem!.harga,
+        estimasi: widget.selectedItem!.estimasi,
+        deskripsi: widget.selectedItem!.deskripsi,
+      );
+    }
   }
 
   @override
   void dispose() {
+    _namaCtrl.dispose();
+    _teleponCtrl.dispose();
     _alamatCtrl.dispose();
     _catatanCtrl.dispose();
     super.dispose();
+  }
+
+  String _generateOrderId() {
+    final now = DateTime.now();
+    final datePart = DateFormat('yyyyMMdd').format(now);
+    final suffix = now.millisecondsSinceEpoch.toString().substring(8);
+    return 'ORD-$datePart-$suffix';
   }
 
   @override
@@ -57,120 +85,215 @@ class _BookingLaundryScreenState extends State<BookingLaundryScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Title bar ─────────────────────────────────
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: const Icon(Icons.arrow_back_ios_rounded,
-                          size: 20, color: Colors.black87),
-                    ),
-                  ),
-                  Text('Booking Laundry',
-                      style: GoogleFonts.inter(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.black87,
-                      )),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // ── Pilih Layanan ──────────────────────────────
-              _label('Pilih Layanan'),
-              const SizedBox(height: 8),
-              _buildLayananSelector(),
-              const SizedBox(height: 20),
-
-              // ── Alamat Penjemputan ───────────────────────────
-              _label('Alamat Penjemputan'),
-              const SizedBox(height: 8),
-              _buildBoxField(
-                child: TextField(
-                  controller: _alamatCtrl,
-                  maxLines: 3,
-                  style: GoogleFonts.inter(fontSize: 13, color: Colors.black87),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    isCollapsed: true,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // ── Tanggal & Sesi ────────────────────────────────
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _label('Tanggal Jemput'),
-                        const SizedBox(height: 8),
-                        _buildDatePicker(),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _label('Sesi Jemput'),
-                        const SizedBox(height: 8),
-                        _buildSesiPicker(),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // ── Catatan ───────────────────────────────────────
-              _label('Catatan'),
-              const SizedBox(height: 8),
-              _buildBoxField(
-                child: TextField(
-                  controller: _catatanCtrl,
-                  style: GoogleFonts.inter(fontSize: 13, color: Colors.black87),
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    isCollapsed: true,
-                    hintText: 'Misal: Hati-hati baju warna putih',
-                    hintStyle:
-                        GoogleFonts.inter(fontSize: 13, color: Colors.black38),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 28),
-
-              // ── Submit ────────────────────────────────────────
-              GestureDetector(
-                onTap: _onKirimBooking,
-                child: Container(
-                  width: double.infinity,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: _blue,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Title bar ─────────────────────────────────
+                Stack(
                   alignment: Alignment.center,
-                  child: Text('Kirim Booking',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      )),
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: const Icon(Icons.arrow_back_ios_rounded,
+                            size: 20, color: Colors.black87),
+                      ),
+                    ),
+                    Text('Booking Laundry',
+                        style: GoogleFonts.inter(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black87,
+                        )),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 20),
+
+                // ── Nama Pelanggan ────────────────────────────
+                _label('Nama Pelanggan'),
+                const SizedBox(height: 8),
+                _buildBoxField(
+                  child: TextFormField(
+                    controller: _namaCtrl,
+                    style:
+                        GoogleFonts.inter(fontSize: 13, color: Colors.black87),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      isCollapsed: true,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Nama wajib diisi';
+                      }
+                      if (value.trim().length < 3) {
+                        return 'Nama minimal 3 karakter';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // ── Nomor Telepon ─────────────────────────────
+                _label('Nomor Telepon'),
+                const SizedBox(height: 8),
+                _buildBoxField(
+                  child: TextFormField(
+                    controller: _teleponCtrl,
+                    keyboardType: TextInputType.phone,
+                    style:
+                        GoogleFonts.inter(fontSize: 13, color: Colors.black87),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      isCollapsed: true,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Nomor telepon wajib diisi';
+                      }
+                      final phoneRegex = RegExp(r'^[0-9]{9,13}$');
+                      if (!phoneRegex.hasMatch(value.trim())) {
+                        return 'Nomor telepon harus 9-13 digit angka';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // ── Pilih Layanan ──────────────────────────────
+                _label('Pilih Layanan'),
+                const SizedBox(height: 8),
+                StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: FirestoreService.streamKatalogRaw(),
+                  builder: (context, snap) {
+                    final list = (snap.data ?? [])
+                        .map((m) => KatalogModel.fromMap(m['id'], m))
+                        .where((k) => k.aktif)
+                        .toList();
+                    if (_selectedLayanan == null && list.isNotEmpty) {
+                      _selectedLayanan = list.first;
+                    }
+                    return _buildLayananSelector();
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // ── Alamat Penjemputan ───────────────────────────
+                _label('Alamat Penjemputan'),
+                const SizedBox(height: 8),
+                _buildBoxField(
+                  child: TextFormField(
+                    controller: _alamatCtrl,
+                    maxLines: 3,
+                    style:
+                        GoogleFonts.inter(fontSize: 13, color: Colors.black87),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      isCollapsed: true,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Alamat penjemputan wajib diisi';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // ── Tanggal & Sesi ────────────────────────────────
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _label('Tanggal Jemput'),
+                          const SizedBox(height: 8),
+                          _buildDatePicker(),
+                          if (_dateError)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                'Tanggal wajib dipilih',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _label('Sesi Jemput'),
+                          const SizedBox(height: 8),
+                          _buildSesiPicker(),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // ── Catatan ───────────────────────────────────────
+                _label('Catatan'),
+                const SizedBox(height: 8),
+                _buildBoxField(
+                  child: TextFormField(
+                    controller: _catatanCtrl,
+                    style:
+                        GoogleFonts.inter(fontSize: 13, color: Colors.black87),
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      isCollapsed: true,
+                      hintText: 'Misal: Hati-hati baju warna putih',
+                      hintStyle: GoogleFonts.inter(
+                          fontSize: 13, color: Colors.black38),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // ── Submit ────────────────────────────────────────
+                GestureDetector(
+                  onTap: _isSaving ? null : _onKirimBooking,
+                  child: Container(
+                    width: double.infinity,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: _blue,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.center,
+                    child: _isSaving
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text('Kirim Booking',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            )),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -202,7 +325,7 @@ class _BookingLaundryScreenState extends State<BookingLaundryScreen> {
   // ── Layanan Selector ─────────────────────────────────────────
   Widget _buildLayananSelector() {
     return GestureDetector(
-      onTap: _showLayananPicker,
+      onTap: () => _showLayananPicker(),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -226,14 +349,14 @@ class _BookingLaundryScreenState extends State<BookingLaundryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_selectedLayanan.nama,
+                  Text(_selectedLayanan?.nama ?? 'Memuat...',
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: _blue,
                       )),
                   Text(
-                      'Rp${_formatHarga(_selectedLayanan.harga)}/${_selectedLayanan.satuan.toLowerCase()}',
+                      'Rp${_formatHarga(_selectedLayanan?.harga ?? 0)}/${_selectedLayanan?.satuan.toLowerCase() ?? 'kg'}',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: Colors.black54,
@@ -257,20 +380,32 @@ class _BookingLaundryScreenState extends State<BookingLaundryScreen> {
       ),
       builder: (_) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: KatalogRepository.items.map((item) {
-              return ListTile(
-                title: Text(item.nama, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600)),
-                subtitle: Text(
-                    'Rp${_formatHarga(item.harga)}/${item.satuan.toLowerCase()}',
-                    style: GoogleFonts.inter(fontSize: 12, color: Colors.black54)),
-                onTap: () {
-                  setState(() => _selectedLayanan = item);
-                  Navigator.pop(context);
-                },
+          child: StreamBuilder<List<Map<String, dynamic>>>(
+            stream: FirestoreService.streamKatalogRaw(),
+            builder: (context, snap) {
+              final items = (snap.data ?? [])
+                  .map((m) => KatalogModel.fromMap(m['id'], m))
+                  .where((k) => k.aktif)
+                  .toList();
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: items.map((item) {
+                  return ListTile(
+                    title: Text(item.nama,
+                        style: GoogleFonts.inter(
+                            fontSize: 14, fontWeight: FontWeight.w600)),
+                    subtitle: Text(
+                        'Rp${_formatHarga(item.harga)}/${item.satuan.toLowerCase()}',
+                        style: GoogleFonts.inter(
+                            fontSize: 12, color: Colors.black54)),
+                    onTap: () {
+                      setState(() => _selectedLayanan = item);
+                      Navigator.pop(context);
+                    },
+                  );
+                }).toList(),
               );
-            }).toList(),
+            },
           ),
         );
       },
@@ -288,7 +423,10 @@ class _BookingLaundryScreenState extends State<BookingLaundryScreen> {
           lastDate: DateTime.now().add(const Duration(days: 60)),
         );
         if (picked != null) {
-          setState(() => _tanggalJemput = picked);
+          setState(() {
+            _tanggalJemput = picked;
+            _dateError = false;
+          });
         }
       },
       child: _buildBoxField(
@@ -301,9 +439,8 @@ class _BookingLaundryScreenState extends State<BookingLaundryScreen> {
                     : '${_tanggalJemput!.day.toString().padLeft(2, '0')}/${_tanggalJemput!.month.toString().padLeft(2, '0')}/${_tanggalJemput!.year}',
                 style: GoogleFonts.inter(
                   fontSize: 13,
-                  color: _tanggalJemput == null
-                      ? Colors.black38
-                      : Colors.black87,
+                  color:
+                      _tanggalJemput == null ? Colors.black38 : Colors.black87,
                 ),
               ),
             ),
@@ -337,12 +474,53 @@ class _BookingLaundryScreenState extends State<BookingLaundryScreen> {
   }
 
   // ── Submit ────────────────────────────────────────────────────
-  void _onKirimBooking() {
-    showDialog(
-      context: context,
-      barrierColor: Colors.black54,
-      builder: (_) => _buildSuccessDialog(),
+  Future<void> _onKirimBooking() async {
+    final formValid = _formKey.currentState!.validate();
+    final dateValid = _tanggalJemput != null;
+
+    setState(() => _dateError = !dateValid);
+
+    if (!formValid || !dateValid) return;
+
+    setState(() => _isSaving = true);
+
+    final newOrder = OrderModel(
+      id: _generateOrderId(),
+      customerName: _namaCtrl.text.trim(),
+      phone: _teleponCtrl.text.trim(),
+      serviceType: _selectedLayanan?.nama ?? '',
+      pickupDate: _tanggalJemput!,
+      pickupSlot: _sesiJemput,
+      status: OrderStatus.masuk,
+      address: _alamatCtrl.text.trim(),
+      catatan:
+          _catatanCtrl.text.trim().isEmpty ? '-' : _catatanCtrl.text.trim(),
     );
+
+    try {
+      await FirestoreService.addOrder(newOrder);
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierColor: Colors.black54,
+        builder: (_) => _buildSuccessDialog(),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mengirim booking: $e',
+              style: GoogleFonts.inter(fontSize: 13)),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   Widget _buildSuccessDialog() {
