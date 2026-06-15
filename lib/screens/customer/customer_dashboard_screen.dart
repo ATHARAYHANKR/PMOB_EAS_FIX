@@ -4,12 +4,32 @@ import 'package:intl/intl.dart';
 import '../../models/order_model.dart';
 import '../../services/firestore_service.dart';
 import 'booking_laundry_screen.dart';
+import 'customer_order_screen.dart';
 import 'detail_order_screen.dart';
+
+/// Palette dasbor customer - ditata ulang agar terasa lebih "produk"
+/// (warna konsisten dengan brand CleanGo, tapi dengan hierarki yang
+/// lebih jelas: hero gelap untuk status, surface terang untuk daftar).
+class _DashColors {
+  static const ink = Color(0xFF14213D); // hero / teks utama
+  static const primary = Color(0xFF3B5BDB); // brand blue
+  static const primarySoft = Color(0xFFE7ECFB);
+  static const surface = Color(0xFFF6F7FB);
+  static const card = Color(0xFFFFFFFF);
+  static const border = Color(0xFFEAEDF3);
+  static const textMuted = Color(0xFF6B7280);
+  static const success = Color(0xFF1F9D55);
+  static const successSoft = Color(0xFFE3F6EA);
+  static const amber = Color(0xFFC8821B);
+  static const amberSoft = Color(0xFFFBF0DD);
+  static const danger = Color(0xFFC0392B);
+  static const dangerSoft = Color(0xFFFBE7E5);
+  static const neutral = Color(0xFF5B6472);
+  static const neutralSoft = Color(0xFFEDEDF2);
+}
 
 class CustomerDashboardScreen extends StatelessWidget {
   const CustomerDashboardScreen({super.key});
-
-  static const Color _blue = Color(0xFF3B5BDB);
 
   String _displayName() {
     final user = FirestoreService.currentUser;
@@ -29,82 +49,138 @@ class CustomerDashboardScreen extends StatelessWidget {
     return name.isNotEmpty ? name[0].toUpperCase() : 'C';
   }
 
+  ({Color bg, Color fg, String label}) _statusStyle(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.masuk:
+      case OrderStatus.konfirmasi:
+        return (
+          bg: _DashColors.neutralSoft,
+          fg: _DashColors.neutral,
+          label: status.stepTitle
+        );
+      case OrderStatus.dijemput:
+        return (
+          bg: _DashColors.primarySoft,
+          fg: _DashColors.primary,
+          label: 'Dijemput'
+        );
+      case OrderStatus.diproses:
+      case OrderStatus.konfirmasiBayar:
+        return (
+          bg: _DashColors.amberSoft,
+          fg: _DashColors.amber,
+          label: status.stepTitle
+        );
+      case OrderStatus.perluTimbang:
+        return (
+          bg: _DashColors.primarySoft,
+          fg: _DashColors.primary,
+          label: 'Perlu Timbang'
+        );
+      case OrderStatus.selesai:
+        return (
+          bg: _DashColors.successSoft,
+          fg: _DashColors.success,
+          label: 'Selesai'
+        );
+      case OrderStatus.dibatalkan:
+        return (
+          bg: _DashColors.dangerSoft,
+          fg: _DashColors.danger,
+          label: 'Dibatalkan'
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8FB),
+      backgroundColor: _DashColors.surface,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildAppBar(),
-              const SizedBox(height: 20),
-              _buildGreeting(),
-              const SizedBox(height: 20),
-              _buildStatRow(),
-              const SizedBox(height: 20),
-              _buildBookingBaruButton(context),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Order Terbaru',
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black87,
-                      )),
-                  GestureDetector(
-                    onTap: () {},
-                    child: Text('Lihat semua',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: _blue,
-                          fontWeight: FontWeight.w600,
-                        )),
+        child: StreamBuilder<List<OrderModel>>(
+          stream: FirestoreService.streamOrdersForCurrentCustomer(),
+          builder: (context, snap) {
+            if (snap.hasError) {
+              return _ErrorState(message: '${snap.error}');
+            }
+            if (snap.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final all = snap.data ?? [];
+            final aktif = all
+                .where((o) =>
+                    o.status != OrderStatus.selesai &&
+                    o.status != OrderStatus.dibatalkan)
+                .toList();
+            final selesaiCount =
+                all.where((o) => o.status == OrderStatus.selesai).length;
+            final totalBayar = all
+                .where((o) => o.status == OrderStatus.selesai)
+                .fold<double>(0, (sum, o) => sum + (o.totalHarga ?? 0));
+
+            // Order yang menjadi sorotan: order aktif paling baru,
+            // atau kalau tidak ada, order terakhir apa pun.
+            final spotlight = aktif.isNotEmpty
+                ? aktif.first
+                : (all.isNotEmpty ? all.first : null);
+
+            final recent = all.take(3).toList();
+
+            return CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    child: _buildAppBar(),
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              StreamBuilder<List<OrderModel>>(
-                stream: FirestoreService.streamOrdersForCurrentCustomer(),
-                builder: (context, snap) {
-                  if (snap.hasError) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Text(
-                        'Gagal memuat order: ${snap.error}',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: Colors.redAccent,
-                        ),
-                      ),
-                    );
-                  }
-                  if (snap.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  final all = snap.data ?? [];
-                  var recents = all
-                      .where((o) => o.status == OrderStatus.selesai)
-                      .take(2)
-                      .toList();
-                  if (recents.isEmpty) {
-                    recents = all.take(2).toList();
-                  }
-                  return Column(
-                    children: recents
-                        .map((o) => _buildOrderCard(context, o))
-                        .toList(),
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-              _buildPromoBanner(),
-            ],
-          ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+                    child: _buildHero(context, spotlight, aktif.length),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    child:
+                        _buildStatRow(aktif.length, selesaiCount, totalBayar),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    child: _buildBookingBaruButton(context),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                    child: _buildSectionHeader(context),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    child: recent.isEmpty
+                        ? _buildEmptyOrders()
+                        : Column(
+                            children: recent
+                                .map((o) => _buildOrderCard(context, o))
+                                .toList(),
+                          ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                    child: _buildPromoBanner(),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -114,216 +190,339 @@ class CustomerDashboardScreen extends StatelessWidget {
   Widget _buildAppBar() {
     return Row(
       children: [
-        // menu icon removed per request; keep title centered
-        Expanded(
-          child: Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.checkroom_rounded, color: _blue, size: 22),
-                const SizedBox(width: 6),
-                Text('CleanGo',
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: _DashColors.primary,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          alignment: Alignment.center,
+          child: const Icon(Icons.checkroom_rounded,
+              color: Colors.white, size: 19),
+        ),
+        const SizedBox(width: 10),
+        Text('CleanGo',
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: _DashColors.ink,
+              letterSpacing: -0.3,
+            )),
+        const Spacer(),
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: _DashColors.card,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: _DashColors.border),
+          ),
+          alignment: Alignment.center,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const Icon(Icons.notifications_outlined,
+                  size: 19, color: _DashColors.ink),
+              Positioned(
+                right: -1,
+                top: -1,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _DashColors.danger,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: _DashColors.card, width: 1.5),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Hero: greeting + status spotlight ───────────────────────
+  Widget _buildHero(
+      BuildContext context, OrderModel? spotlight, int aktifCount) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+      decoration: BoxDecoration(
+        color: _DashColors.ink,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Halo, ${_displayName()}',
+                        style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: -0.3,
+                        )),
+                    const SizedBox(height: 2),
+                    Text(
+                      aktifCount > 0
+                          ? 'Kamu punya $aktifCount cucian dalam proses'
+                          : 'Semua cucianmu sudah selesai',
+                      style: GoogleFonts.inter(
+                        fontSize: 12.5,
+                        color: Colors.white.withAlpha(160),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(20),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withAlpha(40)),
+                ),
+                alignment: Alignment.center,
+                child: Text(_displayInitial(),
                     style: GoogleFonts.inter(
-                      fontSize: 20,
+                      fontSize: 17,
                       fontWeight: FontWeight.w800,
-                      color: _blue,
+                      color: Colors.white,
+                    )),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          if (spotlight != null)
+            _buildSpotlightCard(context, spotlight)
+          else
+            _buildHeroEmptyCard(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpotlightCard(BuildContext context, OrderModel order) {
+    final style = _statusStyle(order.status);
+    final isDone = order.status == OrderStatus.selesai;
+    final isCancelled = order.status == OrderStatus.dibatalkan;
+    final progress =
+        isCancelled ? 0.0 : order.workflowProgress.clamp(0.0, 1.0);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(14),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withAlpha(28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(order.serviceType,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    )),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: style.bg,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(style.label,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: style.fg,
+                    )),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+              '${order.id} \u00b7 ${DateFormat('d MMM yyyy', 'id').format(order.pickupDate)}',
+              style: GoogleFonts.inter(
+                fontSize: 11.5,
+                color: Colors.white.withAlpha(150),
+              )),
+          const SizedBox(height: 12),
+          if (!isCancelled)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: isDone ? 1.0 : progress,
+                minHeight: 6,
+                backgroundColor: Colors.white.withAlpha(24),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  isDone
+                      ? _DashColors.success
+                      : _DashColors.primary.withAlpha(220),
+                ),
+              ),
+            ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => DetailOrderScreen(order: order)),
+              );
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Lihat detail',
+                    style: GoogleFonts.inter(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    )),
+                const Icon(Icons.arrow_forward_rounded,
+                    color: Colors.white, size: 16),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroEmptyCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(14),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withAlpha(28)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(20),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: const Icon(Icons.local_laundry_service_outlined,
+                color: Colors.white, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text('Belum ada order. Yuk, buat booking pertamamu!',
+                style: GoogleFonts.inter(
+                  fontSize: 12.5,
+                  color: Colors.white.withAlpha(200),
+                )),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Stat Row ─────────────────────────────────────────────────
+  Widget _buildStatRow(int aktif, int selesai, double totalBayar) {
+    final stats = [
+      (
+        icon: Icons.local_shipping_outlined,
+        iconColor: _DashColors.primary,
+        iconBg: _DashColors.primarySoft,
+        label: 'Order aktif',
+        value: '$aktif',
+      ),
+      (
+        icon: Icons.check_circle_outline_rounded,
+        iconColor: _DashColors.success,
+        iconBg: _DashColors.successSoft,
+        label: 'Selesai',
+        value: '$selesai',
+      ),
+      (
+        icon: Icons.payments_outlined,
+        iconColor: _DashColors.amber,
+        iconBg: _DashColors.amberSoft,
+        label: 'Total bayar',
+        value: 'Rp ${_formatRupiah(totalBayar)}',
+      ),
+    ];
+
+    return Row(
+      children: stats.asMap().entries.map((entry) {
+        final i = entry.key;
+        final item = entry.value;
+        return Expanded(
+          child: Container(
+            margin: EdgeInsets.only(right: i < stats.length - 1 ? 10 : 0),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+            decoration: BoxDecoration(
+              color: _DashColors.card,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: _DashColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: item.iconBg,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(item.icon, color: item.iconColor, size: 15),
+                ),
+                const SizedBox(height: 10),
+                Text(item.value,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: _DashColors.ink,
+                    )),
+                const SizedBox(height: 2),
+                Text(item.label,
+                    style: GoogleFonts.inter(
+                      fontSize: 10.5,
+                      color: _DashColors.textMuted,
                     )),
               ],
             ),
           ),
-        ),
-        Stack(
-          children: [
-            const Icon(Icons.notifications_outlined,
-                size: 26, color: Colors.black87),
-            Positioned(
-              right: 0,
-              top: 0,
-              child: Container(
-                width: 9,
-                height: 9,
-                decoration: const BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // ── Greeting + Avatar ────────────────────────────────────────
-  Widget _buildGreeting() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Halo,',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    color: Colors.black54,
-                  )),
-              Row(
-                children: [
-                  Text('${_displayName()}!',
-                      style: GoogleFonts.inter(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.black87,
-                        letterSpacing: -0.5,
-                      )),
-                  const SizedBox(width: 6),
-                  const Text('👋', style: TextStyle(fontSize: 20)),
-                ],
-              ),
-              const SizedBox(height: 2),
-              Text('Selamat datang kembali di CleanGo',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: Colors.black45,
-                  )),
-            ],
-          ),
-        ),
-        Container(
-          width: 48,
-          height: 48,
-          decoration: const BoxDecoration(
-            color: _blue,
-            shape: BoxShape.circle,
-          ),
-          alignment: Alignment.center,
-          child: Text(_displayInitial(),
-              style: GoogleFonts.inter(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-              )),
-        ),
-      ],
-    );
-  }
-
-  // ── Stat Row 3 cards ────────────────────────────────────────
-  Widget _buildStatRow() {
-    return StreamBuilder<List<OrderModel>>(
-      stream: FirestoreService.streamOrdersForCurrentCustomer(),
-      builder: (context, snap) {
-        if (snap.hasError) {
-          return Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFDEDED),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFF5C2C2)),
-            ),
-            child: Text(
-              'Gagal memuat statistik: ${snap.error}',
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: Colors.redAccent,
-              ),
-            ),
-          );
-        }
-        if (snap.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-        final all = snap.data ?? [];
-        final aktif = all.where((o) => o.status != OrderStatus.selesai).length;
-        final selesai =
-            all.where((o) => o.status == OrderStatus.selesai).length;
-
-        final stats = [
-          _StatItem(
-            icon: Icons.local_shipping_rounded,
-            iconBg: const Color(0xFFFFF3E0),
-            iconColor: const Color(0xFFFF8C00),
-            label: 'Order Aktif',
-            value: '$aktif',
-            valueColor: const Color(0xFF1565C0),
-          ),
-          _StatItem(
-            icon: Icons.check_circle_rounded,
-            iconBg: const Color(0xFFE8F5E9),
-            iconColor: const Color(0xFF2E7D32),
-            label: 'Selesai',
-            value: '$selesai',
-            valueColor: const Color(0xFF2E7D32),
-          ),
-          const _StatItem(
-            icon: Icons.monetization_on_rounded,
-            iconBg: Color(0xFFFFF8E1),
-            iconColor: Color(0xFFF9A825),
-            label: 'Total Bayar',
-            value: 'Rp 95.000',
-            valueColor: _blue,
-          ),
-        ];
-
-        return Row(
-          children: stats.asMap().entries.map((entry) {
-            final i = entry.key;
-            final item = entry.value;
-            return Expanded(
-              child: Container(
-                margin: EdgeInsets.only(right: i < stats.length - 1 ? 10 : 0),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(10),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: item.iconBg,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(item.icon, color: item.iconColor, size: 18),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(item.label,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: Colors.black45,
-                        )),
-                    const SizedBox(height: 4),
-                    Text(item.value,
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: item.valueColor,
-                        )),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
         );
-      },
+      }).toList(),
     );
+  }
+
+  String _formatRupiah(double value) {
+    final intVal = value.round();
+    final s = intVal.toString();
+    final buf = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+      buf.write(s[i]);
+    }
+    return buf.toString();
   }
 
   // ── Booking Baru Button ─────────────────────────────────────
@@ -339,23 +538,17 @@ class CustomerDashboardScreen extends StatelessWidget {
         width: double.infinity,
         height: 52,
         decoration: BoxDecoration(
-          color: _blue,
+          color: _DashColors.primary,
           borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: _blue.withAlpha(60),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ],
         ),
         alignment: Alignment.center,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.add_circle, color: Colors.white, size: 20),
+            const Icon(Icons.add_circle_outline_rounded,
+                color: Colors.white, size: 20),
             const SizedBox(width: 8),
-            Text('Booking Baru',
+            Text('Booking baru',
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -367,87 +560,124 @@ class CustomerDashboardScreen extends StatelessWidget {
     );
   }
 
-  // ── Recent Orders ────────────────────────────────────────────
+  // ── Section Header ───────────────────────────────────────────
+  Widget _buildSectionHeader(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text('Order terbaru',
+            style: GoogleFonts.inter(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: _DashColors.ink,
+            )),
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CustomerOrderScreen()),
+            );
+          },
+          child: Text('Lihat semua',
+              style: GoogleFonts.inter(
+                fontSize: 12.5,
+                color: _DashColors.primary,
+                fontWeight: FontWeight.w600,
+              )),
+        ),
+      ],
+    );
+  }
 
+  Widget _buildEmptyOrders() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 28),
+      decoration: BoxDecoration(
+        color: _DashColors.card,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _DashColors.border),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.inventory_2_outlined,
+              size: 28, color: _DashColors.textMuted),
+          const SizedBox(height: 8),
+          Text('Belum ada riwayat order',
+              style: GoogleFonts.inter(
+                fontSize: 12.5,
+                color: _DashColors.textMuted,
+              )),
+        ],
+      ),
+    );
+  }
+
+  // ── Order Card ───────────────────────────────────────────────
   Widget _buildOrderCard(BuildContext context, OrderModel order) {
-    final dateStr =
-        DateFormat('d MMM yyyy HH:mm', 'id').format(order.pickupDate);
+    final dateStr = DateFormat('d MMM yyyy', 'id').format(order.pickupDate);
+    final style = _statusStyle(order.status);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _DashColors.card,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(10),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: _DashColors.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: _DashColors.surface,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: const Icon(Icons.local_laundry_service_outlined,
+                color: _DashColors.neutral, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(order.serviceType,
+                    style: GoogleFonts.inter(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: _DashColors.ink,
+                    )),
+                const SizedBox(height: 2),
+                Text('${order.id} \u00b7 $dateStr',
+                    style: GoogleFonts.inter(
+                      fontSize: 11.5,
+                      color: _DashColors.textMuted,
+                    )),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Container(
-                width: 40,
-                height: 40,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3F3F3),
-                  borderRadius: BorderRadius.circular(10),
+                  color: style.bg,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                alignment: Alignment.center,
-                child: const Icon(Icons.local_laundry_service_outlined,
-                    color: Colors.black45, size: 20),
+                child: Text(style.label,
+                    style: GoogleFonts.inter(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: style.fg,
+                    )),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(order.id,
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                        )),
-                    Text(order.serviceType,
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: Colors.black45,
-                        )),
-                  ],
-                ),
-              ),
-              Text(dateStr,
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    color: Colors.black45,
-                  )),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              const Icon(Icons.circle, size: 8, color: Color(0xFF2E7D32)),
-              const SizedBox(width: 6),
-              Text('Selesai',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF2E7D32),
-                  )),
-              const SizedBox(width: 14),
-              Text('Lunas',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF2E7D32),
-                  )),
-              const Spacer(),
+              const SizedBox(height: 8),
               GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -456,19 +686,19 @@ class CustomerDashboardScreen extends StatelessWidget {
                         builder: (_) => DetailOrderScreen(order: order)),
                   );
                 },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: _blue, width: 1.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text('Detail',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: _blue,
-                      )),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Detail',
+                        style: GoogleFonts.inter(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: _DashColors.primary,
+                        )),
+                    const SizedBox(width: 2),
+                    const Icon(Icons.chevron_right_rounded,
+                        size: 14, color: _DashColors.primary),
+                  ],
                 ),
               ),
             ],
@@ -484,53 +714,74 @@ class CustomerDashboardScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8EEFD),
+        color: _DashColors.primarySoft,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: const Icon(Icons.local_florist_outlined,
+                color: _DashColors.primary, size: 20),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Kebersihan Maksimal, Hidup Lebih Nyaman',
+                Text('Kebersihan maksimal, hidup lebih nyaman',
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: _blue,
+                      color: _DashColors.ink,
                     )),
-                const SizedBox(height: 4),
-                Text('Percayakan cucian Anda kepada kami.',
+                const SizedBox(height: 2),
+                Text('Percayakan cucianmu kepada kami.',
                     style: GoogleFonts.inter(
                       fontSize: 12,
-                      color: Colors.black54,
+                      color: _DashColors.textMuted,
                     )),
               ],
             ),
           ),
-          const SizedBox(width: 10),
-          const Icon(Icons.shopping_basket_rounded, color: _blue, size: 32),
-          const SizedBox(width: 4),
-          const Text('✨', style: TextStyle(fontSize: 18)),
         ],
       ),
     );
   }
 }
 
-class _StatItem {
-  final IconData icon;
-  final Color iconBg;
-  final Color iconColor;
-  final String label;
-  final String value;
-  final Color valueColor;
-  const _StatItem({
-    required this.icon,
-    required this.iconBg,
-    required this.iconColor,
-    required this.label,
-    required this.value,
-    required this.valueColor,
-  });
+class _ErrorState extends StatelessWidget {
+  final String message;
+  const _ErrorState({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline_rounded,
+                color: _DashColors.danger, size: 32),
+            const SizedBox(height: 8),
+            Text(
+              'Gagal memuat data: $message',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: _DashColors.danger,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
