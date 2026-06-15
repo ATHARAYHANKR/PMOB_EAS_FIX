@@ -508,6 +508,7 @@ class _BookingLaundryScreenState extends State<BookingLaundryScreen> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           isExpanded: true,
+          isDense: true,
           value: _sesiJemput,
           icon: const Icon(Icons.keyboard_arrow_down_rounded,
               size: 18, color: Colors.black45),

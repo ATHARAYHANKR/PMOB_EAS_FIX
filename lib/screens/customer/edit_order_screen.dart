@@ -15,7 +15,7 @@ class EditOrderScreen extends StatefulWidget {
 class _EditOrderScreenState extends State<EditOrderScreen> {
   static const Color _blue = Color(0xFF3B5BDB);
 
-  late KatalogItem _selectedLayanan;
+  KatalogItem? _selectedLayanan;
   final _alamatCtrl = TextEditingController(text: 'Jl. Mawar No. 10');
   final _catatanCtrl = TextEditingController();
   DateTime? _tanggalJemput;
@@ -31,18 +31,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedLayanan = KatalogRepository.items.firstWhere(
-      (i) => i.nama == widget.order.serviceType,
-      orElse: () => KatalogRepository.items.isNotEmpty
-          ? KatalogRepository.items.first
-          : KatalogItem(
-              nama: widget.order.serviceType,
-              satuan: 'Kg',
-              harga: 7000,
-              estimasi: '2 hari',
-              deskripsi: widget.order.serviceType,
-            ),
-    );
     _alamatCtrl.text = widget.order.address;
     _catatanCtrl.text = widget.order.catatan == '-' ? '' : widget.order.catatan;
     _tanggalJemput = widget.order.pickupDate;
@@ -65,7 +53,29 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8FB),
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: StreamBuilder<List<Map<String, dynamic>>>(
+          stream: FirestoreService.streamKatalogRaw(),
+          builder: (context, snapshot) {
+            final katalogList = (snapshot.data ?? const <Map<String, dynamic>>[])
+                .map(KatalogItem.fromMap)
+                .toList();
+
+            _selectedLayanan ??= katalogList.firstWhere(
+              (i) => i.nama == widget.order.serviceType,
+              orElse: () => katalogList.isNotEmpty
+                  ? katalogList.first
+                  : KatalogItem(
+                      id: 'custom',
+                      nama: widget.order.serviceType,
+                      satuan: 'Kg',
+                      harga: 7000,
+                      estimasi: '2 hari',
+                      deskripsi: widget.order.serviceType,
+                    ),
+            );
+            final selected = _selectedLayanan!;
+
+            return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,7 +105,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               // ── Pilih Layanan ──────────────────────────────
               _label('Pilih Layanan'),
               const SizedBox(height: 8),
-              _buildLayananSelector(),
+              _buildLayananSelector(selected, katalogList),
               const SizedBox(height: 20),
 
               // ── Alamat Penjemputan ───────────────────────────
@@ -208,6 +218,8 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               ),
             ],
           ),
+        );
+          },
         ),
       ),
     );
@@ -236,9 +248,9 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   }
 
   // ── Layanan Selector ─────────────────────────────────────────
-  Widget _buildLayananSelector() {
+  Widget _buildLayananSelector(KatalogItem selected, List<KatalogItem> katalogList) {
     return GestureDetector(
-      onTap: _showLayananPicker,
+      onTap: () => _showLayananPicker(katalogList),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -262,14 +274,14 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_selectedLayanan.nama,
+                  Text(selected.nama,
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: _blue,
                       )),
                   Text(
-                      'Rp${_formatHarga(_selectedLayanan.harga)}/${_selectedLayanan.satuan.toLowerCase()}',
+                      'Rp${_formatHarga(selected.harga)}/${selected.satuan.toLowerCase()}',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: Colors.black54,
@@ -285,7 +297,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     );
   }
 
-  void _showLayananPicker() {
+  void _showLayananPicker(List<KatalogItem> katalogList) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -295,7 +307,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: KatalogRepository.items.map((item) {
+            children: katalogList.map((item) {
               return ListTile(
                 title: Text(item.nama,
                     style: GoogleFonts.inter(
@@ -359,6 +371,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           isExpanded: true,
+          isDense: true,
           value: _sesiJemput,
           icon: const Icon(Icons.keyboard_arrow_down_rounded,
               size: 18, color: Colors.black45),

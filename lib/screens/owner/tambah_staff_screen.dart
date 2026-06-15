@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'owner_kelola_screen.dart';
+import '../../services/firestore_service.dart';
 
 class TambahStaffScreen extends StatefulWidget {
   const TambahStaffScreen({super.key});
@@ -11,11 +11,13 @@ class TambahStaffScreen extends StatefulWidget {
 
 class _TambahStaffScreenState extends State<TambahStaffScreen> {
   static const Color _purple = Color(0xFFBB2BCD);
+  static const String _defaultPassword = 'staff123';
 
   final _namaCtrl = TextEditingController();
   final _teleponCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   bool _statusAktif = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -25,7 +27,7 @@ class _TambahStaffScreenState extends State<TambahStaffScreen> {
     super.dispose();
   }
 
-  void _onSimpan() {
+  Future<void> _onSimpan() async {
     if (_namaCtrl.text.trim().isEmpty) {
       _showError('Nama lengkap tidak boleh kosong');
       return;
@@ -39,14 +41,32 @@ class _TambahStaffScreenState extends State<TambahStaffScreen> {
       return;
     }
 
-    StaffRepository.items.add(StaffItem(
-      nama: _namaCtrl.text.trim(),
-      telepon: _teleponCtrl.text.trim(),
-      email: _emailCtrl.text.trim(),
-      aktif: _statusAktif,
-    ));
+    setState(() => _isLoading = true);
 
-    _showSuksesDialog();
+    try {
+      // Simpan data staff ke Firestore via FirestoreService
+      await FirestoreService.addStaff({
+        'nama': _namaCtrl.text.trim(),
+        'telepon': _teleponCtrl.text.trim(),
+        'email': _emailCtrl.text.trim(),
+        'aktif': _statusAktif,
+      });
+
+      // Buat akun login untuk staff baru dengan password default
+      await FirestoreService.createUser({
+        'name': _namaCtrl.text.trim(),
+        'phone': _teleponCtrl.text.trim(),
+        'email': _emailCtrl.text.trim(),
+        'role': 'staff',
+        'password': _defaultPassword,
+      });
+
+      if (mounted) _showSuksesDialog();
+    } catch (e) {
+      if (mounted) _showError('Gagal menyimpan: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _showError(String msg) {
@@ -91,7 +111,9 @@ class _TambahStaffScreenState extends State<TambahStaffScreen> {
                     height: 1.4,
                   )),
               const SizedBox(height: 8),
-              Text('Data staff baru telah disimpan!',
+              Text(
+                  'Data staff baru telah disimpan!\n'
+                  'Password login default: $_defaultPassword',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 13,
@@ -171,7 +193,7 @@ class _TambahStaffScreenState extends State<TambahStaffScreen> {
                     const SizedBox(height: 8),
                     _textField(
                       controller: _namaCtrl,
-                      hint: 'Cont: Cuci Kering',
+                      hint: 'Cont: Budi Santoso',
                       keyboardType: TextInputType.name,
                     ),
                     const SizedBox(height: 16),
@@ -180,7 +202,7 @@ class _TambahStaffScreenState extends State<TambahStaffScreen> {
                     const SizedBox(height: 8),
                     _textField(
                       controller: _teleponCtrl,
-                      hint: 'Kg',
+                      hint: 'Cont: 0812 3456 7890',
                       keyboardType: TextInputType.phone,
                     ),
                     const SizedBox(height: 16),
@@ -189,7 +211,7 @@ class _TambahStaffScreenState extends State<TambahStaffScreen> {
                     const SizedBox(height: 8),
                     _textField(
                       controller: _emailCtrl,
-                      hint: 'Rp. 0',
+                      hint: 'Cont: budi@cleango.com',
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 16),
@@ -217,22 +239,32 @@ class _TambahStaffScreenState extends State<TambahStaffScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _onSimpan,
+                        onPressed: _isLoading ? null : _onSimpan,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _purple,
                           foregroundColor: Colors.white,
+                          disabledBackgroundColor: _purple.withAlpha(120),
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: Text('Simpan Staff',
-                            style: GoogleFonts.inter(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            )),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text('Simpan Staff',
+                                style: GoogleFonts.inter(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                )),
                       ),
                     ),
                   ],

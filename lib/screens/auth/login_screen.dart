@@ -314,13 +314,33 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
       final role = account.$2;
-      if (role == 'customer') {
-        FirestoreService.currentUser = {
-          'id': 'demo_customer',
-          'name': 'Dhira Putri',
-          'phone': '081323230001',
-          'role': 'customer',
-        };
+      switch (role) {
+        case 'customer':
+          FirestoreService.currentUser = {
+            'id': 'demo_customer',
+            'name': 'Dhira Putri',
+            'phone': '081323230001',
+            'role': 'customer',
+          };
+          break;
+        case 'owner':
+          FirestoreService.currentUser = {
+            'id': 'demo_owner',
+            'name': 'Pemilik CleanGo',
+            'phone': '+62 821 9876 5432',
+            'email': 'owner@cleango.id',
+            'role': 'owner',
+          };
+          break;
+        case 'staff':
+          FirestoreService.currentUser = {
+            'id': 'demo_staff',
+            'name': 'Karimah',
+            'phone': '0812 0000 1111',
+            'email': 'karimah@cleango.local',
+            'role': 'staff',
+          };
+          break;
       }
       Widget target;
       switch (role) {

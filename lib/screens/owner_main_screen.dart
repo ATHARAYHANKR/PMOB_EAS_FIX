@@ -18,18 +18,38 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
 
   static const Color _purple = Color(0xFFBB2BCD);
 
+  /// Digunakan agar dashboard / menu cepat dapat membuka tab tertentu
+  /// pada halaman Kelola (Katalog / Layanan / Staff).
+  final ValueNotifier<KelolaTab> _kelolaTabNotifier =
+      ValueNotifier(KelolaTab.katalog);
+
+  late final List<Widget> _screens = [
+    OwnerDashboardScreen(onNavigateTab: _goToTab),
+    OwnerKelolaScreen(tabNotifier: _kelolaTabNotifier),
+    const OwnerLaporanScreen(),
+    const OwnerProfilScreen(),
+  ];
+
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
   }
 
-  final List<Widget> _screens = const [
-    OwnerDashboardScreen(),
-    OwnerKelolaScreen(),
-    OwnerLaporanScreen(),
-    OwnerProfilScreen(),
-  ];
+  @override
+  void dispose() {
+    _kelolaTabNotifier.dispose();
+    super.dispose();
+  }
+
+  /// Navigasi ke tab tertentu pada bottom navigation. Jika [kelolaTab]
+  /// diberikan, halaman Kelola akan otomatis berpindah ke sub-tab terkait.
+  void _goToTab(int index, {KelolaTab? kelolaTab}) {
+    if (kelolaTab != null) {
+      _kelolaTabNotifier.value = kelolaTab;
+    }
+    setState(() => _currentIndex = index);
+  }
 
   @override
   Widget build(BuildContext context) {

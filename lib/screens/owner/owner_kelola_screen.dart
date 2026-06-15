@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../services/firestore_service.dart';
 import 'tambah_katalog_screen.dart';
 import 'tambah_layanan_screen.dart';
 import 'tambah_staff_screen.dart';
 
-// ── Model & Repository: Katalog ────────────────────────────────
+// ── Display models (dibangun dari data Firestore) ──────────────
 class KatalogItem {
-  String nama;
-  String satuan;
-  int harga;
-  String estimasi;
-  String deskripsi;
-  bool aktif;
+  final String id;
+  final String nama;
+  final String satuan;
+  final int harga;
+  final String estimasi;
+  final String deskripsi;
+  final bool aktif;
 
   KatalogItem({
+    required this.id,
     required this.nama,
     required this.satuan,
     required this.harga,
@@ -21,47 +24,32 @@ class KatalogItem {
     required this.deskripsi,
     this.aktif = true,
   });
+
+  factory KatalogItem.fromMap(Map<String, dynamic> map) {
+    return KatalogItem(
+      id: map['id']?.toString() ?? '',
+      nama: map['nama']?.toString() ?? 'Tanpa nama',
+      satuan: map['satuan']?.toString() ?? 'Kg',
+      harga: int.tryParse(map['harga']?.toString() ?? '') ?? 0,
+      estimasi: map['estimasi']?.toString() ?? '-',
+      deskripsi: map['deskripsi']?.toString() ?? '-',
+      aktif: map['aktif'] == true ||
+          map['aktif']?.toString().toLowerCase() == 'true',
+    );
+  }
 }
 
-class KatalogRepository {
-  static final List<KatalogItem> items = [
-    KatalogItem(
-        nama: 'Cuci Kering',
-        satuan: 'Kg',
-        harga: 7000,
-        estimasi: '2 hari',
-        deskripsi: 'Cuci Kering'),
-    KatalogItem(
-        nama: 'Cuci Basah',
-        satuan: 'Kg',
-        harga: 6000,
-        estimasi: '1 hari',
-        deskripsi: 'Cuci Basah'),
-    KatalogItem(
-        nama: 'Setrika',
-        satuan: 'Kg',
-        harga: 5000,
-        estimasi: '1 hari',
-        deskripsi: 'Setrika saja'),
-    KatalogItem(
-        nama: 'Cuci + Setrika',
-        satuan: 'Kg',
-        harga: 10000,
-        estimasi: '3 hari',
-        deskripsi: 'Cuci dan Setrika'),
-  ];
-}
-
-// ── Model & Repository: Layanan ────────────────────────────────
 class LayananItem {
-  String nama;
-  String satuan;
-  int harga;
-  String estimasi;
-  String deskripsi;
-  bool aktif;
+  final String id;
+  final String nama;
+  final String satuan;
+  final int harga;
+  final String estimasi;
+  final String deskripsi;
+  final bool aktif;
 
   LayananItem({
+    required this.id,
     required this.nama,
     required this.satuan,
     required this.harga,
@@ -69,118 +57,109 @@ class LayananItem {
     required this.deskripsi,
     this.aktif = true,
   });
+
+  factory LayananItem.fromMap(Map<String, dynamic> map) {
+    return LayananItem(
+      id: map['id']?.toString() ?? '',
+      nama: map['nama']?.toString() ?? 'Tanpa nama',
+      satuan: map['satuan']?.toString() ?? 'Kg',
+      harga: int.tryParse(map['harga']?.toString() ?? '') ?? 0,
+      estimasi: map['estimasi']?.toString() ?? '-',
+      deskripsi: map['deskripsi']?.toString() ?? '-',
+      aktif: map['aktif'] == true ||
+          map['aktif']?.toString().toLowerCase() == 'true',
+    );
+  }
 }
 
-class LayananRepository {
-  static final List<LayananItem> items = [
-    LayananItem(
-        nama: 'Express Wash',
-        satuan: 'Kg',
-        harga: 12000,
-        estimasi: '1 hari',
-        deskripsi: 'Cuci Express'),
-    LayananItem(
-        nama: 'Premium Dry Clean',
-        satuan: 'Pcs',
-        harga: 25000,
-        estimasi: '3 hari',
-        deskripsi: 'Dry Cleaning Premium'),
-  ];
-}
-
-// ── Model & Repository: Staff ──────────────────────────────────
 class StaffItem {
-  String nama;
-  String telepon;
-  String email;
-  bool aktif;
+  final String id;
+  final String nama;
+  final String telepon;
+  final String email;
+  final bool aktif;
 
   StaffItem({
+    required this.id,
     required this.nama,
     required this.telepon,
     required this.email,
     this.aktif = true,
   });
-}
 
-class StaffRepository {
-  static final List<StaffItem> items = [
-    StaffItem(
-        nama: 'Andi',
-        telepon: '0812 3456 7890',
-        email: 'andi@gmail.com',
-        aktif: true),
-    StaffItem(
-        nama: 'Budi',
-        telepon: '0813 4567 8901',
-        email: 'budi@gmail.com',
-        aktif: true),
-    StaffItem(
-        nama: 'Citra',
-        telepon: '0814 5678 9012',
-        email: 'citra@gmail.com',
-        aktif: false),
-    StaffItem(
-        nama: 'Dina',
-        telepon: '0815 6789 0123',
-        email: 'dina@gmail.com',
-        aktif: true),
-  ];
+  factory StaffItem.fromMap(Map<String, dynamic> map) {
+    return StaffItem(
+      id: map['id']?.toString() ?? '',
+      nama: map['nama']?.toString() ?? 'Tanpa nama',
+      telepon: map['telepon']?.toString() ?? '-',
+      email: map['email']?.toString() ?? '-',
+      aktif: map['aktif'] == true ||
+          map['aktif']?.toString().toLowerCase() == 'true',
+    );
+  }
 }
 
 // ── Main Screen ────────────────────────────────────────────────
+enum KelolaTab { katalog, layanan, staff }
+
 class OwnerKelolaScreen extends StatefulWidget {
-  const OwnerKelolaScreen({super.key});
+  const OwnerKelolaScreen({
+    super.key,
+    this.initialTab = KelolaTab.katalog,
+    this.tabNotifier,
+  });
+
+  final KelolaTab initialTab;
+
+  /// Opsional: jika diberikan, perubahan nilai pada notifier ini akan
+  /// mengganti tab aktif secara otomatis (digunakan oleh OwnerMainScreen
+  /// untuk navigasi dari dashboard / menu cepat).
+  final ValueNotifier<KelolaTab>? tabNotifier;
 
   @override
   State<OwnerKelolaScreen> createState() => _OwnerKelolaScreenState();
 }
 
-enum _KelolaTab { katalog, layanan, staff }
-
 class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
-  _KelolaTab _tab = _KelolaTab.katalog;
+  late KelolaTab _tab;
   final _searchCtrl = TextEditingController();
   String _query = '';
 
   static const Color _purple = Color(0xFFBB2BCD);
 
   @override
+  void initState() {
+    super.initState();
+    _tab = widget.tabNotifier?.value ?? widget.initialTab;
+    widget.tabNotifier?.addListener(_onExternalTabChange);
+  }
+
+  void _onExternalTabChange() {
+    final next = widget.tabNotifier?.value;
+    if (next != null && next != _tab) {
+      setState(() {
+        _tab = next;
+        _query = '';
+        _searchCtrl.clear();
+      });
+    }
+  }
+
+  @override
   void dispose() {
+    widget.tabNotifier?.removeListener(_onExternalTabChange);
     _searchCtrl.dispose();
     super.dispose();
-  }
-
-  // ── Filtered lists ──────────────────────────────────────────
-  List<KatalogItem> get _filteredKatalog {
-    if (_query.isEmpty) return KatalogRepository.items;
-    return KatalogRepository.items
-        .where((k) => k.nama.toLowerCase().contains(_query.toLowerCase()))
-        .toList();
-  }
-
-  List<LayananItem> get _filteredLayanan {
-    if (_query.isEmpty) return LayananRepository.items;
-    return LayananRepository.items
-        .where((l) => l.nama.toLowerCase().contains(_query.toLowerCase()))
-        .toList();
-  }
-
-  List<StaffItem> get _filteredStaff {
-    if (_query.isEmpty) return StaffRepository.items;
-    return StaffRepository.items
-        .where((s) => s.nama.toLowerCase().contains(_query.toLowerCase()))
-        .toList();
   }
 
   // ── Search hint per tab ─────────────────────────────────────
   String get _searchHint {
     switch (_tab) {
-      case _KelolaTab.katalog:
+      case KelolaTab.katalog:
         return 'Cari katalog';
-      case _KelolaTab.layanan:
+      case KelolaTab.layanan:
         return 'Cari layanan';
-      case _KelolaTab.staff:
+      case KelolaTab.staff:
         return 'Cari staff';
     }
   }
@@ -189,13 +168,13 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
   void _onTambah() async {
     Widget screen;
     switch (_tab) {
-      case _KelolaTab.katalog:
+      case KelolaTab.katalog:
         screen = const TambahKatalogScreen();
         break;
-      case _KelolaTab.layanan:
+      case KelolaTab.layanan:
         screen = const TambahLayananScreen();
         break;
-      case _KelolaTab.staff:
+      case KelolaTab.staff:
         screen = const TambahStaffScreen();
         break;
     }
@@ -229,11 +208,11 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  _tabChip('Katalog', _KelolaTab.katalog),
+                  _tabChip('Katalog', KelolaTab.katalog),
                   const SizedBox(width: 8),
-                  _tabChip('Layanan', _KelolaTab.layanan),
+                  _tabChip('Layanan', KelolaTab.layanan),
                   const SizedBox(width: 8),
-                  _tabChip('Staff', _KelolaTab.staff),
+                  _tabChip('Staff', KelolaTab.staff),
                 ],
               ),
             ),
@@ -306,16 +285,16 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
 
   Widget _buildTabContent() {
     switch (_tab) {
-      case _KelolaTab.katalog:
-        return _buildKatalogList();
-      case _KelolaTab.layanan:
-        return _buildLayananList();
-      case _KelolaTab.staff:
-        return _buildStaffList();
+      case KelolaTab.katalog:
+        return _buildKatalogTab();
+      case KelolaTab.layanan:
+        return _buildLayananTab();
+      case KelolaTab.staff:
+        return _buildStaffTab();
     }
   }
 
-  Widget _tabChip(String label, _KelolaTab tab) {
+  Widget _tabChip(String label, KelolaTab tab) {
     final isActive = _tab == tab;
     return GestureDetector(
       onTap: () => setState(() {
@@ -343,20 +322,36 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
     );
   }
 
-  // ── Katalog List ────────────────────────────────────────────
-  Widget _buildKatalogList() {
-    final list = _filteredKatalog;
-    if (list.isEmpty) {
-      return Center(
-        child: Text('Tidak ada katalog ditemukan',
-            style: GoogleFonts.inter(fontSize: 13, color: Colors.black38)),
-      );
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-      itemCount: list.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, i) => _buildKatalogCard(list[i]),
+  // ── Katalog Tab (Firestore) ──────────────────────────────────
+  Widget _buildKatalogTab() {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: FirestoreService.streamKatalogRaw(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return _errorState('Gagal memuat katalog: ${snapshot.error}');
+        }
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        var list = snapshot.data!.map(KatalogItem.fromMap).toList();
+        if (_query.isNotEmpty) {
+          list = list
+              .where((k) => k.nama.toLowerCase().contains(_query.toLowerCase()))
+              .toList();
+        }
+        if (list.isEmpty) {
+          return Center(
+            child: Text('Tidak ada katalog ditemukan',
+                style: GoogleFonts.inter(fontSize: 13, color: Colors.black38)),
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          itemCount: list.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (_, i) => _buildKatalogCard(list[i]),
+        );
+      },
     );
   }
 
@@ -398,12 +393,15 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(item.nama,
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black87,
-                          )),
+                      Expanded(
+                        child: Text(item.nama,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            )),
+                      ),
                       Padding(
                         padding: const EdgeInsets.only(right: 12),
                         child: _statusBadge(item.aktif),
@@ -440,20 +438,36 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
     );
   }
 
-  // ── Layanan List ────────────────────────────────────────────
-  Widget _buildLayananList() {
-    final list = _filteredLayanan;
-    if (list.isEmpty) {
-      return Center(
-        child: Text('Tidak ada layanan ditemukan',
-            style: GoogleFonts.inter(fontSize: 13, color: Colors.black38)),
-      );
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-      itemCount: list.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, i) => _buildLayananCard(list[i]),
+  // ── Layanan Tab (Firestore) ───────────────────────────────────
+  Widget _buildLayananTab() {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: FirestoreService.streamLayananRaw(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return _errorState('Gagal memuat layanan: ${snapshot.error}');
+        }
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        var list = snapshot.data!.map(LayananItem.fromMap).toList();
+        if (_query.isNotEmpty) {
+          list = list
+              .where((l) => l.nama.toLowerCase().contains(_query.toLowerCase()))
+              .toList();
+        }
+        if (list.isEmpty) {
+          return Center(
+            child: Text('Tidak ada layanan ditemukan',
+                style: GoogleFonts.inter(fontSize: 13, color: Colors.black38)),
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          itemCount: list.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (_, i) => _buildLayananCard(list[i]),
+        );
+      },
     );
   }
 
@@ -495,12 +509,15 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(item.nama,
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black87,
-                          )),
+                      Expanded(
+                        child: Text(item.nama,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            )),
+                      ),
                       Padding(
                         padding: const EdgeInsets.only(right: 12),
                         child: _statusBadge(item.aktif),
@@ -537,20 +554,36 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
     );
   }
 
-  // ── Staff List ──────────────────────────────────────────────
-  Widget _buildStaffList() {
-    final list = _filteredStaff;
-    if (list.isEmpty) {
-      return Center(
-        child: Text('Tidak ada staff ditemukan',
-            style: GoogleFonts.inter(fontSize: 13, color: Colors.black38)),
-      );
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-      itemCount: list.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, i) => _buildStaffCard(list[i]),
+  // ── Staff Tab (Firestore) ──────────────────────────────────────
+  Widget _buildStaffTab() {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: FirestoreService.streamStaffRaw(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return _errorState('Gagal memuat staff: ${snapshot.error}');
+        }
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        var list = snapshot.data!.map(StaffItem.fromMap).toList();
+        if (_query.isNotEmpty) {
+          list = list
+              .where((s) => s.nama.toLowerCase().contains(_query.toLowerCase()))
+              .toList();
+        }
+        if (list.isEmpty) {
+          return Center(
+            child: Text('Tidak ada staff ditemukan',
+                style: GoogleFonts.inter(fontSize: 13, color: Colors.black38)),
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          itemCount: list.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (_, i) => _buildStaffCard(list[i]),
+        );
+      },
     );
   }
 
@@ -578,16 +611,13 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
               color: const Color(0xFFEEEEEE),
               borderRadius: BorderRadius.circular(26),
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(26),
-              child: Image.asset(
-                'assets/images/bg_login.jpg',
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.person_rounded,
-                  color: Color(0xFFBBBBBB),
-                  size: 30,
-                ),
+            alignment: Alignment.center,
+            child: Text(
+              item.nama.isNotEmpty ? item.nama.substring(0, 1).toUpperCase() : '?',
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF999999),
               ),
             ),
           ),
@@ -600,12 +630,15 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(item.nama,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                        )),
+                    Expanded(
+                      child: Text(item.nama,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
+                          )),
+                    ),
                     _statusBadge(item.aktif),
                   ],
                 ),
@@ -635,6 +668,19 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
   }
 
   // ── Helpers ─────────────────────────────────────────────────
+  Widget _errorState(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Text(
+          message,
+          style: GoogleFonts.inter(fontSize: 13, color: Colors.redAccent),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
   Widget _statusBadge(bool aktif) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
