@@ -17,6 +17,7 @@ extension OrderStatusX on OrderStatus {
       case OrderStatus.masuk:
         return 'Menunggu Konfirmasi';
       case OrderStatus.konfirmasi:
+
         return 'Dicuci & Disetrika';
       case OrderStatus.dijemput:
         return 'Dijemput';

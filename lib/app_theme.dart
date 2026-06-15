@@ -180,8 +180,8 @@ class StaffEmptyState extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0F2F5),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF0F2F5),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 36, color: const Color(0xFFBDBDBD)),
