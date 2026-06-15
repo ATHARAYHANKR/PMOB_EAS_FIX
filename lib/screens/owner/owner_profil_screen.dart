@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../services/firestore_service.dart';
 import '../auth/login_screen.dart';
 
 class OwnerProfilScreen extends StatelessWidget {
@@ -9,6 +10,25 @@ class OwnerProfilScreen extends StatelessWidget {
   static const Color _purpleLight = Color(0xFFF3E5F5);
   static const Color _textDark = Color(0xFF1A1A2E);
   static const Color _textGrey = Color(0xFF9E9E9E);
+
+  String _displayName() {
+    final user = FirestoreService.currentUser;
+    final name = user?['name']?.toString().trim();
+    if (name != null && name.isNotEmpty) return name;
+    return 'Pemilik CleanGo';
+  }
+
+  String _displayPhone() {
+    final user = FirestoreService.currentUser;
+    final phone = user?['phone']?.toString().trim();
+    return (phone != null && phone.isNotEmpty) ? phone : '+62 821 9876 5432';
+  }
+
+  String _displayEmail() {
+    final user = FirestoreService.currentUser;
+    final email = user?['email']?.toString().trim();
+    return (email != null && email.isNotEmpty) ? email : 'owner@cleango.id';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +57,7 @@ class OwnerProfilScreen extends StatelessWidget {
                           size: 48, color: _purple),
                     ),
                     const SizedBox(height: 12),
-                    Text('Pemilik CleanGo',
+                    Text(_displayName(),
                         style: GoogleFonts.inter(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -67,18 +87,18 @@ class OwnerProfilScreen extends StatelessWidget {
               _section(
                 title: 'Informasi Akun',
                 items: [
-                  const _InfoItem(
+                  _InfoItem(
                       icon: Icons.person_outline_rounded,
                       label: 'Nama',
-                      value: 'Pemilik CleanGo'),
-                  const _InfoItem(
+                      value: _displayName()),
+                  _InfoItem(
                       icon: Icons.phone_outlined,
                       label: 'Telepon',
-                      value: '+62 821 9876 5432'),
-                  const _InfoItem(
+                      value: _displayPhone()),
+                  _InfoItem(
                       icon: Icons.email_outlined,
                       label: 'Email',
-                      value: 'owner@cleango.id'),
+                      value: _displayEmail()),
                   const _InfoItem(
                       icon: Icons.storefront_outlined,
                       label: 'Nama Usaha',
@@ -99,19 +119,19 @@ class OwnerProfilScreen extends StatelessWidget {
                     icon: Icons.lock_outline_rounded,
                     label: 'Ganti Password',
                     color: _purple,
-                    onTap: () {},
+                    onTap: () => _showComingSoon(context, 'Ganti Password'),
                   ),
                   _ActionTile(
                     icon: Icons.notifications_none_rounded,
                     label: 'Notifikasi',
                     color: _purple,
-                    onTap: () {},
+                    onTap: () => _showComingSoon(context, 'Notifikasi'),
                   ),
                   _ActionTile(
                     icon: Icons.help_outline_rounded,
                     label: 'Bantuan',
                     color: _purple,
-                    onTap: () {},
+                    onTap: () => _showComingSoon(context, 'Bantuan'),
                   ),
                 ],
               ),
@@ -276,6 +296,17 @@ class OwnerProfilScreen extends StatelessWidget {
     );
   }
 
+  void _showComingSoon(BuildContext context, String label) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Fitur "$label" akan segera tersedia',
+          style: GoogleFonts.inter(fontSize: 13)),
+      backgroundColor: _purple,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      margin: const EdgeInsets.all(16),
+    ));
+  }
+
   void _confirmLogout(BuildContext context) {
     showDialog(
       context: context,
@@ -294,6 +325,7 @@ class OwnerProfilScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
+              FirestoreService.currentUser = null;
               Navigator.pop(context);
               Navigator.pushAndRemoveUntil(
                 context,

@@ -2,9 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/order_model.dart';
 import '../../services/firestore_service.dart';
+import 'owner_kelola_screen.dart';
+import 'owner_semua_order_screen.dart';
 
 class OwnerDashboardScreen extends StatelessWidget {
-  const OwnerDashboardScreen({super.key});
+  const OwnerDashboardScreen({super.key, required this.onNavigateTab});
+
+  /// Callback untuk berpindah tab pada bottom navigation OwnerMainScreen.
+  /// [kelolaTab] opsional, dipakai saat berpindah ke tab Kelola agar
+  /// langsung membuka sub-tab Katalog / Layanan / Staff.
+  final void Function(int index, {KelolaTab? kelolaTab}) onNavigateTab;
 
   static const Color _purple = Color(0xFFBB2BCD);
 
@@ -58,7 +65,11 @@ class OwnerDashboardScreen extends StatelessWidget {
                   _buildSectionCard(
                     title: 'Order Terbaru',
                     actionLabel: 'Lihat semua',
-                    onAction: () {},
+                    onAction: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const OwnerSemuaOrderScreen()),
+                    ),
                     child: Column(
                       children: _buildRecentOrders(orders),
                     ),
@@ -69,9 +80,26 @@ class OwnerDashboardScreen extends StatelessWidget {
                   _buildSectionCard(
                     title: 'Daftar Staff',
                     actionLabel: 'Kelola',
-                    onAction: () {},
-                    child: Column(
-                      children: _buildStaffList(),
+                    onAction: () =>
+                        onNavigateTab(1, kelolaTab: KelolaTab.staff),
+                    child: StreamBuilder<List<Map<String, dynamic>>>(
+                      stream: FirestoreService.streamStaffRaw(),
+                      builder: (context, staffSnapshot) {
+                        if (!staffSnapshot.hasData) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Center(
+                                child: SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )),
+                          );
+                        }
+                        return Column(
+                          children: _buildStaffList(staffSnapshot.data!),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -138,6 +166,8 @@ class OwnerDashboardScreen extends StatelessWidget {
 
   // ── Greeting + Avatar ────────────────────────────────────────
   Widget _buildGreeting() {
+    final name = FirestoreService.currentUserName ?? 'Owner';
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'O';
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -150,7 +180,7 @@ class OwnerDashboardScreen extends StatelessWidget {
                     fontSize: 14,
                     color: Colors.black54,
                   )),
-              Text('Asa Owner!',
+              Text('$name!',
                   style: GoogleFonts.inter(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
@@ -174,7 +204,7 @@ class OwnerDashboardScreen extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Text('A',
+          child: Text(initial,
               style: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
@@ -396,6 +426,11 @@ class OwnerDashboardScreen extends StatelessWidget {
         badgeFg = const Color(0xFF1565C0);
         badgeLabel = 'Konfirmasi Bayar';
         break;
+      case OrderStatus.dibatalkan:
+        badgeBg = const Color(0xFFFFEBEE);
+        badgeFg = const Color(0xFFC62828);
+        badgeLabel = 'Dibatalkan';
+        break;
       default:
         badgeBg = const Color(0xFFFFF3E0);
         badgeFg = const Color(0xFFFF8C00);
@@ -446,13 +481,21 @@ class OwnerDashboardScreen extends StatelessWidget {
     );
   }
 
-  // ── Staff List ───────────────────────────────────────────────
-  List<Widget> _buildStaffList() {
-    final staffs = [
-      const _StaffItem(name: 'Karimah Staff', role: 'staff', active: true),
-    ];
+  // ── Staff List (Firestore) ───────────────────────────────────
+  List<Widget> _buildStaffList(List<Map<String, dynamic>> staffRaw) {
+    if (staffRaw.isEmpty) {
+      return [
+        Text(
+          'Belum ada staff terdaftar',
+          style: GoogleFonts.inter(fontSize: 12, color: Colors.black45),
+        ),
+      ];
+    }
+
+    final staffs = staffRaw.take(3).map(StaffItem.fromMap).toList();
 
     return staffs.map((s) {
+      final initial = s.nama.isNotEmpty ? s.nama.substring(0, 1).toUpperCase() : '?';
       return Container(
         margin: const EdgeInsets.only(bottom: 4),
         child: Row(
@@ -465,7 +508,7 @@ class OwnerDashboardScreen extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
-              child: Text(s.name.substring(0, 1),
+              child: Text(initial,
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -477,13 +520,13 @@ class OwnerDashboardScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(s.name,
+                  Text(s.nama,
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: Colors.black87,
                       )),
-                  Text(s.role,
+                  Text('Staff',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: Colors.black45,
@@ -491,7 +534,7 @@ class OwnerDashboardScreen extends StatelessWidget {
                 ],
               ),
             ),
-            if (s.active)
+            if (s.aktif)
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
@@ -504,6 +547,21 @@ class OwnerDashboardScreen extends StatelessWidget {
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF2E7D32),
+                    )),
+              )
+            else
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEEEEE),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text('Nonaktif',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.redAccent,
                     )),
               ),
             const SizedBox(width: 8),
@@ -518,41 +576,53 @@ class OwnerDashboardScreen extends StatelessWidget {
   // ── Menu Cepat 2x3 ─────────────────────────────────────────
   Widget _buildQuickMenu(BuildContext context) {
     final items = [
-      const _MenuItem(
+      _MenuItem(
         icon: Icons.list_alt_rounded,
         label: 'Semua Order',
-        bg: Color(0xFFF3E5F5),
+        bg: const Color(0xFFF3E5F5),
         iconColor: _purple,
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const OwnerSemuaOrderScreen()),
+        ),
       ),
-      const _MenuItem(
+      _MenuItem(
         icon: Icons.sell_rounded,
         label: 'Katalog Harga',
-        bg: Color(0xFFF3E5F5),
+        bg: const Color(0xFFF3E5F5),
         iconColor: _purple,
+        onTap: () => onNavigateTab(1, kelolaTab: KelolaTab.katalog),
       ),
-      const _MenuItem(
+      _MenuItem(
         icon: Icons.room_service_rounded,
         label: 'Jenis Layanan',
-        bg: Color(0xFFF3E5F5),
+        bg: const Color(0xFFF3E5F5),
         iconColor: _purple,
+        onTap: () => onNavigateTab(1, kelolaTab: KelolaTab.layanan),
       ),
-      const _MenuItem(
+      _MenuItem(
         icon: Icons.groups_rounded,
         label: 'Manajemen Staff',
-        bg: Color(0xFFF3E5F5),
+        bg: const Color(0xFFF3E5F5),
         iconColor: _purple,
+        onTap: () => onNavigateTab(1, kelolaTab: KelolaTab.staff),
       ),
-      const _MenuItem(
+      _MenuItem(
         icon: Icons.description_rounded,
         label: 'Invoice',
-        bg: Color(0xFFF3E5F5),
+        bg: const Color(0xFFF3E5F5),
         iconColor: _purple,
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const OwnerSemuaOrderScreen()),
+        ),
       ),
-      const _MenuItem(
+      _MenuItem(
         icon: Icons.bar_chart_rounded,
         label: 'Laporan',
-        bg: Color(0xFFF3E5F5),
+        bg: const Color(0xFFF3E5F5),
         iconColor: _purple,
+        onTap: () => onNavigateTab(2),
       ),
     ];
 
@@ -565,7 +635,7 @@ class OwnerDashboardScreen extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       children: items.map((item) {
         return GestureDetector(
-          onTap: () {},
+          onTap: item.onTap,
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -626,26 +696,17 @@ class _StatItem {
   });
 }
 
-class _StaffItem {
-  final String name;
-  final String role;
-  final bool active;
-  const _StaffItem({
-    required this.name,
-    required this.role,
-    required this.active,
-  });
-}
-
 class _MenuItem {
   final IconData icon;
   final String label;
   final Color bg;
   final Color iconColor;
+  final VoidCallback onTap;
   const _MenuItem({
     required this.icon,
     required this.label,
     required this.bg,
     required this.iconColor,
+    required this.onTap,
   });
 }

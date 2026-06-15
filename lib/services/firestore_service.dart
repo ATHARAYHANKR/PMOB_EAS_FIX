@@ -45,6 +45,27 @@ class FirestoreService {
     },
   ];
 
+  static final List<Map<String, dynamic>> _localLayanan = [
+    {
+      'id': 'express_wash',
+      'nama': 'Express Wash',
+      'satuan': 'Kg',
+      'harga': 12000,
+      'estimasi': '1 hari',
+      'deskripsi': 'Cuci Express',
+      'aktif': true,
+    },
+    {
+      'id': 'premium_dry_clean',
+      'nama': 'Premium Dry Clean',
+      'satuan': 'Pcs',
+      'harga': 25000,
+      'estimasi': '3 hari',
+      'deskripsi': 'Dry Cleaning Premium',
+      'aktif': true,
+    },
+  ];
+
   static final List<Map<String, dynamic>> _localUsers = [
     {
       'id': 'demo_customer',
@@ -56,7 +77,15 @@ class FirestoreService {
     },
   ];
 
-  static final List<Map<String, dynamic>> _localStaff = [];
+  static final List<Map<String, dynamic>> _localStaff = [
+    {
+      'id': 'karimah_staff',
+      'nama': 'Karimah',
+      'telepon': '0812 0000 1111',
+      'email': 'karimah@cleango.local',
+      'aktif': true,
+    },
+  ];
 
   static Map<String, dynamic>? currentUser;
 
@@ -359,5 +388,24 @@ class FirestoreService {
       return;
     }
     await _db!.collection('staff').add(data);
+  }
+
+  static Stream<List<Map<String, dynamic>>> streamLayananRaw() {
+    if (!firebaseAvailable) {
+      return Stream.value(_localLayanan.map((item) => {...item}).toList());
+    }
+    return _db!.collection('layanan').snapshots().map(
+        (snap) => snap.docs.map((d) => {...(d.data()), 'id': d.id}).toList());
+  }
+
+  static Future<void> addLayanan(Map<String, dynamic> data) async {
+    if (!firebaseAvailable) {
+      _localLayanan.add({
+        ...data,
+        'id': data['id'] ?? 'layanan_${_localLayanan.length + 1}'
+      });
+      return;
+    }
+    await _db!.collection('layanan').add(data);
   }
 }

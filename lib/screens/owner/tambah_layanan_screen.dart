@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'owner_kelola_screen.dart';
+import '../../services/firestore_service.dart';
 
 class TambahLayananScreen extends StatefulWidget {
   const TambahLayananScreen({super.key});
@@ -20,6 +20,7 @@ class _TambahLayananScreenState extends State<TambahLayananScreen> {
   String? _satuan = 'Kg';
   String? _estimasi;
   bool _statusAktif = true;
+  bool _isLoading = false;
 
   final List<String> _satuanOptions = ['Kg', 'Pcs', 'Lusin'];
   final List<String> _estimasiOptions = [
@@ -38,7 +39,7 @@ class _TambahLayananScreenState extends State<TambahLayananScreen> {
     super.dispose();
   }
 
-  void _onTambah() {
+  Future<void> _onTambah() async {
     if (_namaCtrl.text.trim().isEmpty) {
       _showError('Nama layanan tidak boleh kosong');
       return;
@@ -49,17 +50,30 @@ class _TambahLayananScreenState extends State<TambahLayananScreen> {
       _showError('Harga tidak valid');
       return;
     }
+    if (_estimasi == null) {
+      _showError('Pilih estimasi pengerjaan');
+      return;
+    }
 
-    LayananRepository.items.add(LayananItem(
-      nama: _namaCtrl.text.trim(),
-      satuan: _satuan ?? 'Kg',
-      harga: harga,
-      estimasi: _estimasi ?? '-',
-      deskripsi: _deskripsiCtrl.text.trim(),
-      aktif: _statusAktif,
-    ));
+    setState(() => _isLoading = true);
 
-    _showSuksesDialog();
+    try {
+      // Simpan ke Firestore via FirestoreService
+      await FirestoreService.addLayanan({
+        'nama': _namaCtrl.text.trim(),
+        'satuan': _satuan ?? 'Kg',
+        'harga': harga,
+        'estimasi': _estimasi,
+        'deskripsi': _deskripsiCtrl.text.trim(),
+        'aktif': _statusAktif,
+      });
+
+      if (mounted) _showSuksesDialog();
+    } catch (e) {
+      if (mounted) _showError('Gagal menyimpan: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _showError(String msg) {
@@ -250,22 +264,32 @@ class _TambahLayananScreenState extends State<TambahLayananScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _onTambah,
+                        onPressed: _isLoading ? null : _onTambah,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _purple,
                           foregroundColor: Colors.white,
+                          disabledBackgroundColor: _purple.withAlpha(120),
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: Text('Tambah Layanan',
-                            style: GoogleFonts.inter(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            )),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text('Tambah Layanan',
+                                style: GoogleFonts.inter(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                )),
                       ),
                     ),
                   ],

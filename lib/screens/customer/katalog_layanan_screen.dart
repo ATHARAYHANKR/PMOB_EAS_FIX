@@ -26,6 +26,7 @@ class _KatalogLayananScreenState extends State<KatalogLayananScreen> {
 
   /// Konversi KatalogModel → KatalogItem agar kompatibel dengan DetailLayananScreen
   KatalogItem _toKatalogItem(KatalogModel m) => KatalogItem(
+        id: m.id,
         nama: m.nama,
         satuan: m.satuan,
         harga: m.harga,

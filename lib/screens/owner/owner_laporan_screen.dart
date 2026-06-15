@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import '../../models/order_model.dart';
+import '../../services/firestore_service.dart';
 
 class OwnerLaporanScreen extends StatefulWidget {
   const OwnerLaporanScreen({super.key});
@@ -11,292 +14,302 @@ class OwnerLaporanScreen extends StatefulWidget {
 class _OwnerLaporanScreenState extends State<OwnerLaporanScreen> {
   static const Color _purple = Color(0xFFBB2BCD);
 
-  // Daftar bulan tersedia
-  final List<String> _bulanOptions = [
-    'Januari 2026',
-    'Februari 2026',
-    'Maret 2026',
-    'April 2026',
-    'Mei 2026',
-    'Juni 2026',
-    'Juli 2026',
-    'Agustus 2026',
-    'September 2026',
-    'Oktober 2026',
-    'November 2026',
-    'Desember 2026',
-  ];
-  String _selectedBulan = 'Juni 2026';
+  /// Bulan yang sedang dipilih, dalam format key 'yyyy-MM'.
+  String? _selectedMonthKey;
 
-  // Data ringkasan per bulan (dummy)
-  final Map<String, _LaporanData> _dataMap = {
-    'Januari 2026': const _LaporanData(
-        pendapatan: 3200000,
-        totalOrder: 88,
-        selesai: 70,
-        diproses: 12,
-        dibatalkan: 6),
-    'Februari 2026': const _LaporanData(
-        pendapatan: 2800000,
-        totalOrder: 76,
-        selesai: 60,
-        diproses: 10,
-        dibatalkan: 6),
-    'Maret 2026': const _LaporanData(
-        pendapatan: 3700000,
-        totalOrder: 95,
-        selesai: 78,
-        diproses: 11,
-        dibatalkan: 6),
-    'April 2026': const _LaporanData(
-        pendapatan: 4100000,
-        totalOrder: 110,
-        selesai: 89,
-        diproses: 14,
-        dibatalkan: 7),
-    'Mei 2026': const _LaporanData(
-        pendapatan: 3900000,
-        totalOrder: 102,
-        selesai: 84,
-        diproses: 12,
-        dibatalkan: 6),
-    'Juni 2026': const _LaporanData(
-        pendapatan: 4500000,
-        totalOrder: 120,
-        selesai: 95,
-        diproses: 20,
-        dibatalkan: 5),
-    'Juli 2026': const _LaporanData(
-        pendapatan: 0, totalOrder: 0, selesai: 0, diproses: 0, dibatalkan: 0),
-  };
+  String _monthLabel(String key) {
+    final parts = key.split('-');
+    final year = int.parse(parts[0]);
+    final month = int.parse(parts[1]);
+    return DateFormat('MMMM yyyy', 'id').format(DateTime(year, month));
+  }
 
-  _LaporanData get _current =>
-      _dataMap[_selectedBulan] ??
-      const _LaporanData(
-          pendapatan: 0, totalOrder: 0, selesai: 0, diproses: 0, dibatalkan: 0);
+  String _monthKey(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}';
 
   @override
   Widget build(BuildContext context) {
-    final data = _current;
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F8),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Title ─────────────────────────────────────────
-              Center(
-                child: Text('Laporan',
+        child: StreamBuilder<List<OrderModel>>(
+          stream: FirestoreService.streamAllOrders(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    'Gagal memuat data: ${snapshot.error}',
                     style: GoogleFonts.inter(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
-                    )),
-              ),
-              const SizedBox(height: 16),
-
-              // ── Month Picker ───────────────────────────────────
-              Align(
-                alignment: Alignment.centerRight,
-                child: GestureDetector(
-                  onTap: _showMonthPicker,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border:
-                          Border.all(color: const Color(0xFFEEEEEE), width: 1),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(8),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        )
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(_selectedBulan,
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            )),
-                        const SizedBox(width: 6),
-                        const Icon(Icons.keyboard_arrow_down_rounded,
-                            size: 18, color: Colors.black45),
-                      ],
-                    ),
+                        fontSize: 13, color: Colors.redAccent),
+                    textAlign: TextAlign.center,
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
+              );
+            }
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-              // ── Ringkasan ──────────────────────────────────────
-              Text('Ringkasan',
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                  )),
-              const SizedBox(height: 12),
+            final orders = snapshot.data!;
 
-              // ── Total Pendapatan Card ──────────────────────────
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFBB2BCD), Color(0xFFD966E8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _purple.withAlpha(60),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    )
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Total Pendapatan',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white.withAlpha(210),
-                        )),
-                    const SizedBox(height: 8),
-                    Text('Rp. ${_formatHarga(data.pendapatan)}',
-                        style: GoogleFonts.inter(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        )),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
+            // Kumpulkan semua bulan yang punya data order, urut terbaru dulu.
+            final monthKeys = <String>{};
+            for (final o in orders) {
+              monthKeys.add(_monthKey(o.pickupDate));
+            }
+            final now = DateTime.now();
+            monthKeys.add(_monthKey(now));
+            final sortedKeys = monthKeys.toList()
+              ..sort((a, b) => b.compareTo(a));
 
-              // ── Stat Grid ─────────────────────────────────────
-              Row(
+            _selectedMonthKey ??= sortedKeys.first;
+            if (!sortedKeys.contains(_selectedMonthKey)) {
+              _selectedMonthKey = sortedKeys.first;
+            }
+
+            final monthOrders = orders
+                .where((o) => _monthKey(o.pickupDate) == _selectedMonthKey)
+                .toList();
+
+            final pendapatan = monthOrders
+                .where((o) => o.status == OrderStatus.selesai)
+                .fold<double>(0, (sum, o) => sum + (o.totalHarga ?? 0))
+                .toInt();
+            final totalOrder = monthOrders.length;
+            final selesai = monthOrders
+                .where((o) => o.status == OrderStatus.selesai)
+                .length;
+            final dibatalkan = monthOrders
+                .where((o) => o.status == OrderStatus.dibatalkan)
+                .length;
+            final diproses = totalOrder - selesai - dibatalkan;
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: _statCard(
-                      icon: Icons.receipt_long_outlined,
-                      iconBg: const Color(0xFFEDE7F6),
-                      iconColor: const Color(0xFF7B1FA2),
-                      label: 'Total Order',
-                      value: '${data.totalOrder}',
-                      sub: 'Semua waktu',
-                      subColor: Colors.black45,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _statCard(
-                      icon: Icons.check_circle_outline_rounded,
-                      iconBg: const Color(0xFFE8F5E9),
-                      iconColor: const Color(0xFF2E7D32),
-                      label: 'Order Selesai',
-                      value: '${data.selesai}',
-                      sub: data.totalOrder > 0
-                          ? '${(data.selesai / data.totalOrder * 100).toStringAsFixed(1)}% dari total'
-                          : '0% dari total',
-                      subColor: Colors.black45,
-                      valueColor: const Color(0xFF2E7D32),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _statCard(
-                      icon: Icons.access_time_rounded,
-                      iconBg: const Color(0xFFFFF3E0),
-                      iconColor: const Color(0xFFE65100),
-                      label: 'Order Diproses',
-                      value: '${data.diproses}',
-                      sub: data.totalOrder > 0
-                          ? '${(data.diproses / data.totalOrder * 100).toStringAsFixed(1)}% dari total'
-                          : '0% dari total',
-                      subColor: Colors.black45,
-                      valueColor: const Color(0xFFE65100),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _statCard(
-                      icon: Icons.cancel_outlined,
-                      iconBg: const Color(0xFFFEEEEE),
-                      iconColor: Colors.redAccent,
-                      label: 'Order Dibatalkan',
-                      value: '${data.dibatalkan}',
-                      sub: data.totalOrder > 0
-                          ? '${(data.dibatalkan / data.totalOrder * 100).toStringAsFixed(1)}% dari total'
-                          : '0% dari total',
-                      subColor: Colors.black45,
-                      valueColor: Colors.redAccent,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // ── Grafik Placeholder ─────────────────────────────
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withAlpha(10),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2))
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Pendapatan per Minggu',
+                  // ── Title ─────────────────────────────────────────
+                  Center(
+                    child: Text('Laporan',
                         style: GoogleFonts.inter(
-                          fontSize: 13,
+                          fontSize: 20,
                           fontWeight: FontWeight.w700,
                           color: Colors.black87,
                         )),
-                    const SizedBox(height: 12),
-                    _buildSimpleBarChart(data),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Month Picker ───────────────────────────────────
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: GestureDetector(
+                      onTap: () => _showMonthPicker(sortedKeys),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                              color: const Color(0xFFEEEEEE), width: 1),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withAlpha(8),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            )
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(_monthLabel(_selectedMonthKey!),
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                )),
+                            const SizedBox(width: 6),
+                            const Icon(Icons.keyboard_arrow_down_rounded,
+                                size: 18, color: Colors.black45),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ── Ringkasan ──────────────────────────────────────
+                  Text('Ringkasan',
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      )),
+                  const SizedBox(height: 12),
+
+                  // ── Total Pendapatan Card ──────────────────────────
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFBB2BCD), Color(0xFFD966E8)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _purple.withAlpha(60),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        )
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Total Pendapatan',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withAlpha(210),
+                            )),
+                        const SizedBox(height: 8),
+                        Text('Rp. ${_formatHarga(pendapatan)}',
+                            style: GoogleFonts.inter(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            )),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Stat Grid ─────────────────────────────────────
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _statCard(
+                          icon: Icons.receipt_long_outlined,
+                          iconBg: const Color(0xFFEDE7F6),
+                          iconColor: const Color(0xFF7B1FA2),
+                          label: 'Total Order',
+                          value: '$totalOrder',
+                          sub: 'Bulan ini',
+                          subColor: Colors.black45,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _statCard(
+                          icon: Icons.check_circle_outline_rounded,
+                          iconBg: const Color(0xFFE8F5E9),
+                          iconColor: const Color(0xFF2E7D32),
+                          label: 'Order Selesai',
+                          value: '$selesai',
+                          sub: totalOrder > 0
+                              ? '${(selesai / totalOrder * 100).toStringAsFixed(1)}% dari total'
+                              : '0% dari total',
+                          subColor: Colors.black45,
+                          valueColor: const Color(0xFF2E7D32),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _statCard(
+                          icon: Icons.access_time_rounded,
+                          iconBg: const Color(0xFFFFF3E0),
+                          iconColor: const Color(0xFFE65100),
+                          label: 'Order Diproses',
+                          value: '$diproses',
+                          sub: totalOrder > 0
+                              ? '${(diproses / totalOrder * 100).toStringAsFixed(1)}% dari total'
+                              : '0% dari total',
+                          subColor: Colors.black45,
+                          valueColor: const Color(0xFFE65100),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _statCard(
+                          icon: Icons.cancel_outlined,
+                          iconBg: const Color(0xFFFFEBEE),
+                          iconColor: const Color(0xFFC62828),
+                          label: 'Dibatalkan',
+                          value: '$dibatalkan',
+                          sub: totalOrder > 0
+                              ? '${(dibatalkan / totalOrder * 100).toStringAsFixed(1)}% dari total'
+                              : '0% dari total',
+                          subColor: Colors.black45,
+                          valueColor: const Color(0xFFC62828),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ── Grafik ─────────────────────────────────────
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black.withAlpha(10),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2))
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Order per Minggu',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            )),
+                        const SizedBox(height: 12),
+                        _buildWeeklyBarChart(monthOrders),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
   }
 
-  // ── Simple bar chart (manual) ─────────────────────────────────
-  Widget _buildSimpleBarChart(_LaporanData data) {
-    // Dummy weekly data derived from total
-    final base = data.totalOrder > 0 ? (data.totalOrder / 4).round() : 0;
+  // ── Weekly bar chart dihitung dari pickupDate order bulan terpilih ──
+  Widget _buildWeeklyBarChart(List<OrderModel> monthOrders) {
+    final weekCounts = List<int>.filled(5, 0);
+    for (final o in monthOrders) {
+      final weekIndex = ((o.pickupDate.day - 1) ~/ 7).clamp(0, 4);
+      weekCounts[weekIndex]++;
+    }
+    // Gabungkan minggu ke-5 (sisa hari) ke minggu ke-4 agar tetap 4 kolom.
+    weekCounts[3] += weekCounts[4];
+
     final weeks = [
-      (label: 'Minggu 1', val: (base * 0.8).round()),
-      (label: 'Minggu 2', val: (base * 1.1).round()),
-      (label: 'Minggu 3', val: (base * 0.9).round()),
-      (label: 'Minggu 4', val: (base * 1.2).round()),
+      (label: 'Minggu 1', val: weekCounts[0]),
+      (label: 'Minggu 2', val: weekCounts[1]),
+      (label: 'Minggu 3', val: weekCounts[2]),
+      (label: 'Minggu 4', val: weekCounts[3]),
     ];
     final maxVal = weeks.map((w) => w.val).reduce((a, b) => a > b ? a : b);
 
@@ -395,7 +408,7 @@ class _OwnerLaporanScreenState extends State<OwnerLaporanScreen> {
     );
   }
 
-  void _showMonthPicker() {
+  void _showMonthPicker(List<String> monthKeys) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -422,25 +435,27 @@ class _OwnerLaporanScreenState extends State<OwnerLaporanScreen> {
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: _bulanOptions.length,
+                  itemCount: monthKeys.length,
                   itemBuilder: (_, index) {
-                    final b = _bulanOptions[index];
+                    final key = monthKeys[index];
+                    final label = _monthLabel(key);
+                    final isSelected = key == _selectedMonthKey;
                     return ListTile(
-                      title: Text(b,
+                      title: Text(label,
                           style: GoogleFonts.inter(
                               fontSize: 14,
-                              fontWeight: b == _selectedBulan
+                              fontWeight: isSelected
                                   ? FontWeight.w700
                                   : FontWeight.w400,
-                              color: b == _selectedBulan
+                              color: isSelected
                                   ? const Color(0xFFBB2BCD)
                                   : Colors.black87)),
-                      trailing: b == _selectedBulan
+                      trailing: isSelected
                           ? const Icon(Icons.check_rounded,
                               color: Color(0xFFBB2BCD))
                           : null,
                       onTap: () {
-                        setState(() => _selectedBulan = b);
+                        setState(() => _selectedMonthKey = key);
                         Navigator.pop(context);
                       },
                     );
@@ -464,19 +479,4 @@ class _OwnerLaporanScreenState extends State<OwnerLaporanScreen> {
     }
     return buf.toString();
   }
-}
-
-class _LaporanData {
-  final int pendapatan;
-  final int totalOrder;
-  final int selesai;
-  final int diproses;
-  final int dibatalkan;
-  const _LaporanData({
-    required this.pendapatan,
-    required this.totalOrder,
-    required this.selesai,
-    required this.diproses,
-    required this.dibatalkan,
-  });
 }
