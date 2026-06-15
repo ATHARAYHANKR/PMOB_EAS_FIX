@@ -294,7 +294,7 @@ class _DetailPembayaranScreenState extends State<DetailPembayaranScreen> {
               onTap: () async {
                 try {
                   await FirestoreService.updateStatus(
-                      order.id, OrderStatus.selesai);
+                      order.id, OrderStatus.konfirmasi);
                   if (!mounted) return;
                   Navigator.of(context).popUntil((route) => route.isFirst);
                   Navigator.pushReplacement(

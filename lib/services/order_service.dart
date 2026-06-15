@@ -156,6 +156,6 @@ class OrderRepository {
 
   static void updateWeightAndConfirm(OrderModel order, double weightKg) {
     order.beratKg = weightKg;
-    updateStatus(order, OrderStatus.konfirmasi);
+    updateStatus(order, OrderStatus.konfirmasiBayar);
   }
 }

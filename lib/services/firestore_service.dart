@@ -338,13 +338,13 @@ class FirestoreService {
       final index = _localOrders.indexWhere((order) => order.id == id);
       if (index >= 0) {
         _localOrders[index].beratKg = weightKg;
-        _localOrders[index].status = OrderStatus.konfirmasi;
+        _localOrders[index].status = OrderStatus.konfirmasiBayar;
       }
       return;
     }
     await _db!.collection('orders').doc(id).update({
       'beratKg': weightKg,
-      'status': orderStatusToString(OrderStatus.konfirmasi),
+      'status': orderStatusToString(OrderStatus.konfirmasiBayar),
     });
   }
 
