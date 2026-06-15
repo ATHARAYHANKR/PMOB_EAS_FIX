@@ -406,56 +406,65 @@ class _BookingLaundryScreenState extends State<BookingLaundryScreen> {
   void _showLayananPicker() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) {
         return SafeArea(
-          child: StreamBuilder<List<Map<String, dynamic>>>(
-            stream: FirestoreService.streamKatalogRaw(),
-            builder: (context, snap) {
-              if (snap.hasError) {
-                return Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Text(
-                    'Gagal memuat data layanan: ${snap.error}',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: Colors.redAccent,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
+            ),
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: FirestoreService.streamKatalogRaw(),
+              builder: (context, snap) {
+                if (snap.hasError) {
+                  return Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Text(
+                      'Gagal memuat data layanan: ${snap.error}',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: Colors.redAccent,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                );
-              }
-              if (!snap.hasData) {
-                return const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-              final items = (snap.data ?? [])
-                  .map((m) => KatalogModel.fromMap(m['id'], m))
-                  .where((k) => k.aktif)
-                  .toList();
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: items.map((item) {
-                  return ListTile(
-                    title: Text(item.nama,
-                        style: GoogleFonts.inter(
-                            fontSize: 14, fontWeight: FontWeight.w600)),
-                    subtitle: Text(
-                        'Rp${_formatHarga(item.harga)}/${item.satuan.toLowerCase()}',
-                        style: GoogleFonts.inter(
-                            fontSize: 12, color: Colors.black54)),
-                    onTap: () {
-                      setState(() => _selectedLayanan = item);
-                      Navigator.pop(context);
-                    },
                   );
-                }).toList(),
-              );
-            },
+                }
+                if (!snap.hasData) {
+                  return const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                final items = (snap.data ?? [])
+                    .map((m) => KatalogModel.fromMap(m['id'], m))
+                    .where((k) => k.aktif)
+                    .toList();
+                return ListView.builder(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.only(bottom: 12),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    return ListTile(
+                      title: Text(item.nama,
+                          style: GoogleFonts.inter(
+                              fontSize: 14, fontWeight: FontWeight.w600)),
+                      subtitle: Text(
+                          'Rp${_formatHarga(item.harga)}/${item.satuan.toLowerCase()}',
+                          style: GoogleFonts.inter(
+                              fontSize: 12, color: Colors.black54)),
+                      onTap: () {
+                        setState(() => _selectedLayanan = item);
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                );
+              },
+            ),
           ),
         );
       },

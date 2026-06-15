@@ -244,7 +244,7 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
             const SizedBox(height: 10),
             Row(
               children: [
-                Icon(Icons.payments_outlined,
+                const Icon(Icons.payments_outlined,
                     size: 15, color: AppColors.primary),
                 const SizedBox(width: 8),
                 Text(
@@ -273,7 +273,7 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
                   ),
                 ),
                 const SizedBox(width: 2),
-                Icon(Icons.arrow_forward_rounded,
+                const Icon(Icons.arrow_forward_rounded,
                     size: 14, color: AppColors.primary),
               ],
             ),
