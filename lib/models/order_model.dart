@@ -167,8 +167,8 @@ class OrderModel {
     OrderStatus.masuk,
     OrderStatus.diproses,
     OrderStatus.perluTimbang,
-    OrderStatus.konfirmasi,
     OrderStatus.konfirmasiBayar,
+    OrderStatus.konfirmasi,
     OrderStatus.selesai,
   ];
 
