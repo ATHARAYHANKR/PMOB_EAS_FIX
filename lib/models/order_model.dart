@@ -32,6 +32,27 @@ extension OrderStatusX on OrderStatus {
         return 'Dibatalkan';
     }
   }
+
+  String get statusLabel {
+    switch (this) {
+      case OrderStatus.masuk:
+        return 'Order Masuk';
+      case OrderStatus.diproses:
+        return 'Diambil';
+      case OrderStatus.perluTimbang:
+        return 'Perlu Timbang';
+      case OrderStatus.selesai:
+        return 'Selesai';
+      case OrderStatus.konfirmasiBayar:
+        return 'Konfirmasi Bayar';
+      case OrderStatus.konfirmasi:
+        return 'Dicuci & Disetrika';
+      case OrderStatus.dijemput:
+        return 'Dijemput';
+      case OrderStatus.dibatalkan:
+        return 'Dibatalkan';
+    }
+  }
 }
 
 String orderStatusToString(OrderStatus status) {

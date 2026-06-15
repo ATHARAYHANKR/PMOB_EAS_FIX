@@ -179,41 +179,52 @@ class _LoginScreenState extends State<LoginScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: Checkbox(
-                      value: _remember,
-                      onChanged: (v) => setState(() => _remember = v ?? false),
-                      fillColor: WidgetStateProperty.all(_blue),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4)),
-                      side: const BorderSide(
-                          color: Color(0xFFCDD3E0), width: 1.5),
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
+              Expanded(
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: Checkbox(
+                        value: _remember,
+                        onChanged: (v) => setState(() => _remember = v ?? false),
+                        fillColor: WidgetStateProperty.all(_blue),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4)),
+                        side: const BorderSide(
+                            color: Color(0xFFCDD3E0), width: 1.5),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text('Ingat saya',
-                      style: GoogleFonts.inter(
-                          fontSize: 13, color: Colors.black54)),
-                ],
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text('Ingat saya',
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                              fontSize: 13, color: Colors.black54)),
+                    ),
+                  ],
+                ),
               ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const RegisterScreen()));
-                },
-                child: Text('Daftar akun baru',
-                    style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: _blue,
-                        fontWeight: FontWeight.w600)),
+              Flexible(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const RegisterScreen()));
+                    },
+                    child: Text('Daftar akun baru',
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: _blue,
+                            fontWeight: FontWeight.w600)),
+                  ),
+                ),
               ),
             ],
           ),
