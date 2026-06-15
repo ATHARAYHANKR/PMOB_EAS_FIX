@@ -55,6 +55,12 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
           bg: Color(0xFFFFF9C4),
           fg: Color(0xFF795548),
         );
+      case OrderStatus.konfirmasi:
+        return const _BadgeConfig(
+          label: 'Dicuci & Disetrika',
+          bg: Color(0xFFD6F5F0),
+          fg: Color(0xFF00897B),
+        );
       case OrderStatus.konfirmasiBayar:
         return const _BadgeConfig(
           label: 'Konfirmasi Bayar',

@@ -66,11 +66,11 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
       case OrderStatus.diproses:
         return 'Terima order dan lanjutkan ke penimbangan.';
       case OrderStatus.perluTimbang:
-        return 'Lanjutkan ke proses pembayaran setelah penimbangan.';
-      case OrderStatus.konfirmasiBayar:
-        return 'Pastikan pembayaran diterima sebelum memproses cuci & setrika.';
+        return 'Lanjutkan ke proses cuci & setrika setelah penimbangan.';
       case OrderStatus.konfirmasi:
-        return 'Order sedang dicuci & disetrika. Tandai selesai setelah proses cucian selesai.';
+        return 'Order sedang dicuci & disetrika. Lanjutkan ke konfirmasi pembayaran setelah selesai.';
+      case OrderStatus.konfirmasiBayar:
+        return 'Pastikan pembayaran sudah diterima, lalu tandai order sebagai selesai.';
       case OrderStatus.dijemput:
         return 'Pakaian sudah dijemput, lanjutkan ke proses selanjutnya.';
       default:
@@ -83,10 +83,10 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
     switch (order.status) {
       case OrderStatus.masuk:
         return 'Terima Order';
-      case OrderStatus.konfirmasiBayar:
-        return 'Mulai Cuci';
       case OrderStatus.konfirmasi:
-        return 'Selesai';
+        return 'Lanjut ke Pembayaran';
+      case OrderStatus.konfirmasiBayar:
+        return 'Tandai Selesai';
       case OrderStatus.dijemput:
         return 'Masuk Cucian';
       case OrderStatus.diproses:
