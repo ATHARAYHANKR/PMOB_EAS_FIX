@@ -40,48 +40,6 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
     }
   }
 
-  // ── Badge style per status ─────────────────────────────────
-  _BadgeConfig _badgeFor(OrderStatus status) {
-    switch (status) {
-      case OrderStatus.diproses:
-        return const _BadgeConfig(
-          label: 'Diambil',
-          bg: Color(0xFFD6EEFF),
-          fg: Color(0xFF1565C0),
-        );
-      case OrderStatus.perluTimbang:
-        return const _BadgeConfig(
-          label: 'Timbang',
-          bg: Color(0xFFFFF9C4),
-          fg: Color(0xFF795548),
-        );
-      case OrderStatus.konfirmasi:
-        return const _BadgeConfig(
-          label: 'Dicuci & Disetrika',
-          bg: Color(0xFFD6F5F0),
-          fg: Color(0xFF00897B),
-        );
-      case OrderStatus.konfirmasiBayar:
-        return const _BadgeConfig(
-          label: 'Konfirmasi Bayar',
-          bg: Color(0xFFEDD6FF),
-          fg: Color(0xFF6A1F9F),
-        );
-      case OrderStatus.selesai:
-        return const _BadgeConfig(
-          label: 'Selesai',
-          bg: Color(0xFFE8F5E9),
-          fg: AppColors.primary,
-        );
-      default:
-        return const _BadgeConfig(
-          label: 'Order Masuk',
-          bg: Color(0xFFFFF3E0),
-          fg: AppColors.orange,
-        );
-    }
-  }
-
   // ── Empty state message per filter ─────────────────────────
   String get _emptyMessage {
     switch (_activeFilter) {
@@ -103,22 +61,15 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgPage,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── Title ─────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
-              child: Text(
-                'Kelola Order',
-                style: GoogleFonts.inter(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textDark,
-                ),
-              ),
+            const StaffPageHeader(
+              title: 'Kelola Order',
+              subtitle: 'Pantau dan kelola seluruh pesanan',
             ),
 
             // ── Filter chips ──────────────────────────────
@@ -146,13 +97,16 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return Center(
-                      child: Text(
-                        'Gagal memuat data: ${snapshot.error}',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: Colors.redAccent,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Text(
+                          'Gagal memuat data: ${snapshot.error}',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: Colors.redAccent,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     );
                   }
@@ -167,9 +121,9 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
                   }
 
                   return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     itemCount: filtered.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (_, i) => _buildCard(filtered[i]),
                   );
                 },
@@ -188,15 +142,25 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
       padding: const EdgeInsets.only(right: 8),
       child: GestureDetector(
         onTap: () => setState(() => _activeFilter = tab),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
           decoration: BoxDecoration(
             color: isActive ? AppColors.primary : Colors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isActive ? AppColors.primary : const Color(0xFFDDDDDD),
+              color: isActive ? AppColors.primary : const Color(0xFFE0E0E0),
               width: 1.2,
             ),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: AppColors.primary.withAlpha(40),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
           ),
           child: Text(
             label,
@@ -215,12 +179,14 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
   Widget _buildCard(OrderModel order) {
     final dateStr = DateFormat('d MMMM yyyy', 'id').format(order.pickupDate);
     final timeStr = order.pickupSlot.split(' ').first;
-    final badge = _badgeFor(order.status);
 
-    // Label berat jika ada
     final beratLabel = order.beratKg != null
-        ? ' - ${order.beratKg!.toStringAsFixed(0)}kg'
-        : '';
+        ? '${order.beratKg!.toStringAsFixed(order.beratKg! % 1 == 0 ? 0 : 1)} kg'
+        : null;
+    final hargaStr = order.totalHarga != null
+        ? NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0)
+            .format(order.totalHarga)
+        : null;
 
     // Apakah bisa dilanjut proses (bukan selesai / konfirmasi bayar)
     final bisa = order.status == OrderStatus.diproses ||
@@ -228,7 +194,7 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
         order.status == OrderStatus.konfirmasi ||
         order.status == OrderStatus.dijemput;
 
-    return GestureDetector(
+    return StaffCard(
       onTap: bisa
           ? () {
               Navigator.push(
@@ -242,101 +208,106 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
               ).then((_) => setState(() {}));
             }
           : null,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFEEEEEE), width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(10),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    order.id,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textDark,
-                    ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  order.id,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${order.customerName} - ${order.phone}',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: AppColors.textGrey,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${order.serviceType}$beratLabel',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: AppColors.textGrey,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '$dateStr, $timeStr',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: AppColors.textGrey,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: badge.bg,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                badge.label,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: badge.fg,
                 ),
               ),
+              StatusBadge(status: order.status),
+            ],
+          ),
+          const Divider(height: 18),
+
+          _infoRow(Icons.person_outline_rounded,
+              '${order.customerName} • ${order.phone}'),
+          const SizedBox(height: 6),
+          _infoRow(
+            Icons.local_laundry_service_outlined,
+            beratLabel != null
+                ? '${order.serviceType} • $beratLabel'
+                : order.serviceType,
+          ),
+          const SizedBox(height: 6),
+          _infoRow(Icons.event_outlined, '$dateStr • $timeStr'),
+
+          if (hargaStr != null) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(Icons.payments_outlined,
+                    size: 15, color: AppColors.primary),
+                const SizedBox(width: 8),
+                Text(
+                  hargaStr,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
             ),
           ],
-        ),
+
+          if (bisa) ...[
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'Lihat detail & lanjutkan',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Icon(Icons.arrow_forward_rounded,
+                    size: 14, color: AppColors.primary),
+              ],
+            ),
+          ],
+        ],
       ),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 15, color: AppColors.textGrey),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: AppColors.textGrey,
+              height: 1.3,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   // ── Empty State ───────────────────────────────────────────
   Widget _buildEmptyState() {
-    return Center(
-      child: Text(
-        _emptyMessage,
-        style: GoogleFonts.inter(
-          fontSize: 13,
-          color: AppColors.textGrey,
-        ),
-      ),
+    return StaffEmptyState(
+      icon: Icons.list_alt_rounded,
+      message: _emptyMessage,
     );
   }
-}
-
-class _BadgeConfig {
-  final String label;
-  final Color bg;
-  final Color fg;
-  const _BadgeConfig({required this.label, required this.bg, required this.fg});
 }

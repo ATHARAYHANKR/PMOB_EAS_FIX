@@ -187,7 +187,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 20,
                       child: Checkbox(
                         value: _remember,
-                        onChanged: (v) => setState(() => _remember = v ?? false),
+                        onChanged: (v) =>
+                            setState(() => _remember = v ?? false),
                         fillColor: WidgetStateProperty.all(_blue),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(4)),

@@ -18,22 +18,15 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgPage,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── Title ───────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-              child: Text(
-                'Konfirmasi Bayar',
-                style: GoogleFonts.inter(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textDark,
-                ),
-              ),
+            const StaffPageHeader(
+              title: 'Konfirmasi Bayar',
+              subtitle: 'Order yang menunggu konfirmasi pembayaran',
             ),
 
             // ── List / Empty / Loading / Error ───────────
@@ -44,13 +37,16 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return Center(
-                      child: Text(
-                        'Gagal memuat data: ${snapshot.error}',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: Colors.redAccent,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Text(
+                          'Gagal memuat data: ${snapshot.error}',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: Colors.redAccent,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     );
                   }
@@ -65,7 +61,7 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
                   }
 
                   return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     itemCount: orders.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (_, i) => _buildCard(orders[i]),
@@ -82,31 +78,21 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
   // ── Card ─────────────────────────────────────────────────
   Widget _buildCard(OrderModel order) {
     final dateStr = _formatDate(order.pickupDate);
-    final timeStr = order.pickupSlot.split(' ').first;
+    final hargaStr = order.totalHarga != null
+        ? NumberFormat.currency(
+                locale: 'id', symbol: 'Rp', decimalDigits: 0)
+            .format(order.totalHarga)
+        : null;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFEEEEEE), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(10),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Row(
+    return StaffCard(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Info kiri
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+          // Header: ID + status badge
+          Row(
+            children: [
+              Expanded(
+                child: Text(
                   order.id,
                   style: GoogleFonts.inter(
                     fontSize: 14,
@@ -114,54 +100,74 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
                     color: AppColors.textDark,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '${order.customerName} - ${order.phone}',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: AppColors.textGrey,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  order.serviceType,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: AppColors.textGrey,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '$dateStr, $timeStr',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: AppColors.textGrey,
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const StatusBadge(status: OrderStatus.konfirmasiBayar),
+            ],
           ),
-          const SizedBox(width: 10),
+          const Divider(height: 18),
 
-          // Tombol Konfirmasi Lunas
-          ElevatedButton(
-            onPressed: () => _showKonfirmasiDialog(order),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              shape: RoundedRectangleBorder(
+          _infoRow(Icons.person_outline_rounded,
+              '${order.customerName} • ${order.phone}'),
+          const SizedBox(height: 6),
+          _infoRow(Icons.local_laundry_service_outlined, order.serviceType),
+          const SizedBox(height: 6),
+          _infoRow(Icons.event_outlined, '$dateStr • ${order.pickupSlot}'),
+
+          if (hargaStr != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3E5F5),
                 borderRadius: BorderRadius.circular(10),
               ),
+              child: Row(
+                children: [
+                  Text(
+                    'Total Pembayaran',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: const Color(0xFF6A1F9F),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    hargaStr,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF6A1F9F),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: Text(
-              'Konfirmasi\nLunas',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
+          ],
+
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _showKonfirmasiDialog(order),
+              icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+              label: Text(
+                'Konfirmasi Lunas',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             ),
           ),
@@ -170,20 +176,31 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
     );
   }
 
-  // ── Empty state ───────────────────────────────────────────
-  Widget _buildEmptyState() {
-    return Align(
-      alignment: Alignment.topCenter,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 8),
-        child: Text(
-          'Tidak ada pembayaran masuk saat ini',
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            color: AppColors.textGrey,
+  Widget _infoRow(IconData icon, String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 15, color: AppColors.textGrey),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: AppColors.textGrey,
+              height: 1.3,
+            ),
           ),
         ),
-      ),
+      ],
+    );
+  }
+
+  // ── Empty state ───────────────────────────────────────────
+  Widget _buildEmptyState() {
+    return const StaffEmptyState(
+      icon: Icons.payments_outlined,
+      message: 'Tidak ada pembayaran masuk saat ini',
     );
   }
 

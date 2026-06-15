@@ -14,38 +14,59 @@ class ProfilScreen extends StatelessWidget {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Header green
+              // Header
               Container(
                 width: double.infinity,
-                color: Colors.white,
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [AppColors.primary, AppColors.primaryLight],
+                  ),
+                ),
+                padding: const EdgeInsets.fromLTRB(20, 28, 20, 36),
                 child: Column(
                   children: [
-                    CircleAvatar(
-                      radius: 44,
-                      backgroundColor: AppColors.primaryLight.withAlpha(38),
-                      child: const Icon(Icons.person_rounded,
-                          size: 48, color: AppColors.primary),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: CircleAvatar(
+                        radius: 42,
+                        backgroundColor: AppColors.primaryLight.withAlpha(38),
+                        child: const Icon(Icons.person_rounded,
+                            size: 46, color: AppColors.primary),
+                      ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     Text('Karimah Staff',
                         style: GoogleFonts.inter(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textDark)),
-                    const SizedBox(height: 4),
+                            fontSize: 19,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white)),
+                    const SizedBox(height: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 4),
+                          horizontal: 14, vertical: 5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
+                        color: Colors.white.withAlpha(46),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text('Staff',
-                          style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary)),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.badge_rounded,
+                              size: 14, color: Colors.white),
+                          const SizedBox(width: 6),
+                          Text('Staff Laundry',
+                              style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white)),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -91,12 +112,13 @@ class ProfilScreen extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEEEEEE), width: 1),
         boxShadow: [
           BoxShadow(
               color: Colors.black.withAlpha(10),
-              blurRadius: 8,
-              offset: const Offset(0, 2))
+              blurRadius: 10,
+              offset: const Offset(0, 3))
         ],
       ),
       child: Column(
@@ -164,12 +186,13 @@ class ProfilScreen extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEEEEEE), width: 1),
         boxShadow: [
           BoxShadow(
               color: Colors.black.withAlpha(10),
-              blurRadius: 8,
-              offset: const Offset(0, 2))
+              blurRadius: 10,
+              offset: const Offset(0, 3))
         ],
       ),
       child: Column(

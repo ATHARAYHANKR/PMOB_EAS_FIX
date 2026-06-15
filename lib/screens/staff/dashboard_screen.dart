@@ -6,7 +6,8 @@ import '../../models/order_model.dart';
 import '../../services/firestore_service.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  final void Function(int index) onNavigate;
+  const DashboardScreen({super.key, required this.onNavigate});
 
   @override
   Widget build(BuildContext context) {
@@ -86,55 +87,31 @@ class DashboardScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       child: Row(
         children: [
-          // Hamburger
-          GestureDetector(
-            onTap: () {},
-            child: const Icon(Icons.menu_rounded,
-                size: 26, color: AppColors.textDark),
-          ),
-          const Spacer(),
           // Logo
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withAlpha(31),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.dry_cleaning_rounded,
-                    color: AppColors.primary, size: 20),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'CleanGo',
-                style: GoogleFonts.inter(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withAlpha(31),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.dry_cleaning_rounded,
+                color: AppColors.primary, size: 20),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'CleanGo',
+            style: GoogleFonts.inter(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: AppColors.primary,
+            ),
           ),
           const Spacer(),
-          // Notification bell
-          Stack(
-            children: [
-              const Icon(Icons.notifications_outlined,
-                  size: 26, color: AppColors.textDark),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  width: 9,
-                  height: 9,
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
+          // Shortcut ke Profil Saya
+          GestureDetector(
+            onTap: () => onNavigate(4),
+            child: const Icon(Icons.person_outline_rounded,
+                size: 26, color: AppColors.textDark),
           ),
         ],
       ),
@@ -292,7 +269,7 @@ class DashboardScreen extends StatelessWidget {
               ),
             ),
             GestureDetector(
-              onTap: () {},
+              onTap: () => onNavigate(2),
               child: Text(
                 'Lihat semua',
                 style: GoogleFonts.inter(
@@ -350,26 +327,6 @@ class DashboardScreen extends StatelessWidget {
     final dateStr =
         DateFormat('dd MMM yyyy, HH:mm', 'id').format(order.pickupDate);
 
-    Color statusColor;
-    Color statusBg;
-    switch (order.status) {
-      case OrderStatus.diproses:
-        statusColor = AppColors.blue;
-        statusBg = const Color(0xFFE3F2FD);
-        break;
-      case OrderStatus.masuk:
-        statusColor = AppColors.orange;
-        statusBg = const Color(0xFFFFF3E0);
-        break;
-      case OrderStatus.perluTimbang:
-        statusColor = AppColors.orange;
-        statusBg = const Color(0xFFFFF3E0);
-        break;
-      default:
-        statusColor = AppColors.primary;
-        statusBg = const Color(0xFFE8F5E9);
-    }
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -380,7 +337,7 @@ class DashboardScreen extends StatelessWidget {
               color: const Color(0xFFE8F5E9),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.sync_rounded,
+            child: const Icon(Icons.receipt_long_rounded,
                 color: AppColors.primary, size: 18),
           ),
           const SizedBox(width: 12),
@@ -409,29 +366,7 @@ class DashboardScreen extends StatelessWidget {
               ],
             ),
           ),
-          Row(
-            children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusBg,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  order.statusLabel,
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: statusColor,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 4),
-              const Icon(Icons.chevron_right_rounded,
-                  size: 18, color: Color(0xFFB0B0B0)),
-            ],
-          ),
+          StatusBadge(status: order.status),
         ],
       ),
     );
@@ -447,37 +382,31 @@ class DashboardScreen extends StatelessWidget {
           label: 'Order Masuk',
           color: AppColors.orange,
           bg: Color(0xFFFFF3E0),
-          badge: 0),
+          targetIndex: 1),
       const _MenuItem(
           icon: Icons.list_alt_rounded,
           label: 'Kelola Order',
           color: AppColors.blue,
           bg: Color(0xFFE3F2FD),
-          badge: 1),
-      const _MenuItem(
-          icon: Icons.sync_rounded,
-          label: 'Update Status',
-          color: AppColors.primary,
-          bg: Color(0xFFE8F5E9),
-          badge: 0),
+          targetIndex: 2),
       const _MenuItem(
           icon: Icons.credit_card_rounded,
           label: 'Konfirmasi Bayar',
-          color: AppColors.blue,
-          bg: Color(0xFFE3F2FD),
-          badge: 0),
+          color: Color(0xFF6A1F9F),
+          bg: Color(0xFFF3E5F5),
+          targetIndex: 3),
       const _MenuItem(
           icon: Icons.history_rounded,
           label: 'History Selesai',
-          color: Color(0xFF7B1FA2),
-          bg: Color(0xFFF3E5F5),
-          badge: 0),
+          color: AppColors.primary,
+          bg: Color(0xFFE8F5E9),
+          targetIndex: 2),
       const _MenuItem(
           icon: Icons.person_rounded,
           label: 'Profil Saya',
           color: AppColors.primary,
           bg: Color(0xFFE8F5E9),
-          badge: 0),
+          targetIndex: 4),
     ];
 
     return Column(
@@ -507,7 +436,7 @@ class DashboardScreen extends StatelessWidget {
 
   Widget _buildMenuTile(BuildContext context, _MenuItem m) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () => onNavigate(m.targetIndex),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -523,38 +452,13 @@ class DashboardScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: m.bg,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(m.icon, color: m.color, size: 26),
-                ),
-                if (m.badge > 0)
-                  Positioned(
-                    right: -4,
-                    top: -4,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        '${m.badge}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: m.bg,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(m.icon, color: m.color, size: 26),
             ),
             const SizedBox(height: 8),
             Text(
@@ -594,11 +498,11 @@ class _MenuItem {
   final String label;
   final Color color;
   final Color bg;
-  final int badge;
+  final int targetIndex;
   const _MenuItem(
       {required this.icon,
       required this.label,
       required this.color,
       required this.bg,
-      required this.badge});
+      required this.targetIndex});
 }

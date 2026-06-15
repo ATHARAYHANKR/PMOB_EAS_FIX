@@ -23,23 +23,17 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgPage,
       body: SafeArea(
         child: Column(
           children: [
             // ── Title ─────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-              child: Text(
-                'Order Masuk',
-                style: GoogleFonts.inter(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textDark,
-                ),
-              ),
+            StaffPageHeader(
+              title: 'Order Masuk',
+              subtitle: _tabIndex == 0
+                  ? 'Order yang menunggu untuk diambil'
+                  : 'Order yang menunggu ditimbang',
             ),
-            const SizedBox(height: 16),
 
             // ── Tab Selector ──────────────────────────────
             Padding(
@@ -55,13 +49,16 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return Center(
-                      child: Text(
-                        'Gagal memuat data: ${snapshot.error}',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: Colors.redAccent,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Text(
+                          'Gagal memuat data: ${snapshot.error}',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: Colors.redAccent,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     );
                   }
@@ -76,7 +73,7 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
                   }
 
                   return ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     itemCount: orders.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (ctx, i) => _buildOrderCard(orders[i]),
@@ -94,41 +91,62 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
   //  TAB SELECTOR  (Ambil / Timbang)
   // ──────────────────────────────────────────────────────────
   Widget _buildTabSelector() {
-    return Row(
-      children: [
-        Expanded(child: _tabButton('Ambil', 0)),
-        Expanded(child: _tabButton('Timbang', 1)),
-      ],
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F2F5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(child: _tabButton('Ambil', 0, Icons.move_to_inbox_rounded)),
+          const SizedBox(width: 4),
+          Expanded(child: _tabButton('Timbang', 1, Icons.balance_rounded)),
+        ],
+      ),
     );
   }
 
-  Widget _tabButton(String label, int idx) {
+  Widget _tabButton(String label, int idx, IconData icon) {
     final isActive = _tabIndex == idx;
-    final isLeft = idx == 0;
 
     return GestureDetector(
       onTap: () => setState(() => _tabIndex = idx),
-      child: Container(
-        height: 42,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        height: 44,
         decoration: BoxDecoration(
-          color: isActive ? AppColors.primaryLight : Colors.white,
-          borderRadius: BorderRadius.horizontal(
-            left: isLeft ? const Radius.circular(8) : Radius.zero,
-            right: !isLeft ? const Radius.circular(8) : Radius.zero,
-          ),
-          border: Border.all(
-            color: isActive ? AppColors.primaryLight : const Color(0xFFDDDDDD),
-            width: 1.2,
-          ),
+          color: isActive ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(13),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         alignment: Alignment.center,
-        child: Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: isActive ? Colors.white : const Color(0xFF888888),
-          ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isActive ? AppColors.primary : AppColors.textGrey,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isActive ? AppColors.primary : AppColors.textGrey,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -139,29 +157,19 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
   // ──────────────────────────────────────────────────────────
   Widget _buildOrderCard(OrderModel order) {
     final dateStr = DateFormat('d MMMM yyyy', 'id').format(order.pickupDate);
+    final beratLabel = order.beratKg != null
+        ? '${order.beratKg!.toStringAsFixed(order.beratKg! % 1 == 0 ? 0 : 1)} kg'
+        : null;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFEEEEEE), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(10),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Row(
+    return StaffCard(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+          // Header: ID + status badge
+          Row(
+            children: [
+              Expanded(
+                child: Text(
                   order.id,
                   style: GoogleFonts.inter(
                     fontSize: 14,
@@ -169,59 +177,76 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
                     color: AppColors.textDark,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '${order.customerName} - ${order.phone}',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: AppColors.textGrey,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  order.serviceType,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: AppColors.textGrey,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '$dateStr, ${order.pickupSlot}',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: AppColors.textGrey,
-                  ),
-                ),
-              ],
-            ),
+              ),
+              StatusBadge(status: order.status),
+            ],
           ),
-          const SizedBox(width: 12),
-          _buildActionButton(order),
+          const Divider(height: 18),
+
+          _infoRow(Icons.person_outline_rounded,
+              '${order.customerName} • ${order.phone}'),
+          const SizedBox(height: 6),
+          _infoRow(Icons.local_laundry_service_outlined, order.serviceType),
+          const SizedBox(height: 6),
+          _infoRow(Icons.event_outlined, '$dateStr • ${order.pickupSlot}'),
+          if (beratLabel != null) ...[
+            const SizedBox(height: 6),
+            _infoRow(Icons.scale_outlined, 'Estimasi berat: $beratLabel'),
+          ],
+          const SizedBox(height: 14),
+
+          // Action button full width
+          SizedBox(
+            width: double.infinity,
+            child: _buildActionButton(order),
+          ),
         ],
       ),
     );
   }
 
+  Widget _infoRow(IconData icon, String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 15, color: AppColors.textGrey),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: AppColors.textGrey,
+              height: 1.3,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildActionButton(OrderModel order) {
     final isAmbil = _tabIndex == 0;
-    return ElevatedButton(
+    return ElevatedButton.icon(
       onPressed: () => _handleAction(order),
+      icon: Icon(
+        isAmbil ? Icons.move_to_inbox_rounded : Icons.balance_rounded,
+        size: 18,
+      ),
+      label: Text(
+        isAmbil ? 'Ambil Order' : 'Timbang Order',
+        style: GoogleFonts.inter(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-      child: Text(
-        isAmbil ? 'Ambil Order' : 'Timbang',
-        style: GoogleFonts.inter(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: Colors.white,
         ),
       ),
     );
@@ -234,16 +259,10 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
     final msg = _tabIndex == 0
         ? 'Tidak ada orderan yang perlu diambil'
         : 'Tidak ada orderan yang perlu ditimbang';
+    final icon =
+        _tabIndex == 0 ? Icons.move_to_inbox_rounded : Icons.balance_rounded;
 
-    return Center(
-      child: Text(
-        msg,
-        style: GoogleFonts.inter(
-          fontSize: 13,
-          color: AppColors.textGrey,
-        ),
-      ),
-    );
+    return StaffEmptyState(icon: icon, message: msg);
   }
 
   // ──────────────────────────────────────────────────────────

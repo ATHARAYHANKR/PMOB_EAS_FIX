@@ -18,13 +18,7 @@ class StaffMainScreen extends StatefulWidget {
 class _StaffMainScreenState extends State<StaffMainScreen> {
   late int _currentIndex;
 
-  final List<Widget> _screens = const [
-    DashboardScreen(),
-    OrderMasukScreen(),
-    KelolaOrderScreen(),
-    KonfirmasiBayarScreen(),
-    ProfilScreen(),
-  ];
+  // Screens are built in `build` so we can pass callbacks that use `setState`.
 
   @override
   void initState() {
@@ -37,7 +31,13 @@ class _StaffMainScreenState extends State<StaffMainScreen> {
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: _screens,
+        children: [
+          DashboardScreen(onNavigate: (i) => setState(() => _currentIndex = i)),
+          const OrderMasukScreen(),
+          const KelolaOrderScreen(),
+          const KonfirmasiBayarScreen(),
+          const ProfilScreen(),
+        ],
       ),
       bottomNavigationBar: _buildBottomNav(),
     );
