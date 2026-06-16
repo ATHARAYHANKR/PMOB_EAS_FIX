@@ -75,10 +75,15 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
                       break;
                     case 3:
                       orders = all
-                          .where((o) => o.status == OrderStatus.konfirmasi)
+                          .where((o) => o.status == OrderStatus.dicuci)
                           .toList();
                       break;
                     case 4:
+                      orders = all
+                          .where((o) => o.status == OrderStatus.disetrika)
+                          .toList();
+                      break;
+                    case 5:
                       if (_selesaiSub == 0) {
                         orders = all
                             .where((o) => o.status == OrderStatus.selesai)
@@ -202,10 +207,15 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
         badgeFg = const Color(0xFF616161);
         badgeLabel = 'Masuk';
         break;
-      case OrderStatus.konfirmasi:
-        badgeBg = const Color(0xFFC8E6C9);
-        badgeFg = const Color(0xFF2E7D32);
-        badgeLabel = 'Lunas';
+      case OrderStatus.dicuci:
+        badgeBg = const Color(0xFFD9F7E3);
+        badgeFg = const Color(0xFF1E7E34);
+        badgeLabel = 'Dicuci';
+        break;
+      case OrderStatus.disetrika:
+        badgeBg = const Color(0xFFD1C4E9);
+        badgeFg = const Color(0xFF512DA8);
+        badgeLabel = 'Disetrika';
         break;
       case OrderStatus.dijemput:
         badgeBg = const Color(0xFFD6F0F7);

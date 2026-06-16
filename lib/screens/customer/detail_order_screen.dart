@@ -35,10 +35,15 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
         badgeFg = const Color(0xFF555555);
         badgeLabel = 'Menunggu';
         break;
-      case OrderStatus.konfirmasi:
-        badgeBg = const Color(0xFFC8E6C9);
-        badgeFg = const Color(0xFF2E7D32);
-        badgeLabel = 'Lunas';
+      case OrderStatus.dicuci:
+        badgeBg = const Color(0xFFD9F7E3);
+        badgeFg = const Color(0xFF1E7E34);
+        badgeLabel = 'Dicuci';
+        break;
+      case OrderStatus.disetrika:
+        badgeBg = const Color(0xFFD1C4E9);
+        badgeFg = const Color(0xFF512DA8);
+        badgeLabel = 'Disetrika';
         break;
       case OrderStatus.dijemput:
         badgeBg = const Color(0xFFD6F0F7);
@@ -218,7 +223,7 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
                 ),
               ),
 
-              if (order.status == OrderStatus.konfirmasi) ...[
+              if (order.status == OrderStatus.disetrika) ...[
                 const SizedBox(height: 14),
                 Row(
                   children: [

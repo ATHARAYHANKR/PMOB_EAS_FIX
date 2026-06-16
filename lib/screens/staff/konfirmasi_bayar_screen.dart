@@ -274,7 +274,7 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
                         Navigator.pop(context);
                         try {
                           await FirestoreService.updateStatus(
-                              order.id, OrderStatus.konfirmasi);
+                              order.id, OrderStatus.dicuci);
                           if (!mounted) return;
                           _showSnack('${order.id} berhasil dikonfirmasi lunas');
                         } catch (e) {

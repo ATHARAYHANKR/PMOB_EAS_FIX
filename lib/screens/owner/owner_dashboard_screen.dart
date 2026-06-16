@@ -411,10 +411,15 @@ class OwnerDashboardScreen extends StatelessWidget {
         badgeFg = const Color(0xFF795548);
         badgeLabel = 'Timbang';
         break;
-      case OrderStatus.konfirmasi:
+      case OrderStatus.dicuci:
         badgeBg = const Color(0xFFFFF9C4);
         badgeFg = const Color(0xFF795548);
-        badgeLabel = 'Dicuci & Disetrika';
+        badgeLabel = 'Dicuci';
+        break;
+      case OrderStatus.disetrika:
+        badgeBg = const Color(0xFFD1C4E9);
+        badgeFg = const Color(0xFF512DA8);
+        badgeLabel = 'Disetrika';
         break;
 
       case OrderStatus.konfirmasiBayar:
