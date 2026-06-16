@@ -2,11 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum OrderStatus {
   masuk,
-  perluTimbang,
-  selesai,
-  konfirmasiBayar,
-  konfirmasi,
   dijemput,
+  perluTimbang,
+  dicuci,
+  disetrika,
+  konfirmasiBayar,
+  selesai,
   dibatalkan,
 }
 
@@ -19,12 +20,14 @@ extension OrderStatusX on OrderStatus {
     switch (normalized) {
       case OrderStatus.masuk:
         return 'Menunggu Konfirmasi';
-      case OrderStatus.konfirmasi:
-        return 'Lunas';
       case OrderStatus.dijemput:
         return 'Dijemput';
       case OrderStatus.perluTimbang:
         return 'Timbang';
+      case OrderStatus.dicuci:
+        return 'Dicuci';
+      case OrderStatus.disetrika:
+        return 'Disetrika';
       case OrderStatus.konfirmasiBayar:
         return 'Menunggu Pembayaran';
       case OrderStatus.selesai:
@@ -42,10 +45,12 @@ extension OrderStatusX on OrderStatus {
         return 'Dijemput';
       case OrderStatus.perluTimbang:
         return 'Perlu Timbang';
+      case OrderStatus.dicuci:
+        return 'Dicuci';
+      case OrderStatus.disetrika:
+        return 'Disetrika';
       case OrderStatus.konfirmasiBayar:
         return 'Menunggu Pembayaran';
-      case OrderStatus.konfirmasi:
-        return 'Lunas';
       case OrderStatus.selesai:
         return 'Selesai';
       case OrderStatus.dibatalkan:
@@ -58,16 +63,18 @@ String orderStatusToString(OrderStatus status) {
   switch (status) {
     case OrderStatus.masuk:
       return 'masuk';
-    case OrderStatus.perluTimbang:
-      return 'perluTimbang';
-    case OrderStatus.selesai:
-      return 'selesai';
-    case OrderStatus.konfirmasiBayar:
-      return 'konfirmasiBayar';
-    case OrderStatus.konfirmasi:
-      return 'konfirmasi';
     case OrderStatus.dijemput:
       return 'dijemput';
+    case OrderStatus.perluTimbang:
+      return 'perluTimbang';
+    case OrderStatus.dicuci:
+      return 'dicuci';
+    case OrderStatus.disetrika:
+      return 'disetrika';
+    case OrderStatus.konfirmasiBayar:
+      return 'konfirmasiBayar';
+    case OrderStatus.selesai:
+      return 'selesai';
     case OrderStatus.dibatalkan:
       return 'dibatalkan';
   }
@@ -83,20 +90,24 @@ OrderStatus orderStatusFromString(String? value) {
     case 'perlu_timbang':
     case 'perluTimbang':
       return OrderStatus.perluTimbang;
-    case 'selesai':
-      return OrderStatus.selesai;
+    case 'dicuci':
+      return OrderStatus.dicuci;
+    case 'disetrika':
+      return OrderStatus.disetrika;
     case 'konfirmasi bayar':
     case 'konfirmasibayar':
     case 'konfirmasiBayar':
       return OrderStatus.konfirmasiBayar;
-    case 'konfirmasi':
-    case 'dicuci & disetrika':
-    case 'dicuci':
-    case 'disetrika':
-    case 'lunas':
-      return OrderStatus.konfirmasi;
+    case 'selesai':
+      return OrderStatus.selesai;
     case 'dibatalkan':
       return OrderStatus.dibatalkan;
+    // Legacy values that mapped to old konfirmasi status
+    case 'konfirmasi':
+    case 'dicuci & disetrika':
+    case 'lunas':
+      // Map legacy values to dicuci (start of washing process)
+      return OrderStatus.dicuci;
     default:
       return OrderStatus.masuk;
   }
@@ -146,10 +157,12 @@ class OrderModel {
         return 'Dijemput';
       case OrderStatus.perluTimbang:
         return 'Perlu Timbang';
+      case OrderStatus.dicuci:
+        return 'Dicuci';
+      case OrderStatus.disetrika:
+        return 'Disetrika';
       case OrderStatus.konfirmasiBayar:
         return 'Menunggu Pembayaran';
-      case OrderStatus.konfirmasi:
-        return 'Lunas';
       case OrderStatus.selesai:
         return 'Selesai';
       case OrderStatus.dibatalkan:
@@ -161,8 +174,9 @@ class OrderModel {
     OrderStatus.masuk,
     OrderStatus.dijemput,
     OrderStatus.perluTimbang,
+    OrderStatus.dicuci,
+    OrderStatus.disetrika,
     OrderStatus.konfirmasiBayar,
-    OrderStatus.konfirmasi,
     OrderStatus.selesai,
   ];
 

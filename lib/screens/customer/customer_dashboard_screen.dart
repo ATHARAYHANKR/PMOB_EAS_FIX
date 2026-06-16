@@ -52,11 +52,22 @@ class CustomerDashboardScreen extends StatelessWidget {
   ({Color bg, Color fg, String label}) _statusStyle(OrderStatus status) {
     switch (status) {
       case OrderStatus.masuk:
-      case OrderStatus.konfirmasi:
         return (
           bg: _DashColors.neutralSoft,
           fg: _DashColors.neutral,
           label: status.stepTitle
+        );
+      case OrderStatus.dicuci:
+        return (
+          bg: _DashColors.primarySoft,
+          fg: _DashColors.primary,
+          label: 'Dicuci'
+        );
+      case OrderStatus.disetrika:
+        return (
+          bg: _DashColors.primarySoft,
+          fg: _DashColors.primary,
+          label: 'Disetrika'
         );
       case OrderStatus.dijemput:
         return (

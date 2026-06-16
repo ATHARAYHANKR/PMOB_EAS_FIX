@@ -14,7 +14,15 @@ class KelolaOrderScreen extends StatefulWidget {
 }
 
 // Filter yang ditampilkan di chip
-enum _FilterTab { semua, diambil, timbang, cuci, pembayaran, selesai }
+enum _FilterTab {
+  semua,
+  diambil,
+  timbang,
+  dicuci,
+  disetrika,
+  pembayaran,
+  selesai
+}
 
 class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
   _FilterTab _activeFilter = _FilterTab.semua;
@@ -31,8 +39,10 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
             .toList();
       case _FilterTab.timbang:
         return all.where((o) => o.status == OrderStatus.perluTimbang).toList();
-      case _FilterTab.cuci:
-        return all.where((o) => o.status == OrderStatus.konfirmasi).toList();
+      case _FilterTab.dicuci:
+        return all.where((o) => o.status == OrderStatus.dicuci).toList();
+      case _FilterTab.disetrika:
+        return all.where((o) => o.status == OrderStatus.disetrika).toList();
       case _FilterTab.pembayaran:
         return all
             .where((o) => o.status == OrderStatus.konfirmasiBayar)
@@ -51,8 +61,10 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
         return 'Tidak ada order yang sedang dijemput';
       case _FilterTab.timbang:
         return 'Tidak ada order yang perlu ditimbang';
-      case _FilterTab.cuci:
-        return 'Tidak ada order yang sedang dicuci & disetrika';
+      case _FilterTab.dicuci:
+        return 'Tidak ada order yang sedang dicuci';
+      case _FilterTab.disetrika:
+        return 'Tidak ada order yang sedang disetrika';
       case _FilterTab.pembayaran:
         return 'Tidak ada order yang menunggu konfirmasi bayar';
       default:
@@ -139,9 +151,10 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
       order: order,
       dateStr: dateStr,
       timeStr: timeStr,
-      onTap: order.status.normalized == OrderStatus.dijemput ||
+      onTap: order.status == OrderStatus.dijemput ||
               order.status == OrderStatus.perluTimbang ||
-              order.status == OrderStatus.konfirmasi
+              order.status == OrderStatus.dicuci ||
+              order.status == OrderStatus.disetrika
           ? () {
               Navigator.push(
                 context,
@@ -185,7 +198,8 @@ class _StaffOrderFilterChips extends StatelessWidget {
           _buildChip(context, 'Semua', _FilterTab.semua),
           _buildChip(context, 'Dijemput', _FilterTab.diambil),
           _buildChip(context, 'Timbang', _FilterTab.timbang),
-          _buildChip(context, 'Dicuci & Disetrika', _FilterTab.cuci),
+          _buildChip(context, 'Dicuci', _FilterTab.dicuci),
+          _buildChip(context, 'Disetrika', _FilterTab.disetrika),
           _buildChip(context, 'Pembayaran', _FilterTab.pembayaran),
           _buildChip(context, 'Selesai', _FilterTab.selesai),
         ],

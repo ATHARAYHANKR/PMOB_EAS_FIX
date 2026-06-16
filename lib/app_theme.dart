@@ -46,13 +46,18 @@ class StatusBadgeConfig {
           fg: Color(0xFF795548),
           icon: Icons.balance_rounded,
         );
-      case OrderStatus.konfirmasi:
+      case OrderStatus.dicuci:
+        return const StatusBadgeConfig(
+          bg: Color(0xFFB2DFDB),
+          fg: Color(0xFF00695C),
+          icon: Icons.local_laundry_service_rounded,
+        );
+      case OrderStatus.disetrika:
         return const StatusBadgeConfig(
           bg: Color(0xFFD6F5F0),
           fg: Color(0xFF00897B),
-          icon: Icons.local_laundry_service_rounded,
+          icon: Icons.dry_cleaning_rounded,
         );
-
       case OrderStatus.konfirmasiBayar:
         return const StatusBadgeConfig(
           bg: Color(0xFFEDD6FF),
