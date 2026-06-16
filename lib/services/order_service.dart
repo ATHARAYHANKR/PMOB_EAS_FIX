@@ -49,7 +49,7 @@ class OrderRepository {
       serviceType: 'Cuci Kering',
       pickupDate: DateTime(2026, 6, 11),
       pickupSlot: '08.00-10.00',
-      status: OrderStatus.konfirmasi,
+      status: OrderStatus.dicuci,
       steps: [
         StatusStep(
             title: 'Menunggu Konfirmasi', date: '10 Juni 2026', done: true),

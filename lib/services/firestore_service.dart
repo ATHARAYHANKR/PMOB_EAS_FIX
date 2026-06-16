@@ -321,13 +321,14 @@ class FirestoreService {
       case OrderStatus.masuk:
         return next == OrderStatus.dijemput;
       case OrderStatus.dijemput:
-        return next == OrderStatus.perluTimbang ||
-            next == OrderStatus.konfirmasiBayar;
+        return next == OrderStatus.perluTimbang;
       case OrderStatus.perluTimbang:
         return next == OrderStatus.konfirmasiBayar;
       case OrderStatus.konfirmasiBayar:
-        return next == OrderStatus.konfirmasi;
-      case OrderStatus.konfirmasi:
+        return next == OrderStatus.dicuci;
+      case OrderStatus.dicuci:
+        return next == OrderStatus.disetrika;
+      case OrderStatus.disetrika:
         return next == OrderStatus.selesai;
       default:
         return false;

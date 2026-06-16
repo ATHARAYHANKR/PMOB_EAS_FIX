@@ -40,6 +40,18 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
           fg: Color(0xFF795548),
           label: 'Timbang',
         );
+      case OrderStatus.dicuci:
+        return const _BadgeStyle(
+          bg: Color(0xFFB2DFDB),
+          fg: Color(0xFF00695C),
+          label: 'Dicuci',
+        );
+      case OrderStatus.disetrika:
+        return const _BadgeStyle(
+          bg: Color(0xFFD6F5F0),
+          fg: Color(0xFF00897B),
+          label: 'Disetrika',
+        );
       case OrderStatus.konfirmasiBayar:
         return const _BadgeStyle(
           bg: Color(0xFFEDD6FF),
@@ -67,11 +79,12 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
         return 'Order sudah dijemput, lanjutkan ke penimbangan.';
       case OrderStatus.perluTimbang:
         return 'Lanjutkan ke proses penimbangan untuk mengirim tagihan ke customer.';
+      case OrderStatus.dicuci:
+        return 'Order sedang dicuci. Lanjutkan ke proses setrika setelah selesai.';
+      case OrderStatus.disetrika:
+        return 'Order sedang disetrika. Tandai selesai atau lanjut ke konfirmasi pembayaran.';
       case OrderStatus.konfirmasiBayar:
         return 'Menunggu customer melakukan pembayaran sebelum dilanjutkan.';
-      case OrderStatus.konfirmasi:
-        return 'Order sedang dicuci, disetrika & dikirim. Tandai selesai setelah proses selesai.';
-
       default:
         return 'Lanjutkan proses pesanan ini.';
     }
@@ -82,14 +95,16 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
     switch (order.status) {
       case OrderStatus.masuk:
         return 'Terima Order';
-      case OrderStatus.konfirmasi:
-        return 'Tandai Selesai';
-      case OrderStatus.konfirmasiBayar:
-        return 'Menunggu Pembayaran';
       case OrderStatus.dijemput:
         return 'Timbang Order';
       case OrderStatus.perluTimbang:
         return 'Kirim Tagihan';
+      case OrderStatus.dicuci:
+        return 'Lanjut Setrika';
+      case OrderStatus.disetrika:
+        return 'Lanjut Proses';
+      case OrderStatus.konfirmasiBayar:
+        return 'Menunggu Pembayaran';
       default:
         return 'Lanjut Proses';
     }
