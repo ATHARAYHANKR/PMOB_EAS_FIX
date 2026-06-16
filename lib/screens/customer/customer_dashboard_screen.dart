@@ -64,18 +64,17 @@ class CustomerDashboardScreen extends StatelessWidget {
           fg: _DashColors.primary,
           label: 'Dijemput'
         );
-      case OrderStatus.diproses:
-      case OrderStatus.konfirmasiBayar:
-        return (
-          bg: _DashColors.amberSoft,
-          fg: _DashColors.amber,
-          label: status.stepTitle
-        );
       case OrderStatus.perluTimbang:
         return (
           bg: _DashColors.primarySoft,
           fg: _DashColors.primary,
           label: 'Perlu Timbang'
+        );
+      case OrderStatus.konfirmasiBayar:
+        return (
+          bg: _DashColors.amberSoft,
+          fg: _DashColors.amber,
+          label: 'Menunggu Pembayaran'
         );
       case OrderStatus.selesai:
         return (
@@ -316,8 +315,7 @@ class CustomerDashboardScreen extends StatelessWidget {
     final style = _statusStyle(order.status);
     final isDone = order.status == OrderStatus.selesai;
     final isCancelled = order.status == OrderStatus.dibatalkan;
-    final progress =
-        isCancelled ? 0.0 : order.workflowProgress.clamp(0.0, 1.0);
+    final progress = isCancelled ? 0.0 : order.workflowProgress.clamp(0.0, 1.0);
 
     return Container(
       width: double.infinity,

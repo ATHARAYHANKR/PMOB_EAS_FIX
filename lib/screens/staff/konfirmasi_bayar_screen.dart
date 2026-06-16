@@ -79,8 +79,7 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
   Widget _buildCard(OrderModel order) {
     final dateStr = _formatDate(order.pickupDate);
     final hargaStr = order.totalHarga != null
-        ? NumberFormat.currency(
-                locale: 'id', symbol: 'Rp', decimalDigits: 0)
+        ? NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0)
             .format(order.totalHarga)
         : null;
 
@@ -117,8 +116,7 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
             const SizedBox(height: 12),
             Container(
               width: double.infinity,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: const Color(0xFFF3E5F5),
                 borderRadius: BorderRadius.circular(10),
@@ -276,7 +274,7 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
                         Navigator.pop(context);
                         try {
                           await FirestoreService.updateStatus(
-                              order.id, OrderStatus.selesai);
+                              order.id, OrderStatus.konfirmasi);
                           if (!mounted) return;
                           _showSnack('${order.id} berhasil dikonfirmasi lunas');
                         } catch (e) {

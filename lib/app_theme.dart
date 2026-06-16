@@ -3,16 +3,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'models/order_model.dart';
 
 class AppColors {
-  static const primary      = Color(0xFF2E7D32); // dark green
+  static const primary = Color(0xFF2E7D32); // dark green
   static const primaryLight = Color(0xFF4CAF50); // medium green
-  static const bgPage       = Color(0xFFF5F6FA);
-  static const bgCard       = Color(0xFFFFFFFF);
-  static const textDark     = Color(0xFF1A1A2E);
-  static const textGrey     = Color(0xFF9E9E9E);
-  static const orange       = Color(0xFFFF8C42);
-  static const blue         = Color(0xFF1E88E5);
-  static const statusGreen  = Color(0xFF43A047);
-  static const statusBlue   = Color(0xFF1E88E5);
+  static const bgPage = Color(0xFFF5F6FA);
+  static const bgCard = Color(0xFFFFFFFF);
+  static const textDark = Color(0xFF1A1A2E);
+  static const textGrey = Color(0xFF9E9E9E);
+  static const orange = Color(0xFFFF8C42);
+  static const blue = Color(0xFF1E88E5);
+  static const statusGreen = Color(0xFF43A047);
+  static const statusBlue = Color(0xFF1E88E5);
   static const statusOrange = Color(0xFFFB8C00);
 }
 
@@ -34,11 +34,11 @@ class StatusBadgeConfig {
           fg: AppColors.orange,
           icon: Icons.inventory_2_rounded,
         );
-      case OrderStatus.diproses:
+      case OrderStatus.dijemput:
         return const StatusBadgeConfig(
           bg: Color(0xFFD6EEFF),
           fg: Color(0xFF1565C0),
-          icon: Icons.sync_rounded,
+          icon: Icons.delivery_dining_rounded,
         );
       case OrderStatus.perluTimbang:
         return const StatusBadgeConfig(
@@ -52,12 +52,7 @@ class StatusBadgeConfig {
           fg: Color(0xFF00897B),
           icon: Icons.local_laundry_service_rounded,
         );
-      case OrderStatus.dijemput:
-        return const StatusBadgeConfig(
-          bg: Color(0xFFE1F5FE),
-          fg: Color(0xFF0277BD),
-          icon: Icons.delivery_dining_rounded,
-        );
+
       case OrderStatus.konfirmasiBayar:
         return const StatusBadgeConfig(
           bg: Color(0xFFEDD6FF),

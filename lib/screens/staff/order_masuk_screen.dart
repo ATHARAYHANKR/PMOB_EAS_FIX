@@ -18,7 +18,7 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
   int _tabIndex = 0;
 
   OrderStatus get _activeStatus =>
-      _tabIndex == 0 ? OrderStatus.masuk : OrderStatus.perluTimbang;
+      _tabIndex == 0 ? OrderStatus.masuk : OrderStatus.dijemput;
 
   @override
   Widget build(BuildContext context) {
@@ -258,7 +258,7 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
   Widget _buildEmptyState() {
     final msg = _tabIndex == 0
         ? 'Tidak ada orderan yang perlu diambil'
-        : 'Tidak ada orderan yang perlu ditimbang';
+        : 'Tidak ada orderan yang sudah dijemput dan menunggu penimbangan';
     final icon =
         _tabIndex == 0 ? Icons.move_to_inbox_rounded : Icons.balance_rounded;
 
@@ -359,9 +359,9 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
                         Navigator.pop(context);
                         try {
                           await FirestoreService.updateStatus(
-                              order.id, OrderStatus.diproses);
+                              order.id, OrderStatus.dijemput);
                           if (!mounted) return;
-                          _showSnack('Order ${order.id} berhasil diambil');
+                          _showSnack('Order ${order.id} berhasil dijemput');
                         } catch (e) {
                           if (!mounted) return;
                           _showSnack('Gagal memperbarui status: $e');

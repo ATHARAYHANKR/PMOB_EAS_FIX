@@ -26,7 +26,9 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
         // Tampilkan semua kecuali "masuk" (belum diambil)
         return all.where((o) => o.status != OrderStatus.masuk).toList();
       case _FilterTab.diambil:
-        return all.where((o) => o.status == OrderStatus.diproses).toList();
+        return all
+            .where((o) => o.status.normalized == OrderStatus.dijemput)
+            .toList();
       case _FilterTab.timbang:
         return all.where((o) => o.status == OrderStatus.perluTimbang).toList();
       case _FilterTab.cuci:
@@ -46,7 +48,7 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
       case _FilterTab.selesai:
         return 'Belum ada pesenan yang selesai';
       case _FilterTab.diambil:
-        return 'Tidak ada order yang sedang diambil';
+        return 'Tidak ada order yang sedang dijemput';
       case _FilterTab.timbang:
         return 'Tidak ada order yang perlu ditimbang';
       case _FilterTab.cuci:
@@ -75,18 +77,9 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
             // ── Filter chips ──────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _chip('Semua', _FilterTab.semua),
-                    _chip('Diambil', _FilterTab.diambil),
-                    _chip('Timbang', _FilterTab.timbang),
-                    _chip('Dicuci & Disetrika', _FilterTab.cuci),
-                    _chip('Pembayaran', _FilterTab.pembayaran),
-                    _chip('Selesai', _FilterTab.selesai),
-                  ],
-                ),
+              child: _StaffOrderFilterChips(
+                activeFilter: _activeFilter,
+                onSelected: (tab) => setState(() => _activeFilter = tab),
               ),
             ),
 
@@ -136,12 +129,76 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
   }
 
   // ── Chip ──────────────────────────────────────────────────
-  Widget _chip(String label, _FilterTab tab) {
-    final isActive = _activeFilter == tab;
+
+  // ── Order Card ────────────────────────────────────────────
+  Widget _buildCard(OrderModel order) {
+    final dateStr = DateFormat('d MMMM yyyy', 'id').format(order.pickupDate);
+    final timeStr = order.pickupSlot.split(' ').first;
+
+    return StaffOrderCard(
+      order: order,
+      dateStr: dateStr,
+      timeStr: timeStr,
+      onTap: order.status.normalized == OrderStatus.dijemput ||
+              order.status == OrderStatus.perluTimbang ||
+              order.status == OrderStatus.konfirmasi
+          ? () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => LanjutProsesScreen(
+                    order: order,
+                    onUpdated: () => setState(() {}),
+                  ),
+                ),
+              ).then((_) => setState(() {}));
+            }
+          : null,
+    );
+  }
+
+  // ── Empty State ───────────────────────────────────────────
+  Widget _buildEmptyState() {
+    return StaffEmptyState(
+      icon: Icons.list_alt_rounded,
+      message: _emptyMessage,
+    );
+  }
+}
+
+class _StaffOrderFilterChips extends StatelessWidget {
+  final _FilterTab activeFilter;
+  final ValueChanged<_FilterTab> onSelected;
+
+  const _StaffOrderFilterChips({
+    Key? key,
+    required this.activeFilter,
+    required this.onSelected,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _buildChip(context, 'Semua', _FilterTab.semua),
+          _buildChip(context, 'Dijemput', _FilterTab.diambil),
+          _buildChip(context, 'Timbang', _FilterTab.timbang),
+          _buildChip(context, 'Dicuci & Disetrika', _FilterTab.cuci),
+          _buildChip(context, 'Pembayaran', _FilterTab.pembayaran),
+          _buildChip(context, 'Selesai', _FilterTab.selesai),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChip(BuildContext context, String label, _FilterTab tab) {
+    final isActive = activeFilter == tab;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: GestureDetector(
-        onTap: () => setState(() => _activeFilter = tab),
+        onTap: () => onSelected(tab),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
@@ -174,12 +231,24 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
       ),
     );
   }
+}
 
-  // ── Order Card ────────────────────────────────────────────
-  Widget _buildCard(OrderModel order) {
-    final dateStr = DateFormat('d MMMM yyyy', 'id').format(order.pickupDate);
-    final timeStr = order.pickupSlot.split(' ').first;
+class StaffOrderCard extends StatelessWidget {
+  final OrderModel order;
+  final String dateStr;
+  final String timeStr;
+  final VoidCallback? onTap;
 
+  const StaffOrderCard({
+    super.key,
+    required this.order,
+    required this.dateStr,
+    required this.timeStr,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final beratLabel = order.beratKg != null
         ? '${order.beratKg!.toStringAsFixed(order.beratKg! % 1 == 0 ? 0 : 1)} kg'
         : null;
@@ -188,26 +257,8 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
             .format(order.totalHarga)
         : null;
 
-    // Apakah bisa dilanjut proses (bukan selesai / konfirmasi bayar)
-    final bisa = order.status == OrderStatus.diproses ||
-        order.status == OrderStatus.perluTimbang ||
-        order.status == OrderStatus.konfirmasi ||
-        order.status == OrderStatus.dijemput;
-
     return StaffCard(
-      onTap: bisa
-          ? () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => LanjutProsesScreen(
-                    order: order,
-                    onUpdated: () => setState(() {}),
-                  ),
-                ),
-              ).then((_) => setState(() {}));
-            }
-          : null,
+      onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -227,7 +278,6 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
             ],
           ),
           const Divider(height: 18),
-
           _infoRow(Icons.person_outline_rounded,
               '${order.customerName} • ${order.phone}'),
           const SizedBox(height: 6),
@@ -239,7 +289,6 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
           ),
           const SizedBox(height: 6),
           _infoRow(Icons.event_outlined, '$dateStr • $timeStr'),
-
           if (hargaStr != null) ...[
             const SizedBox(height: 10),
             Row(
@@ -258,8 +307,7 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
               ],
             ),
           ],
-
-          if (bisa) ...[
+          if (onTap != null) ...[
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -300,14 +348,6 @@ class _KelolaOrderScreenState extends State<KelolaOrderScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  // ── Empty State ───────────────────────────────────────────
-  Widget _buildEmptyState() {
-    return StaffEmptyState(
-      icon: Icons.list_alt_rounded,
-      message: _emptyMessage,
     );
   }
 }

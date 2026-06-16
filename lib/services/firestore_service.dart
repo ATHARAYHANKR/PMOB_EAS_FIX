@@ -308,18 +308,59 @@ class FirestoreService {
     return OrderModel.fromMap(doc.id, doc.data() as Map<String, dynamic>);
   }
 
+  static bool _isValidStatusTransition(OrderStatus current, OrderStatus next) {
+    if (current == next) return false;
+    if (next == OrderStatus.dibatalkan) {
+      return current != OrderStatus.selesai &&
+          current != OrderStatus.dibatalkan;
+    }
+    if (current == OrderStatus.selesai || current == OrderStatus.dibatalkan) {
+      return false;
+    }
+    switch (current) {
+      case OrderStatus.masuk:
+        return next == OrderStatus.dijemput;
+      case OrderStatus.dijemput:
+        return next == OrderStatus.perluTimbang ||
+            next == OrderStatus.konfirmasiBayar;
+      case OrderStatus.perluTimbang:
+        return next == OrderStatus.konfirmasiBayar;
+      case OrderStatus.konfirmasiBayar:
+        return next == OrderStatus.konfirmasi;
+      case OrderStatus.konfirmasi:
+        return next == OrderStatus.selesai;
+      default:
+        return false;
+    }
+  }
+
   static Future<void> updateStatus(String id, OrderStatus status) async {
     if (!firebaseAvailable) {
       final index = _localOrders.indexWhere((order) => order.id == id);
-      if (index >= 0) {
-        _localOrders[index].status = status;
+      if (index < 0) {
+        throw StateError('Order $id tidak ditemukan.');
       }
+      final current = _localOrders[index].status;
+      if (!_isValidStatusTransition(current, status)) {
+        throw StateError(
+            'Transisi status tidak valid: ${current.stepTitle} → ${status.stepTitle}');
+      }
+      _localOrders[index].status = status;
       return;
     }
-    await _db!
-        .collection('orders')
-        .doc(id)
-        .update({'status': orderStatusToString(status)});
+
+    final docRef = _db!.collection('orders').doc(id);
+    final doc = await docRef.get();
+    if (!doc.exists) {
+      throw StateError('Order $id tidak ditemukan.');
+    }
+    final currentOrder =
+        OrderModel.fromMap(doc.id, doc.data() as Map<String, dynamic>);
+    if (!_isValidStatusTransition(currentOrder.status, status)) {
+      throw StateError(
+          'Transisi status tidak valid: ${currentOrder.status.stepTitle} → ${status.stepTitle}');
+    }
+    await docRef.update({'status': orderStatusToString(status)});
   }
 
   static Future<void> cancelOrder(String id) async {
@@ -336,13 +377,32 @@ class FirestoreService {
   static Future<void> updateWeightAndConfirm(String id, double weightKg) async {
     if (!firebaseAvailable) {
       final index = _localOrders.indexWhere((order) => order.id == id);
-      if (index >= 0) {
-        _localOrders[index].beratKg = weightKg;
-        _localOrders[index].status = OrderStatus.konfirmasiBayar;
+      if (index < 0) {
+        throw StateError('Order $id tidak ditemukan.');
       }
+      final current = _localOrders[index].status;
+      if (!_isValidStatusTransition(current, OrderStatus.konfirmasiBayar)) {
+        throw StateError(
+            'Transisi status tidak valid: ${current.stepTitle} → ${OrderStatus.konfirmasiBayar.stepTitle}');
+      }
+      _localOrders[index].beratKg = weightKg;
+      _localOrders[index].status = OrderStatus.konfirmasiBayar;
       return;
     }
-    await _db!.collection('orders').doc(id).update({
+
+    final docRef = _db!.collection('orders').doc(id);
+    final doc = await docRef.get();
+    if (!doc.exists) {
+      throw StateError('Order $id tidak ditemukan.');
+    }
+    final currentOrder =
+        OrderModel.fromMap(doc.id, doc.data() as Map<String, dynamic>);
+    if (!_isValidStatusTransition(
+        currentOrder.status, OrderStatus.konfirmasiBayar)) {
+      throw StateError(
+          'Transisi status tidak valid: ${currentOrder.status.stepTitle} → ${OrderStatus.konfirmasiBayar.stepTitle}');
+    }
+    await docRef.update({
       'beratKg': weightKg,
       'status': orderStatusToString(OrderStatus.konfirmasiBayar),
     });
@@ -400,10 +460,8 @@ class FirestoreService {
 
   static Future<void> addLayanan(Map<String, dynamic> data) async {
     if (!firebaseAvailable) {
-      _localLayanan.add({
-        ...data,
-        'id': data['id'] ?? 'layanan_${_localLayanan.length + 1}'
-      });
+      _localLayanan.add(
+          {...data, 'id': data['id'] ?? 'layanan_${_localLayanan.length + 1}'});
       return;
     }
     await _db!.collection('layanan').add(data);

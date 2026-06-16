@@ -9,7 +9,7 @@ class OrderRepository {
       serviceType: 'Cuci Kering',
       pickupDate: DateTime(2026, 6, 5),
       pickupSlot: '08.00 - 10.00 (Pagi)',
-      status: OrderStatus.diproses,
+      status: OrderStatus.dijemput,
     ),
     OrderModel(
       id: 'ORD-20260606-002',
@@ -91,7 +91,7 @@ class OrderRepository {
       totalHarga: 35000,
       pickupDate: DateTime(2026, 6, 6),
       pickupSlot: '08.00-10.00',
-      status: OrderStatus.diproses,
+      status: OrderStatus.dijemput,
       steps: [
         StatusStep(
             title: 'Berhasil Konfirmasi',
