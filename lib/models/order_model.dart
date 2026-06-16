@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum OrderStatus {
   masuk,
-  diproses,
   perluTimbang,
   selesai,
   konfirmasiBayar,
@@ -12,21 +11,22 @@ enum OrderStatus {
 }
 
 extension OrderStatusX on OrderStatus {
+  OrderStatus get normalized {
+    return this;
+  }
+
   String get stepTitle {
-    switch (this) {
+    switch (normalized) {
       case OrderStatus.masuk:
         return 'Menunggu Konfirmasi';
       case OrderStatus.konfirmasi:
-
-        return 'Dicuci & Disetrika';
+        return 'Lunas';
       case OrderStatus.dijemput:
         return 'Dijemput';
-      case OrderStatus.diproses:
-        return 'Diambil';
       case OrderStatus.perluTimbang:
         return 'Timbang';
       case OrderStatus.konfirmasiBayar:
-        return 'Konfirmasi Pembayaran';
+        return 'Menunggu Pembayaran';
       case OrderStatus.selesai:
         return 'Selesai';
       case OrderStatus.dibatalkan:
@@ -35,21 +35,19 @@ extension OrderStatusX on OrderStatus {
   }
 
   String get statusLabel {
-    switch (this) {
+    switch (normalized) {
       case OrderStatus.masuk:
-        return 'Order Masuk';
-      case OrderStatus.diproses:
-        return 'Diambil';
-      case OrderStatus.perluTimbang:
-        return 'Perlu Timbang';
-      case OrderStatus.selesai:
-        return 'Selesai';
-      case OrderStatus.konfirmasiBayar:
-        return 'Konfirmasi Bayar';
-      case OrderStatus.konfirmasi:
-        return 'Dicuci & Disetrika';
+        return 'Menunggu Konfirmasi';
       case OrderStatus.dijemput:
         return 'Dijemput';
+      case OrderStatus.perluTimbang:
+        return 'Perlu Timbang';
+      case OrderStatus.konfirmasiBayar:
+        return 'Menunggu Pembayaran';
+      case OrderStatus.konfirmasi:
+        return 'Lunas';
+      case OrderStatus.selesai:
+        return 'Selesai';
       case OrderStatus.dibatalkan:
         return 'Dibatalkan';
     }
@@ -60,8 +58,6 @@ String orderStatusToString(OrderStatus status) {
   switch (status) {
     case OrderStatus.masuk:
       return 'masuk';
-    case OrderStatus.diproses:
-      return 'diproses';
     case OrderStatus.perluTimbang:
       return 'perluTimbang';
     case OrderStatus.selesai:
@@ -81,7 +77,8 @@ OrderStatus orderStatusFromString(String? value) {
   switch (value?.toLowerCase()) {
     case 'diproses':
     case 'diambil':
-      return OrderStatus.diproses;
+    case 'dijemput':
+      return OrderStatus.dijemput;
     case 'perlu timbang':
     case 'perlu_timbang':
     case 'perluTimbang':
@@ -96,9 +93,8 @@ OrderStatus orderStatusFromString(String? value) {
     case 'dicuci & disetrika':
     case 'dicuci':
     case 'disetrika':
+    case 'lunas':
       return OrderStatus.konfirmasi;
-    case 'dijemput':
-      return OrderStatus.dijemput;
     case 'dibatalkan':
       return OrderStatus.dibatalkan;
     default:
@@ -146,18 +142,16 @@ class OrderModel {
     switch (status) {
       case OrderStatus.masuk:
         return 'Order Masuk';
-      case OrderStatus.diproses:
-        return 'Diambil';
-      case OrderStatus.perluTimbang:
-        return 'Perlu Timbang';
-      case OrderStatus.selesai:
-        return 'Selesai';
-      case OrderStatus.konfirmasiBayar:
-        return 'Konfirmasi Bayar';
-      case OrderStatus.konfirmasi:
-        return 'Dicuci & Disetrika';
       case OrderStatus.dijemput:
         return 'Dijemput';
+      case OrderStatus.perluTimbang:
+        return 'Perlu Timbang';
+      case OrderStatus.konfirmasiBayar:
+        return 'Menunggu Pembayaran';
+      case OrderStatus.konfirmasi:
+        return 'Lunas';
+      case OrderStatus.selesai:
+        return 'Selesai';
       case OrderStatus.dibatalkan:
         return 'Dibatalkan';
     }
@@ -165,14 +159,14 @@ class OrderModel {
 
   static const List<OrderStatus> workflowStatuses = [
     OrderStatus.masuk,
-    OrderStatus.diproses,
+    OrderStatus.dijemput,
     OrderStatus.perluTimbang,
     OrderStatus.konfirmasiBayar,
     OrderStatus.konfirmasi,
     OrderStatus.selesai,
   ];
 
-  int get workflowIndex => workflowStatuses.indexOf(status);
+  int get workflowIndex => workflowStatuses.indexOf(status.normalized);
 
   double get workflowProgress {
     final index = workflowIndex;
@@ -181,8 +175,8 @@ class OrderModel {
   }
 
   OrderStatus? get nextStatus {
-    if (status == OrderStatus.dijemput) {
-      return OrderStatus.diproses;
+    if (status.normalized == OrderStatus.dijemput) {
+      return OrderStatus.perluTimbang;
     }
     final index = workflowIndex;
     if (index < 0 || index >= workflowStatuses.length - 1) return null;

@@ -28,11 +28,11 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
   // ── Warna & label badge berdasarkan status ─────────────────
   _BadgeStyle _badgeStyle() {
     switch (order.status) {
-      case OrderStatus.diproses:
+      case OrderStatus.dijemput:
         return const _BadgeStyle(
           bg: Color(0xFFD6EEFF),
           fg: Color(0xFF1565C0),
-          label: 'Diambil',
+          label: 'Dijemput',
         );
       case OrderStatus.perluTimbang:
         return const _BadgeStyle(
@@ -63,16 +63,15 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
     switch (order.status) {
       case OrderStatus.masuk:
         return 'Terima order untuk memulai proses laundry.';
-      case OrderStatus.diproses:
-        return 'Terima order dan lanjutkan ke penimbangan.';
+      case OrderStatus.dijemput:
+        return 'Order sudah dijemput, lanjutkan ke penimbangan.';
       case OrderStatus.perluTimbang:
         return 'Lanjutkan ke proses penimbangan untuk mengirim tagihan ke customer.';
       case OrderStatus.konfirmasiBayar:
-        return 'Menunggu customer melakukan pembayaran sebelum lanjut diproses.';
+        return 'Menunggu customer melakukan pembayaran sebelum dilanjutkan.';
       case OrderStatus.konfirmasi:
         return 'Order sedang dicuci, disetrika & dikirim. Tandai selesai setelah proses selesai.';
-      case OrderStatus.dijemput:
-        return 'Pakaian sudah dijemput, lanjutkan ke proses selanjutnya.';
+
       default:
         return 'Lanjutkan proses pesanan ini.';
     }
@@ -88,11 +87,9 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
       case OrderStatus.konfirmasiBayar:
         return 'Menunggu Pembayaran';
       case OrderStatus.dijemput:
-        return 'Masuk Cucian';
-      case OrderStatus.diproses:
-        return 'Lanjut Timbang';
+        return 'Timbang Order';
       case OrderStatus.perluTimbang:
-        return 'Kirim ke Cuci';
+        return 'Kirim Tagihan';
       default:
         return 'Lanjut Proses';
     }

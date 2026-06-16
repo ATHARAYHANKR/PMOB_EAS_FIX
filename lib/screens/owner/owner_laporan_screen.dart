@@ -34,46 +34,46 @@ class _OwnerLaporanScreenState extends State<OwnerLaporanScreen> {
         pendapatan: 3200000,
         totalOrder: 88,
         selesai: 70,
-        diproses: 12,
+        dijemput: 12,
         dibatalkan: 6),
     'Februari 2026': const _LaporanData(
         pendapatan: 2800000,
         totalOrder: 76,
         selesai: 60,
-        diproses: 10,
+        dijemput: 10,
         dibatalkan: 6),
     'Maret 2026': const _LaporanData(
         pendapatan: 3700000,
         totalOrder: 95,
         selesai: 78,
-        diproses: 11,
+        dijemput: 11,
         dibatalkan: 6),
     'April 2026': const _LaporanData(
         pendapatan: 4100000,
         totalOrder: 110,
         selesai: 89,
-        diproses: 14,
+        dijemput: 14,
         dibatalkan: 7),
     'Mei 2026': const _LaporanData(
         pendapatan: 3900000,
         totalOrder: 102,
         selesai: 84,
-        diproses: 12,
+        dijemput: 12,
         dibatalkan: 6),
     'Juni 2026': const _LaporanData(
         pendapatan: 4500000,
         totalOrder: 120,
         selesai: 95,
-        diproses: 20,
+        dijemput: 20,
         dibatalkan: 5),
     'Juli 2026': const _LaporanData(
-        pendapatan: 0, totalOrder: 0, selesai: 0, diproses: 0, dibatalkan: 0),
+        pendapatan: 0, totalOrder: 0, selesai: 0, dijemput: 0, dibatalkan: 0),
   };
 
   _LaporanData get _current =>
       _dataMap[_selectedBulan] ??
       const _LaporanData(
-          pendapatan: 0, totalOrder: 0, selesai: 0, diproses: 0, dibatalkan: 0);
+          pendapatan: 0, totalOrder: 0, selesai: 0, dijemput: 0, dibatalkan: 0);
 
   @override
   Widget build(BuildContext context) {
@@ -225,10 +225,10 @@ class _OwnerLaporanScreenState extends State<OwnerLaporanScreen> {
                       icon: Icons.access_time_rounded,
                       iconBg: const Color(0xFFFFF3E0),
                       iconColor: const Color(0xFFE65100),
-                      label: 'Order Diambil',
-                      value: '${data.diproses}',
+                      label: 'Order Dijemput',
+                      value: '${data.dijemput}',
                       sub: data.totalOrder > 0
-                          ? '${(data.diproses / data.totalOrder * 100).toStringAsFixed(1)}% dari total'
+                          ? '${(data.dijemput / data.totalOrder * 100).toStringAsFixed(1)}% dari total'
                           : '0% dari total',
                       subColor: Colors.black45,
                       valueColor: const Color(0xFFE65100),
@@ -470,13 +470,13 @@ class _LaporanData {
   final int pendapatan;
   final int totalOrder;
   final int selesai;
-  final int diproses;
+  final int dijemput;
   final int dibatalkan;
   const _LaporanData({
     required this.pendapatan,
     required this.totalOrder,
     required this.selesai,
-    required this.diproses,
+    required this.dijemput,
     required this.dibatalkan,
   });
 }

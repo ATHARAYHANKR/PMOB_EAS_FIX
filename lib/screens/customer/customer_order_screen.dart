@@ -13,16 +13,10 @@ class CustomerOrderScreen extends StatefulWidget {
 }
 
 class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
-  int _filterIndex = 0; // 0 Semua,1 Diambil,2 Timbang,3 Dicuci,4 Selesai
+  int _filterIndex = 0; // 0 Semua,1 Dijemput,2 Timbang,3 Lunas,4 Selesai
   int _selesaiSub = 0; // 0 Diterima, 1 Dibatalkan
 
-  static const _filters = [
-    'Semua',
-    'Diambil',
-    'Timbang',
-    'Dicuci & Disetrika',
-    'Selesai'
-  ];
+  static const _filters = ['Semua', 'Dijemput', 'Timbang', 'Lunas', 'Selesai'];
   static const Color _blue = Color(0xFF3B5BDB);
 
   @override
@@ -71,7 +65,7 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
                   switch (_filterIndex) {
                     case 1:
                       orders = all
-                          .where((o) => o.status == OrderStatus.diproses)
+                          .where((o) => o.status == OrderStatus.dijemput)
                           .toList();
                       break;
                     case 2:
@@ -209,19 +203,14 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
         badgeLabel = 'Masuk';
         break;
       case OrderStatus.konfirmasi:
-        badgeBg = const Color(0xFFEDEDF2);
-        badgeFg = const Color(0xFF555555);
-        badgeLabel = 'Dicuci & Disetrika';
+        badgeBg = const Color(0xFFC8E6C9);
+        badgeFg = const Color(0xFF2E7D32);
+        badgeLabel = 'Lunas';
         break;
       case OrderStatus.dijemput:
         badgeBg = const Color(0xFFD6F0F7);
         badgeFg = const Color(0xFF1E88A8);
         badgeLabel = 'Dijemput';
-        break;
-      case OrderStatus.diproses:
-        badgeBg = const Color(0xFFFFF3C4);
-        badgeFg = const Color(0xFF8A6D1B);
-        badgeLabel = 'Diambil';
         break;
       case OrderStatus.perluTimbang:
         badgeBg = const Color(0xFFFFE0B2);

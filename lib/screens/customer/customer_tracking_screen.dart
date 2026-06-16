@@ -173,12 +173,12 @@ class CustomerTrackingScreen extends StatelessWidget {
     switch (status) {
       case OrderStatus.masuk:
         return 'Order Diterima';
-      case OrderStatus.diproses:
-        return 'Diambil';
+      case OrderStatus.dijemput:
+        return 'Dijemput';
       case OrderStatus.perluTimbang:
         return 'Penimbangan';
       case OrderStatus.konfirmasi:
-        return 'Dicuci & Disetrika';
+        return 'Lunas';
       case OrderStatus.konfirmasiBayar:
         return 'Konfirmasi Pembayaran';
       case OrderStatus.selesai:

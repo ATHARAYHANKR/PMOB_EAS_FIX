@@ -396,10 +396,10 @@ class OwnerDashboardScreen extends StatelessWidget {
     String badgeLabel;
 
     switch (order.status) {
-      case OrderStatus.diproses:
-        badgeBg = const Color(0xFFEDD6FF);
-        badgeFg = const Color(0xFF6A1F9F);
-        badgeLabel = 'Diambil';
+      case OrderStatus.dijemput:
+        badgeBg = const Color(0xFFD6EEFF);
+        badgeFg = const Color(0xFF1565C0);
+        badgeLabel = 'Dijemput';
         break;
       case OrderStatus.selesai:
         badgeBg = const Color(0xFFE8F5E9);
@@ -416,11 +416,7 @@ class OwnerDashboardScreen extends StatelessWidget {
         badgeFg = const Color(0xFF795548);
         badgeLabel = 'Dicuci & Disetrika';
         break;
-      case OrderStatus.dijemput:
-        badgeBg = const Color(0xFFD6EEFF);
-        badgeFg = const Color(0xFF1565C0);
-        badgeLabel = 'Dijemput';
-        break;
+
       case OrderStatus.konfirmasiBayar:
         badgeBg = const Color(0xFFE3F2FD);
         badgeFg = const Color(0xFF1565C0);
@@ -495,7 +491,8 @@ class OwnerDashboardScreen extends StatelessWidget {
     final staffs = staffRaw.take(3).map(StaffItem.fromMap).toList();
 
     return staffs.map((s) {
-      final initial = s.nama.isNotEmpty ? s.nama.substring(0, 1).toUpperCase() : '?';
+      final initial =
+          s.nama.isNotEmpty ? s.nama.substring(0, 1).toUpperCase() : '?';
       return Container(
         margin: const EdgeInsets.only(bottom: 4),
         child: Row(
