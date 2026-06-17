@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../app_theme.dart';
 import '../../models/order_model.dart';
 import '../../services/firestore_service.dart';
+import 'order_masuk_screen.dart';
 
 class LanjutProsesScreen extends StatefulWidget {
   final OrderModel order;
@@ -112,7 +113,13 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
 
   OrderStatus? get _nextStatus => order.nextStatus;
 
-  bool get _canContinue => _nextStatus != null && !order.isFinalized;
+  bool get _canContinue {
+    if (_nextStatus == null || order.isFinalized) return false;
+    if (order.status == OrderStatus.konfirmasiBayar && !order.isPaid) {
+      return false;
+    }
+    return true;
+  }
 
   // ──────────────────────────────────────────────────────────
 
@@ -431,9 +438,11 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () => _showKonfirmasiDialog(context),
+                        onPressed: _canContinue ? _onPrimaryAction : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: _canContinue
+                              ? AppColors.primary
+                              : Colors.grey.shade400,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -451,6 +460,17 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
                         ),
                       ),
                     ),
+                    if (order.status == OrderStatus.konfirmasiBayar &&
+                        !order.isPaid) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        'Pembayaran belum diterima. Tunggu customer mengupload bukti terlebih dahulu.',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -459,6 +479,20 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
         ),
       ),
     );
+  }
+
+  void _onPrimaryAction() {
+    if (order.status == OrderStatus.dijemput) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const OrderMasukScreen(initialTabIndex: 1),
+        ),
+      );
+      return;
+    }
+
+    _showKonfirmasiDialog(context);
   }
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../auth/login_screen.dart';
 import '../../app_theme.dart';
+import 'staff_history_screen.dart';
 
 class ProfilScreen extends StatelessWidget {
   const ProfilScreen({super.key});
@@ -202,6 +203,18 @@ class ProfilScreen extends StatelessWidget {
             label: 'Ganti Password',
             color: AppColors.primary,
             onTap: () {},
+          ),
+          const Divider(height: 1, indent: 56, endIndent: 16),
+          _actionTile(
+            icon: Icons.history_rounded,
+            label: 'Riwayat Order',
+            color: AppColors.primary,
+            onTap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const StaffHistoryScreen()));
+            },
           ),
           const Divider(height: 1, indent: 56, endIndent: 16),
           _actionTile(

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+
 import 'package:google_fonts/google_fonts.dart';
 import '../app_theme.dart';
+import '../services/firestore_service.dart';
+import '../models/order_model.dart';
 import 'staff/dashboard_screen.dart';
 import 'staff/order_masuk_screen.dart';
 import 'staff/kelola_order_screen.dart';
@@ -17,6 +21,7 @@ class StaffMainScreen extends StatefulWidget {
 
 class _StaffMainScreenState extends State<StaffMainScreen> {
   late int _currentIndex;
+  StreamSubscription<OrderModel>? _newOrderSub;
 
   // Screens are built in `build` so we can pass callbacks that use `setState`.
 
@@ -24,6 +29,24 @@ class _StaffMainScreenState extends State<StaffMainScreen> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+    // Listen to new order events and show an in-app SnackBar
+    _newOrderSub = FirestoreService.newOrderStream.listen((order) {
+      if (!mounted) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = context;
+        ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+          content: Text('Order baru: ${order.id} • ${order.customerName}'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+        ));
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _newOrderSub?.cancel();
+    super.dispose();
   }
 
   @override
@@ -83,8 +106,23 @@ class _StaffMainScreenState extends State<StaffMainScreen> {
               label: 'Order Masuk',
             ),
             BottomNavigationBarItem(
-              icon: _badgeIcon(Icons.list_alt_outlined, 1),
-              activeIcon: _badgeIcon(Icons.list_alt_rounded, 1, active: true),
+              icon: StreamBuilder<List<OrderModel>>(
+                stream:
+                    FirestoreService.streamOrdersByStatus(OrderStatus.masuk),
+                builder: (context, snap) {
+                  final count = (snap.data ?? []).length;
+                  return _badgeIcon(Icons.list_alt_outlined, count);
+                },
+              ),
+              activeIcon: StreamBuilder<List<OrderModel>>(
+                stream:
+                    FirestoreService.streamOrdersByStatus(OrderStatus.masuk),
+                builder: (context, snap) {
+                  final count = (snap.data ?? []).length;
+                  return _badgeIcon(Icons.list_alt_rounded, count,
+                      active: true);
+                },
+              ),
               label: 'Kelola Order',
             ),
             const BottomNavigationBarItem(

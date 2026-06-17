@@ -84,6 +84,7 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
         : null;
 
     return StaffCard(
+      onTap: () => _showPaymentDetail(order),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -149,17 +150,19 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () => _showKonfirmasiDialog(order),
+              onPressed:
+                  order.isPaid ? () => _showKonfirmasiDialog(order) : null,
               icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
               label: Text(
-                'Konfirmasi Lunas',
+                order.isPaid ? 'Konfirmasi Lunas' : 'Menunggu Pembayaran',
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor:
+                    order.isPaid ? AppColors.primary : Colors.grey.shade400,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -169,6 +172,80 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
               ),
             ),
           ),
+          if (!order.isPaid) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Tunggu bukti pembayaran dari customer sebelum konfirmasi.',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: Colors.black54,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _showPaymentDetail(OrderModel order) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Detail Pembayaran',
+            style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Order: ${order.id}', style: GoogleFonts.inter(fontSize: 13)),
+            const SizedBox(height: 8),
+            Text('Customer: ${order.customerName}',
+                style: GoogleFonts.inter(fontSize: 13)),
+            const SizedBox(height: 8),
+            Text(
+                'Total: ${order.totalHarga != null ? NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0).format(order.totalHarga) : '-'}',
+                style: GoogleFonts.inter(fontSize: 13)),
+            const SizedBox(height: 8),
+            Text(
+                'Status pembayaran: ${order.isPaid ? 'Sudah dibayar' : 'Belum dibayar'}',
+                style: GoogleFonts.inter(fontSize: 13)),
+            const SizedBox(height: 8),
+            if (order.paymentProofUrl != null &&
+                order.paymentProofUrl!.isNotEmpty)
+              Text('Bukti: ${order.paymentProofUrl!}',
+                  style: GoogleFonts.inter(fontSize: 13, color: Colors.blue))
+            else
+              Text('Tidak ada bukti transaksi tersimpan.',
+                  style:
+                      GoogleFonts.inter(fontSize: 13, color: Colors.black54)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Tutup',
+                style: GoogleFonts.inter(color: AppColors.primary)),
+          ),
+          if (order.isPaid)
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                try {
+                  await FirestoreService.updateStatus(
+                      order.id, OrderStatus.dicuci);
+                  if (!mounted) return;
+                  _showSnack('${order.id} berhasil dikonfirmasi lunas');
+                } catch (e) {
+                  if (!mounted) return;
+                  _showSnack('Gagal memperbarui status: $e');
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+              child: Text('Konfirmasi',
+                  style: GoogleFonts.inter(color: Colors.white)),
+            ),
         ],
       ),
     );

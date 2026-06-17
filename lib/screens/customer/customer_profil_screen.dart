@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/firestore_service.dart';
 import '../auth/login_screen.dart';
+import 'customer_history_screen.dart';
+import 'edit_customer_profile_screen.dart';
 
 class CustomerProfilScreen extends StatelessWidget {
   const CustomerProfilScreen({super.key});
@@ -25,6 +27,14 @@ class CustomerProfilScreen extends StatelessWidget {
     final user = FirestoreService.currentUser;
     final phone = user?['phone']?.toString().trim();
     return (phone != null && phone.isNotEmpty) ? phone : 'Tidak ada nomor';
+  }
+
+  String _displayAddress() {
+    final user = FirestoreService.currentUser;
+    final address = user?['address']?.toString().trim();
+    return (address != null && address.isNotEmpty)
+        ? address
+        : 'Tidak ada alamat';
   }
 
   String _displayInitial() {
@@ -98,6 +108,14 @@ class CustomerProfilScreen extends StatelessWidget {
                                 fontSize: 12,
                                 color: Colors.black45,
                               )),
+                          const SizedBox(height: 6),
+                          Text(_displayAddress(),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                color: Colors.black38,
+                              )),
                         ],
                       ),
                     ),
@@ -106,11 +124,13 @@ class CustomerProfilScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              _buildMenuItem(Icons.location_on_outlined, 'Alamat Saya'),
-              _buildMenuItem(Icons.history_rounded, 'Riwayat Order'),
-              _buildMenuItem(Icons.notifications_outlined, 'Notifikasi'),
-              _buildMenuItem(Icons.help_outline_rounded, 'Bantuan'),
-              _buildMenuItem(Icons.settings_outlined, 'Pengaturan'),
+              _buildMenuItem(
+                  context, Icons.location_on_outlined, 'Alamat Saya'),
+              _buildMenuItem(context, Icons.history_rounded, 'Riwayat Order'),
+              _buildMenuItem(
+                  context, Icons.notifications_outlined, 'Notifikasi'),
+              _buildMenuItem(context, Icons.help_outline_rounded, 'Bantuan'),
+              _buildMenuItem(context, Icons.settings_outlined, 'Pengaturan'),
               const SizedBox(height: 12),
 
               GestureDetector(
@@ -153,7 +173,7 @@ class CustomerProfilScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItem(IconData icon, String label) {
+  Widget _buildMenuItem(BuildContext context, IconData icon, String label) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -173,12 +193,30 @@ class CustomerProfilScreen extends StatelessWidget {
           Icon(icon, size: 20, color: _blue),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(label,
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                )),
+            child: GestureDetector(
+              onTap: () {
+                if (label == 'Riwayat Order') {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const CustomerHistoryScreen()));
+                  return;
+                }
+                if (label == 'Alamat Saya') {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const EditCustomerProfileScreen()));
+                  return;
+                }
+              },
+              child: Text(label,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  )),
+            ),
           ),
           const Icon(Icons.chevron_right_rounded,
               size: 18, color: Colors.black26),

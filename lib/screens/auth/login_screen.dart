@@ -29,7 +29,6 @@ class _LoginScreenState extends State<LoginScreen> {
   };
 
   static const Color _blue = Color(0xFF3B5BDB);
-  static const Color _purple = Color(0xFFBB2BCD);
 
   @override
   void dispose() {
@@ -114,35 +113,6 @@ class _LoginScreenState extends State<LoginScreen> {
           Text('Masuk ke akun CleanGo Anda',
               style: GoogleFonts.inter(fontSize: 13.5, color: Colors.black45)),
           const SizedBox(height: 28),
-
-          // Hint akun
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3E5F5),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFCC44DD).withAlpha(80)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Akun Demo:',
-                    style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: _purple)),
-                const SizedBox(height: 4),
-                Text('👤 Staff   →  staff / staff123',
-                    style:
-                        GoogleFonts.inter(fontSize: 12, color: Colors.black54)),
-                const SizedBox(height: 2),
-                Text('👑 Owner  →  owner / owner123',
-                    style:
-                        GoogleFonts.inter(fontSize: 12, color: Colors.black54)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
 
           // Email / Telepon / Nama
           _label('EMAIL / TELEPON / NAMA'),

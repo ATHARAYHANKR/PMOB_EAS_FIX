@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../models/order_model.dart';
 import '../../services/firestore_service.dart';
+import '../../services/notification_helper.dart';
 import '../../models/katalog_model.dart';
 import 'customer_main_screen.dart';
 
@@ -21,9 +22,9 @@ class _BookingLaundryScreenState extends State<BookingLaundryScreen> {
   final _formKey = GlobalKey<FormState>();
 
   KatalogModel? _selectedLayanan;
-  final _namaCtrl = TextEditingController(text: 'Dhira Putri');
-  final _teleponCtrl = TextEditingController(text: '081323230001');
-  final _alamatCtrl = TextEditingController(text: 'Jl. Mawar No. 10');
+  final _namaCtrl = TextEditingController();
+  final _teleponCtrl = TextEditingController();
+  final _alamatCtrl = TextEditingController();
   final _catatanCtrl = TextEditingController();
   DateTime? _tanggalJemput;
   String _sesiJemput = '08.00 - 10.00 (Pagi)';
@@ -42,11 +43,16 @@ class _BookingLaundryScreenState extends State<BookingLaundryScreen> {
     super.initState();
     final currentName = FirestoreService.currentUserName;
     final currentPhone = FirestoreService.currentUserPhone;
+    final currentAddress = FirestoreService.currentUserAddress;
+
     if (currentName != null && currentName.isNotEmpty) {
       _namaCtrl.text = currentName;
     }
     if (currentPhone != null && currentPhone.isNotEmpty) {
       _teleponCtrl.text = currentPhone;
+    }
+    if (currentAddress != null && currentAddress.isNotEmpty) {
+      _alamatCtrl.text = currentAddress;
     }
 
     // initial selection will be resolved from Firestore stream in build
@@ -177,8 +183,7 @@ class _BookingLaundryScreenState extends State<BookingLaundryScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFFDEDED),
                           borderRadius: BorderRadius.circular(12),
-                          border:
-                              Border.all(color: const Color(0xFFF5C2C2)),
+                          border: Border.all(color: const Color(0xFFF5C2C2)),
                         ),
                         child: Text(
                           'Gagal memuat data layanan: ${snap.error}',
@@ -567,17 +572,8 @@ class _BookingLaundryScreenState extends State<BookingLaundryScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Gagal mengirim booking: $e',
-              style: GoogleFonts.inter(fontSize: 13)),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          margin: const EdgeInsets.all(16),
-        ),
-      );
+      NotificationHelper.showErrorSnackBar(
+          context, 'Gagal mengirim booking: $e');
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
