@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../models/order_model.dart';
 import '../../services/firestore_service.dart';
 import 'detail_order_screen.dart';
+import 'detail_pembayaran_screen.dart';
 
 class CustomerTrackingScreen extends StatelessWidget {
   const CustomerTrackingScreen({super.key});
@@ -37,6 +38,10 @@ class CustomerTrackingScreen extends StatelessWidget {
                 .where((o) => o.status != OrderStatus.selesai)
                 .toList();
 
+            final ordersNeedingPayment = activeOrders
+                .where((o) => o.status == OrderStatus.konfirmasiBayar)
+                .toList();
+
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
               child: Column(
@@ -49,6 +54,84 @@ class CustomerTrackingScreen extends StatelessWidget {
                         color: Colors.black87,
                       )),
                   const SizedBox(height: 16),
+
+                  // ── Payment notification banner ────────────────
+                  if (ordersNeedingPayment.isNotEmpty)
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF3C4),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFFFFCB3A),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.warning_rounded,
+                                  size: 20, color: Color(0xFF8A6D1B)),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Ada pembayaran yang diperlukan',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF8A6D1B),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    if (ordersNeedingPayment.isNotEmpty) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              DetailPembayaranScreen(
+                                            order: ordersNeedingPayment.first,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF8A6D1B),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      'Bayar Sekarang',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
                   if (activeOrders.isEmpty)
                     Container(
                       width: double.infinity,

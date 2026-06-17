@@ -4,6 +4,9 @@ import 'owner/owner_dashboard_screen.dart';
 import 'owner/owner_kelola_screen.dart';
 import 'owner/owner_laporan_screen.dart';
 import 'owner/owner_profil_screen.dart';
+import 'dart:async';
+import '../services/firestore_service.dart';
+import '../models/order_model.dart';
 
 class OwnerMainScreen extends StatefulWidget {
   const OwnerMainScreen({super.key, this.initialIndex = 0});
@@ -15,6 +18,7 @@ class OwnerMainScreen extends StatefulWidget {
 
 class _OwnerMainScreenState extends State<OwnerMainScreen> {
   late int _currentIndex;
+  StreamSubscription<OrderModel>? _newOrderSub;
 
   static const Color _purple = Color(0xFFBB2BCD);
 
@@ -34,10 +38,22 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+    // Listen for new orders to notify owner
+    _newOrderSub = FirestoreService.newOrderStream.listen((order) {
+      if (!mounted) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Order baru: ${order.id} • ${order.customerName}'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+        ));
+      });
+    });
   }
 
   @override
   void dispose() {
+    _newOrderSub?.cancel();
     _kelolaTabNotifier.dispose();
     super.dispose();
   }

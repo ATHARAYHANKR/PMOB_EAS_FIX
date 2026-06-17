@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../auth/login_screen.dart';
+import 'owner_history_screen.dart';
 
 class OwnerProfilScreen extends StatelessWidget {
   const OwnerProfilScreen({super.key});
@@ -108,6 +109,17 @@ class OwnerProfilScreen extends StatelessWidget {
                     onTap: () {},
                   ),
                   _ActionTile(
+                    icon: Icons.history_rounded,
+                    label: 'Riwayat Order',
+                    color: _purple,
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const OwnerHistoryScreen()));
+                    },
+                  ),
+                  _ActionTile(
                     icon: Icons.help_outline_rounded,
                     label: 'Bantuan',
                     color: _purple,
@@ -133,8 +145,8 @@ class OwnerProfilScreen extends StatelessWidget {
 
               // App version
               Text('CleanGo v1.0.0',
-                  style: GoogleFonts.inter(
-                      fontSize: 11, color: Colors.black26)),
+                  style:
+                      GoogleFonts.inter(fontSize: 11, color: Colors.black26)),
               const SizedBox(height: 8),
             ],
           ),
@@ -240,8 +252,7 @@ class OwnerProfilScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(item.label,
-                    style: GoogleFonts.inter(
-                        fontSize: 11, color: _textGrey)),
+                    style: GoogleFonts.inter(fontSize: 11, color: _textGrey)),
                 Text(item.value,
                     style: GoogleFonts.inter(
                         fontSize: 14,
@@ -268,9 +279,7 @@ class OwnerProfilScreen extends StatelessWidget {
       ),
       title: Text(tile.label,
           style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: tile.color)),
+              fontSize: 14, fontWeight: FontWeight.w600, color: tile.color)),
       trailing: Icon(Icons.chevron_right_rounded,
           size: 20, color: Colors.grey.shade400),
     );
@@ -282,15 +291,14 @@ class OwnerProfilScreen extends StatelessWidget {
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Keluar',
-            style: GoogleFonts.inter(
-                fontSize: 16, fontWeight: FontWeight.w700)),
+            style:
+                GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700)),
         content: Text('Apakah kamu yakin ingin keluar?',
             style: GoogleFonts.inter(fontSize: 14)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Batal',
-                style: GoogleFonts.inter(color: Colors.grey)),
+            child: Text('Batal', style: GoogleFonts.inter(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -308,8 +316,7 @@ class OwnerProfilScreen extends StatelessWidget {
             ),
             child: Text('Keluar',
                 style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600)),
+                    color: Colors.white, fontWeight: FontWeight.w600)),
           ),
         ],
       ),

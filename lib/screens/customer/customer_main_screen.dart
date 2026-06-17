@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'customer_dashboard_screen.dart';
 import 'customer_order_screen.dart';
-import 'customer_tracking_screen.dart';
+import 'customer_booking_catalog_screen.dart';
 import 'customer_pembayaran_screen.dart';
 import 'customer_profil_screen.dart';
 
@@ -22,7 +22,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
   final List<Widget> _screens = const [
     CustomerDashboardScreen(),
     CustomerOrderScreen(),
-    CustomerTrackingScreen(),
+    CustomerBookingCatalogScreen(),
     CustomerPembayaranScreen(),
     CustomerProfilScreen(),
   ];
@@ -79,9 +79,9 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               label: 'Order',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.local_shipping_outlined),
-              activeIcon: Icon(Icons.local_shipping_rounded),
-              label: 'Tracking',
+              icon: Icon(Icons.calendar_month_outlined),
+              activeIcon: Icon(Icons.calendar_month_rounded),
+              label: 'Booking',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.credit_card_outlined),

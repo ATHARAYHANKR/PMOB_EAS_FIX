@@ -6,6 +6,7 @@ enum OrderStatus {
   perluTimbang,
   dicuci,
   disetrika,
+  dikirim,
   konfirmasiBayar,
   selesai,
   dibatalkan,
@@ -28,6 +29,8 @@ extension OrderStatusX on OrderStatus {
         return 'Dicuci';
       case OrderStatus.disetrika:
         return 'Disetrika';
+      case OrderStatus.dikirim:
+        return 'Dikirim';
       case OrderStatus.konfirmasiBayar:
         return 'Menunggu Pembayaran';
       case OrderStatus.selesai:
@@ -49,6 +52,8 @@ extension OrderStatusX on OrderStatus {
         return 'Dicuci';
       case OrderStatus.disetrika:
         return 'Disetrika';
+      case OrderStatus.dikirim:
+        return 'Dikirim';
       case OrderStatus.konfirmasiBayar:
         return 'Menunggu Pembayaran';
       case OrderStatus.selesai:
@@ -71,6 +76,8 @@ String orderStatusToString(OrderStatus status) {
       return 'dicuci';
     case OrderStatus.disetrika:
       return 'disetrika';
+    case OrderStatus.dikirim:
+      return 'dikirim';
     case OrderStatus.konfirmasiBayar:
       return 'konfirmasiBayar';
     case OrderStatus.selesai:
@@ -98,6 +105,8 @@ OrderStatus orderStatusFromString(String? value) {
     case 'konfirmasibayar':
     case 'konfirmasiBayar':
       return OrderStatus.konfirmasiBayar;
+    case 'dikirim':
+      return OrderStatus.dikirim;
     case 'selesai':
       return OrderStatus.selesai;
     case 'dibatalkan':
@@ -130,6 +139,8 @@ class OrderModel {
   OrderStatus status;
   double? beratKg;
   double? totalHarga;
+  String? paymentProofUrl;
+  bool isPaid;
   String address;
   String catatan;
   List<StatusStep> steps;
@@ -146,6 +157,8 @@ class OrderModel {
     this.totalHarga,
     this.address = 'Jl. Mawar No. 105',
     this.catatan = '-',
+    this.paymentProofUrl,
+    this.isPaid = false,
     this.steps = const [],
   });
 
@@ -161,6 +174,8 @@ class OrderModel {
         return 'Dicuci';
       case OrderStatus.disetrika:
         return 'Disetrika';
+      case OrderStatus.dikirim:
+        return 'Dikirim';
       case OrderStatus.konfirmasiBayar:
         return 'Menunggu Pembayaran';
       case OrderStatus.selesai:
@@ -174,9 +189,10 @@ class OrderModel {
     OrderStatus.masuk,
     OrderStatus.dijemput,
     OrderStatus.perluTimbang,
+    OrderStatus.konfirmasiBayar,
     OrderStatus.dicuci,
     OrderStatus.disetrika,
-    OrderStatus.konfirmasiBayar,
+    OrderStatus.dikirim,
     OrderStatus.selesai,
   ];
 
@@ -225,6 +241,8 @@ class OrderModel {
       'status': orderStatusToString(status),
       if (beratKg != null) 'beratKg': beratKg,
       if (totalHarga != null) 'totalHarga': totalHarga,
+      if (paymentProofUrl != null) 'paymentProofUrl': paymentProofUrl,
+      'isPaid': isPaid,
       'address': address,
       'catatan': catatan,
       if (steps.isNotEmpty)
@@ -279,6 +297,8 @@ class OrderModel {
       status: orderStatusFromString(map['status']?.toString()),
       beratKg: parseDouble(map['beratKg']),
       totalHarga: parseDouble(map['totalHarga']),
+      paymentProofUrl: map['paymentProofUrl']?.toString(),
+      isPaid: map['isPaid'] == true,
       address: map['address']?.toString() ?? '',
       catatan: map['catatan']?.toString() ?? '-',
       steps: steps,

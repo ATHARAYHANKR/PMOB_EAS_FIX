@@ -7,7 +7,9 @@ import '../../services/firestore_service.dart';
 import 'verifikasi_berat_screen.dart';
 
 class OrderMasukScreen extends StatefulWidget {
-  const OrderMasukScreen({super.key});
+  const OrderMasukScreen({super.key, this.initialTabIndex = 0});
+
+  final int initialTabIndex;
 
   @override
   State<OrderMasukScreen> createState() => _OrderMasukScreenState();
@@ -15,7 +17,13 @@ class OrderMasukScreen extends StatefulWidget {
 
 class _OrderMasukScreenState extends State<OrderMasukScreen> {
   // 0 = Ambil, 1 = Timbang
-  int _tabIndex = 0;
+  late int _tabIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabIndex = widget.initialTabIndex.clamp(0, 1);
+  }
 
   OrderStatus get _activeStatus =>
       _tabIndex == 0 ? OrderStatus.masuk : OrderStatus.dijemput;

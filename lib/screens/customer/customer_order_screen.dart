@@ -232,6 +232,11 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
         badgeFg = const Color(0xFF00695C);
         badgeLabel = 'Konfirmasi Bayar';
         break;
+      case OrderStatus.dikirim:
+        badgeBg = const Color(0xFFE3F2FD);
+        badgeFg = const Color(0xFF1565C0);
+        badgeLabel = 'Dikirim';
+        break;
       case OrderStatus.selesai:
         badgeBg = const Color(0xFFD9F7E3);
         badgeFg = const Color(0xFF2E7D32);

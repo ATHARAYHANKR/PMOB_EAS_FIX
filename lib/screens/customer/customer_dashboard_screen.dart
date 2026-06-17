@@ -69,6 +69,12 @@ class CustomerDashboardScreen extends StatelessWidget {
           fg: _DashColors.primary,
           label: 'Disetrika'
         );
+      case OrderStatus.dikirim:
+        return (
+          bg: _DashColors.neutralSoft,
+          fg: _DashColors.primary,
+          label: 'Dikirim'
+        );
       case OrderStatus.dijemput:
         return (
           bg: _DashColors.primarySoft,

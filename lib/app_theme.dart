@@ -58,6 +58,12 @@ class StatusBadgeConfig {
           fg: Color(0xFF00897B),
           icon: Icons.dry_cleaning_rounded,
         );
+      case OrderStatus.dikirim:
+        return const StatusBadgeConfig(
+          bg: Color(0xFFF1F8E9),
+          fg: Color(0xFF558B2F),
+          icon: Icons.local_shipping_rounded,
+        );
       case OrderStatus.konfirmasiBayar:
         return const StatusBadgeConfig(
           bg: Color(0xFFEDD6FF),

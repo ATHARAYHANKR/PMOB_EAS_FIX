@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/order_model.dart';
+import '../../services/firestore_service.dart';
 import 'customer_main_screen.dart';
 
 class DetailPembayaranScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class _DetailPembayaranScreenState extends State<DetailPembayaranScreen> {
   static const Color _blue = Color(0xFF3B5BDB);
 
   final _catatanCtrl = TextEditingController();
+  bool _paymentSubmitted = false;
 
   @override
   void dispose() {
@@ -208,22 +210,47 @@ class _DetailPembayaranScreenState extends State<DetailPembayaranScreen> {
               const SizedBox(height: 16),
 
               // ── Submit ────────────────────────────────────
-              GestureDetector(
-                onTap: () => _onKonfirmasi(order),
-                child: Container(
-                  width: double.infinity,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: _blue,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text('Kirim Bukti Pembayaran',
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Bayar sekarang (simulasi)',
+                        style: GoogleFonts.inter(
+                            fontSize: 13, color: Colors.black54)),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Tekan tombol di bawah untuk menyelesaikan pembayaran. Staf akan menerima notifikasi dan dapat segera mengonfirmasi pesanan.',
                       style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      )),
+                          fontSize: 13, color: Colors.black38, height: 1.5),
+                    ),
+                    const SizedBox(height: 16),
+                    GestureDetector(
+                      onTap: _paymentSubmitted
+                          ? null
+                          : () => _onSubmitProof(order),
+                      child: Container(
+                        width: double.infinity,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: _paymentSubmitted ? Colors.grey : _blue,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          _paymentSubmitted
+                              ? 'Menunggu Konfirmasi'
+                              : 'Bayar Sekarang',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -253,7 +280,58 @@ class _DetailPembayaranScreenState extends State<DetailPembayaranScreen> {
     );
   }
 
-  void _onKonfirmasi(OrderModel order) {
+  Future<void> _onSubmitProof(OrderModel order) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    try {
+      await FirestoreService.completePayment(order.id);
+      if (!mounted) return;
+      Navigator.pop(context); // close loading
+      setState(() {
+        _paymentSubmitted = true;
+      });
+
+      // Show notification that payment is submitted and waiting for confirmation
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Pembayaran disubmit, menunggu konfirmasi staff...',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+              ),
+            ),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+
+      _showSuccessAndReturn(order);
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Gagal memproses pembayaran: $e',
+            style: GoogleFonts.inter(fontSize: 13)),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ));
+    }
+  }
+
+  void _showSuccessAndReturn(OrderModel order) {
     showDialog(
       context: context,
       barrierColor: Colors.black54,
@@ -270,17 +348,17 @@ class _DetailPembayaranScreenState extends State<DetailPembayaranScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Terima Kasih!',
+            Text('Pembayaran Diterima!',
                 style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: Colors.black87,
                 )),
             const SizedBox(height: 12),
-            const Text('🙏', style: TextStyle(fontSize: 56)),
+            const Text('⏳', style: TextStyle(fontSize: 56)),
             const SizedBox(height: 12),
             Text(
-              'Kami akan segera memproses pesanan anda',
+              'Pembayaran Anda telah diterima. Menunggu konfirmasi pembayaran dari staff.',
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 13,
@@ -308,7 +386,7 @@ class _DetailPembayaranScreenState extends State<DetailPembayaranScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 alignment: Alignment.center,
-                child: Text('Kembali',
+                child: Text('OK, Lanjutkan',
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
