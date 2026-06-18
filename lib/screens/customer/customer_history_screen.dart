@@ -25,21 +25,48 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
 
   bool _matchesFilter(OrderModel o, int idx) {
     switch (idx) {
-      case 0: // Semua
-        return true;
+      case 0: // Semua (kecuali Menunggu Pembayaran)
+        return o.status != OrderStatus.konfirmasiBayar;
       case 1: // Konfirmasi: order masuk (bisa diedit / dibatalkan)
         return o.status == OrderStatus.masuk;
-      case 2: // Dijemput
-        return o.status == OrderStatus.dijemput;
-      case 3: // Diproses: dicuci, disetrika, dikirim
+      case 2: // Dijemput: sedang dijemput atau menunggu timbang
+        return o.status == OrderStatus.dijemput ||
+            o.status == OrderStatus.perluTimbang;
+      case 3: // Diproses: sedang dicuci / disetrika / dikirim (sudah bayar)
         return o.status == OrderStatus.dicuci ||
-            o.status == OrderStatus.disetrika ||
-            o.status == OrderStatus.dikirim;
-      case 4: // Selesai
-        return o.status == OrderStatus.selesai;
+            o.status == OrderStatus.disetrika;
+      case 4: // Selesai: order selesai diterima atau dibatalkan
+        return o.status == OrderStatus.selesai ||
+            o.status == OrderStatus.dibatalkan;
       default:
-        return true;
+        return false;
     }
+  }
+
+  // ── Status chip untuk tile ────────────────────────────────────────────────
+  Widget _statusChip(OrderModel o) {
+    // Tab Selesai: chip Diterima (hijau) atau Dibatalkan (merah)
+    if (_selectedIndex == 4) {
+      final isDone = o.status == OrderStatus.selesai;
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: isDone ? const Color(0xFFE6F9F0) : const Color(0xFFFFEDED),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          isDone ? 'Diterima' : 'Dibatalkan',
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: isDone ? const Color(0xFF1B9E5E) : const Color(0xFFD93025),
+          ),
+        ),
+      );
+    }
+
+    // Tab lain: label teks biasa
+    return Text(o.statusLabel, style: GoogleFonts.inter(fontSize: 12));
   }
 
   @override
@@ -52,6 +79,7 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            // ── Tab filter ───────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
               child: Row(
@@ -89,6 +117,8 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
               ),
             ),
             const SizedBox(height: 8),
+
+            // ── Daftar order ─────────────────────────────────────────────────
             Expanded(
               child: StreamBuilder<List<OrderModel>>(
                 stream: FirestoreService.streamOrdersForCurrentCustomer(),
@@ -99,8 +129,7 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
                   if (!snap.hasData) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  final all = (snap.data ?? []);
-                  final list = all
+                  final list = (snap.data ?? [])
                       .where((o) => _matchesFilter(o, _selectedIndex))
                       .toList();
 
@@ -131,6 +160,7 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
                               Text(o.serviceType, style: GoogleFonts.inter()),
                           trailing: _selectedIndex == 1 &&
                                   o.status == OrderStatus.masuk
+                              // ── Tab Konfirmasi: tombol Edit & Batalkan ──
                               ? SizedBox(
                                   width: 160,
                                   child: Row(
@@ -182,7 +212,7 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
                                                                     context,
                                                                     false),
                                                             child: const Text(
-                                                                'Batal')),
+                                                                'Kembali')),
                                                         TextButton(
                                                             onPressed: () =>
                                                                 Navigator.pop(
@@ -230,7 +260,8 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
                                     ],
                                   ),
                                 )
-                              : Text(o.statusLabel, style: GoogleFonts.inter()),
+                              // ── Tab lain: chip status ──
+                              : _statusChip(o),
                           onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(

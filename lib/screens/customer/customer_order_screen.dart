@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../models/order_model.dart';
 import '../../services/firestore_service.dart';
 import 'detail_order_screen.dart';
+import 'edit_order_screen.dart';
 
 class CustomerOrderScreen extends StatefulWidget {
   const CustomerOrderScreen({super.key});
@@ -13,11 +14,48 @@ class CustomerOrderScreen extends StatefulWidget {
 }
 
 class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
-  int _filterIndex = 0; // 0 Semua,1 Dijemput,2 Timbang,3 Lunas,4 Selesai
-  int _selesaiSub = 0; // 0 Diterima, 1 Dibatalkan
+  int _filterIndex = 0;
+  int _selesaiSub = 0; // 0 = Diterima, 1 = Dibatalkan
 
-  static const _filters = ['Semua', 'Dijemput', 'Timbang', 'Lunas', 'Selesai'];
+  // Tab: Semua | Konfirmasi | Dijemput | Diproses | Selesai
+  static const _filters = [
+    'Semua',
+    'Konfirmasi',
+    'Dijemput',
+    'Diproses',
+    'Selesai'
+  ];
   static const Color _blue = Color(0xFF3B5BDB);
+
+  List<OrderModel> _applyFilter(List<OrderModel> all) {
+    switch (_filterIndex) {
+      case 1: // Konfirmasi: order masuk, bisa diedit/dibatalkan
+        return all.where((o) => o.status == OrderStatus.masuk).toList();
+      case 2: // Dijemput: dijemput + perluTimbang (tidak termasuk Menunggu Pembayaran)
+        return all
+            .where((o) =>
+                o.status == OrderStatus.dijemput ||
+                o.status == OrderStatus.perluTimbang)
+            .toList();
+      case 3: // Diproses: sedang dicuci / disetrika / dikirim
+        return all
+            .where((o) =>
+                o.status == OrderStatus.dicuci ||
+                o.status == OrderStatus.disetrika ||
+                o.status == OrderStatus.dikirim)
+            .toList();
+      case 4: // Selesai: diterima atau dibatalkan (sub-tab)
+        if (_selesaiSub == 0) {
+          return all.where((o) => o.status == OrderStatus.selesai).toList();
+        } else {
+          return all.where((o) => o.status == OrderStatus.dibatalkan).toList();
+        }
+      default: // Semua (kecuali Menunggu Pembayaran)
+        return all
+            .where((o) => o.status != OrderStatus.konfirmasiBayar || o.isPaid)
+            .toList();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +63,7 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
       backgroundColor: const Color(0xFFF8F8FB),
       body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
@@ -49,9 +88,7 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
                         child: Text(
                           'Gagal memuat data order: ${snap.error}',
                           style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: Colors.redAccent,
-                          ),
+                              fontSize: 13, color: Colors.redAccent),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -60,51 +97,12 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
                   if (snap.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  final all = snap.data ?? [];
-                  List<OrderModel> orders = all;
-                  switch (_filterIndex) {
-                    case 1:
-                      orders = all
-                          .where((o) => o.status == OrderStatus.dijemput)
-                          .toList();
-                      break;
-                    case 2:
-                      orders = all
-                          .where((o) => o.status == OrderStatus.perluTimbang)
-                          .toList();
-                      break;
-                    case 3:
-                      orders = all
-                          .where((o) => o.status == OrderStatus.dicuci)
-                          .toList();
-                      break;
-                    case 4:
-                      orders = all
-                          .where((o) => o.status == OrderStatus.disetrika)
-                          .toList();
-                      break;
-                    case 5:
-                      if (_selesaiSub == 0) {
-                        orders = all
-                            .where((o) => o.status == OrderStatus.selesai)
-                            .toList();
-                      } else {
-                        orders = all
-                            .where((o) => o.status == OrderStatus.dibatalkan)
-                            .toList();
-                      }
-                      break;
-                    default:
-                      orders = all;
-                  }
-
+                  final orders = _applyFilter(snap.data ?? []);
                   if (orders.isEmpty) {
                     return Center(
                       child: Text('Belum ada order',
                           style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: Colors.black45,
-                          )),
+                              fontSize: 13, color: Colors.black45)),
                     );
                   }
                   return ListView.separated(
@@ -122,6 +120,7 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
     );
   }
 
+  // ── Filter chip row ───────────────────────────────────────────────────────
   Widget _buildFilterRow() {
     return SizedBox(
       height: 36,
@@ -157,9 +156,10 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
     );
   }
 
+  // ── Sub-tab Selesai: Diterima / Dibatalkan ───────────────────────────────
   Widget _buildSelesaiSubTabs() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
       child: Row(
         children: [
           _buildSubTab('Diterima', 0),
@@ -194,9 +194,11 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
     );
   }
 
+  // ── Order card ────────────────────────────────────────────────────────────
   Widget _buildOrderCard(BuildContext context, OrderModel order) {
     final dateStr = DateFormat('d MMMM yyyy', 'id').format(order.pickupDate);
 
+    // Badge warna sesuai status
     Color badgeBg;
     Color badgeFg;
     String badgeLabel;
@@ -205,17 +207,7 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
       case OrderStatus.masuk:
         badgeBg = const Color(0xFFEBEBEB);
         badgeFg = const Color(0xFF616161);
-        badgeLabel = 'Masuk';
-        break;
-      case OrderStatus.dicuci:
-        badgeBg = const Color(0xFFD9F7E3);
-        badgeFg = const Color(0xFF1E7E34);
-        badgeLabel = 'Dicuci';
-        break;
-      case OrderStatus.disetrika:
-        badgeBg = const Color(0xFFD1C4E9);
-        badgeFg = const Color(0xFF512DA8);
-        badgeLabel = 'Disetrika';
+        badgeLabel = 'Menunggu Konfirmasi';
         break;
       case OrderStatus.dijemput:
         badgeBg = const Color(0xFFD6F0F7);
@@ -230,7 +222,18 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
       case OrderStatus.konfirmasiBayar:
         badgeBg = const Color(0xFFB2DFDB);
         badgeFg = const Color(0xFF00695C);
-        badgeLabel = 'Konfirmasi Bayar';
+        badgeLabel =
+            order.isPaid ? 'Menunggu Konfirmasi Bayar' : 'Menunggu Pembayaran';
+        break;
+      case OrderStatus.dicuci:
+        badgeBg = const Color(0xFFD9F7E3);
+        badgeFg = const Color(0xFF1E7E34);
+        badgeLabel = 'Dicuci';
+        break;
+      case OrderStatus.disetrika:
+        badgeBg = const Color(0xFFD1C4E9);
+        badgeFg = const Color(0xFF512DA8);
+        badgeLabel = 'Disetrika';
         break;
       case OrderStatus.dikirim:
         badgeBg = const Color(0xFFE3F2FD);
@@ -240,7 +243,7 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
       case OrderStatus.selesai:
         badgeBg = const Color(0xFFD9F7E3);
         badgeFg = const Color(0xFF2E7D32);
-        badgeLabel = 'Selesai';
+        badgeLabel = 'Diterima';
         break;
       case OrderStatus.dibatalkan:
         badgeBg = const Color(0xFFFBD9DC);
@@ -250,12 +253,10 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
     }
 
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => DetailOrderScreen(order: order)),
-        );
-      },
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => DetailOrderScreen(order: order)),
+      ),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
@@ -270,70 +271,150 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
             ),
           ],
         ),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(order.id,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.black87,
-                      )),
-                  const SizedBox(height: 6),
-                  Text(
-                    order.beratKg != null
-                        ? '${order.serviceType} - ${order.beratKg!.toStringAsFixed(0)}kg'
-                        : order.serviceType,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: order.totalHarga != null
-                          ? FontWeight.w700
-                          : FontWeight.w400,
-                      color: order.totalHarga != null
-                          ? Colors.black87
-                          : Colors.black54,
-                    ),
-                  ),
-                  if (order.totalHarga != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        'Rp${NumberFormat('#,###', 'id').format(order.totalHarga)}',
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(order.id,
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black87,
+                          )),
+                      const SizedBox(height: 4),
+                      Text(
+                        order.beratKg != null
+                            ? '${order.serviceType} · ${order.beratKg!.toStringAsFixed(0)} kg'
+                            : order.serviceType,
                         style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.black87,
+                            fontSize: 13, color: Colors.black54),
+                      ),
+                      if (order.totalHarga != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            'Rp${NumberFormat('#,###', 'id').format(order.totalHarga)}',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.black87,
+                            ),
+                          ),
                         ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(dateStr,
+                            style: GoogleFonts.inter(
+                                fontSize: 12, color: Colors.black45)),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: badgeBg,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(badgeLabel,
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: badgeFg,
+                      )),
+                ),
+              ],
+            ),
+            // ── Tombol Edit & Batalkan khusus tab Konfirmasi ──────────────
+            if (_filterIndex == 1 && order.status == OrderStatus.masuk) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => EditOrderScreen(order: order)),
+                        );
+                        setState(() {});
+                      },
+                      child: Container(
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEDEDF2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text('Edit',
+                            style: GoogleFonts.inter(
+                                fontSize: 13, fontWeight: FontWeight.w700)),
                       ),
                     ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(dateStr,
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: Colors.black45,
-                        )),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () async {
+                        final ok = await showDialog<bool>(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: const Text('Batalkan order?'),
+                            content: const Text(
+                                'Yakin ingin membatalkan order ini?'),
+                            actions: [
+                              TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text('Kembali')),
+                              TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text('Batalkan',
+                                      style: TextStyle(color: Colors.red))),
+                            ],
+                          ),
+                        );
+                        if (ok == true) {
+                          try {
+                            await FirestoreService.cancelOrder(order.id);
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Order dibatalkan')));
+                            setState(() {});
+                          } catch (e) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Gagal batalkan: $e')));
+                          }
+                        }
+                      },
+                      child: Container(
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE05D5D),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text('Batalkan',
+                            style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white)),
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: badgeBg,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(badgeLabel,
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: badgeFg,
-                  )),
-            ),
+            ],
           ],
         ),
       ),

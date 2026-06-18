@@ -69,12 +69,6 @@ class CustomerDashboardScreen extends StatelessWidget {
           fg: _DashColors.primary,
           label: 'Disetrika'
         );
-      case OrderStatus.dikirim:
-        return (
-          bg: _DashColors.neutralSoft,
-          fg: _DashColors.primary,
-          label: 'Dikirim'
-        );
       case OrderStatus.dijemput:
         return (
           bg: _DashColors.primarySoft,
@@ -86,6 +80,12 @@ class CustomerDashboardScreen extends StatelessWidget {
           bg: _DashColors.primarySoft,
           fg: _DashColors.primary,
           label: 'Perlu Timbang'
+        );
+      case OrderStatus.dikirim:
+        return (
+          bg: _DashColors.primarySoft,
+          fg: _DashColors.primary,
+          label: 'Dikirim'
         );
       case OrderStatus.konfirmasiBayar:
         return (

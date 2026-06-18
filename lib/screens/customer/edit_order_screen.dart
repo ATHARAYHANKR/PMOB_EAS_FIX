@@ -35,8 +35,14 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     _catatanCtrl.text = widget.order.catatan == '-' ? '' : widget.order.catatan;
     _tanggalJemput = widget.order.pickupDate;
     final slot = widget.order.pickupSlot;
+    // Normalize time separators (08.00 vs 08:00) before matching
+    final slotStartRaw = slot.split('-')[0].trim();
+    final slotStart = slotStartRaw.replaceAll('.', ':');
     _sesiJemput = _sesiOptions.firstWhere(
-      (s) => s.startsWith(slot.split('-')[0].trim()),
+      (s) {
+        final sStart = s.split('-')[0].trim().replaceAll('.', ':');
+        return sStart.startsWith(slotStart) || slotStart.startsWith(sStart);
+      },
       orElse: () => _sesiOptions.first,
     );
   }
@@ -56,9 +62,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         child: StreamBuilder<List<Map<String, dynamic>>>(
           stream: FirestoreService.streamKatalogRaw(),
           builder: (context, snapshot) {
-            final katalogList = (snapshot.data ?? const <Map<String, dynamic>>[])
-                .map(KatalogItem.fromMap)
-                .toList();
+            final katalogList =
+                (snapshot.data ?? const <Map<String, dynamic>>[])
+                    .map(KatalogItem.fromMap)
+                    .toList();
 
             _selectedLayanan ??= katalogList.firstWhere(
               (i) => i.nama == widget.order.serviceType,
@@ -76,149 +83,151 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             final selected = _selectedLayanan!;
 
             return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Title bar ─────────────────────────────────
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: const Icon(Icons.arrow_back_ios_rounded,
-                          size: 20, color: Colors.black87),
-                    ),
-                  ),
-                  Text('Edit Order',
-                      style: GoogleFonts.inter(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.black87,
-                      )),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // ── Pilih Layanan ──────────────────────────────
-              _label('Pilih Layanan'),
-              const SizedBox(height: 8),
-              _buildLayananSelector(selected, katalogList),
-              const SizedBox(height: 20),
-
-              // ── Alamat Penjemputan ───────────────────────────
-              _label('Alamat Penjemputan'),
-              const SizedBox(height: 8),
-              _buildBoxField(
-                child: TextField(
-                  controller: _alamatCtrl,
-                  maxLines: 3,
-                  style: GoogleFonts.inter(fontSize: 13, color: Colors.black87),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    isCollapsed: true,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // ── Tanggal & Sesi ────────────────────────────────
-              Row(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _label('Tanggal Jemput'),
-                        const SizedBox(height: 8),
-                        _buildDatePicker(),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _label('Sesi Jemput'),
-                        const SizedBox(height: 8),
-                        _buildSesiPicker(),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // ── Catatan ───────────────────────────────────────
-              _label('Catatan'),
-              const SizedBox(height: 8),
-              _buildBoxField(
-                child: TextField(
-                  controller: _catatanCtrl,
-                  style: GoogleFonts.inter(fontSize: 13, color: Colors.black87),
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    isCollapsed: true,
-                    hintText: 'Misal: Hati-hati baju warna putih',
-                    hintStyle:
-                        GoogleFonts.inter(fontSize: 13, color: Colors.black38),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 28),
-
-              // ── Batalkan & Edit ────────────────────────────────
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: _showBatalkanDialog,
-                      child: Container(
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: _blue, width: 1.5),
+                  // ── Title bar ─────────────────────────────────
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: const Icon(Icons.arrow_back_ios_rounded,
+                              size: 20, color: Colors.black87),
                         ),
-                        alignment: Alignment.center,
-                        child: Text('Batalkan',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: _blue,
-                            )),
+                      ),
+                      Text('Edit Order',
+                          style: GoogleFonts.inter(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black87,
+                          )),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ── Pilih Layanan ──────────────────────────────
+                  _label('Pilih Layanan'),
+                  const SizedBox(height: 8),
+                  _buildLayananSelector(selected, katalogList),
+                  const SizedBox(height: 20),
+
+                  // ── Alamat Penjemputan ───────────────────────────
+                  _label('Alamat Penjemputan'),
+                  const SizedBox(height: 8),
+                  _buildBoxField(
+                    child: TextField(
+                      controller: _alamatCtrl,
+                      maxLines: 3,
+                      style: GoogleFonts.inter(
+                          fontSize: 13, color: Colors.black87),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        isCollapsed: true,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: _onSimpanEdit,
-                      child: Container(
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: _blue,
-                          borderRadius: BorderRadius.circular(12),
+                  const SizedBox(height: 20),
+
+                  // ── Tanggal & Sesi ────────────────────────────────
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label('Tanggal Jemput'),
+                            const SizedBox(height: 8),
+                            _buildDatePicker(),
+                          ],
                         ),
-                        alignment: Alignment.center,
-                        child: Text('Edit',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label('Sesi Jemput'),
+                            const SizedBox(height: 8),
+                            _buildSesiPicker(),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ── Catatan ───────────────────────────────────────
+                  _label('Catatan'),
+                  const SizedBox(height: 8),
+                  _buildBoxField(
+                    child: TextField(
+                      controller: _catatanCtrl,
+                      style: GoogleFonts.inter(
+                          fontSize: 13, color: Colors.black87),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        isCollapsed: true,
+                        hintText: 'Misal: Hati-hati baju warna putih',
+                        hintStyle: GoogleFonts.inter(
+                            fontSize: 13, color: Colors.black38),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+
+                  // ── Batalkan & Edit ────────────────────────────────
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: _showBatalkanDialog,
+                          child: Container(
+                            height: 52,
+                            decoration: BoxDecoration(
                               color: Colors.white,
-                            )),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: _blue, width: 1.5),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text('Batalkan',
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: _blue,
+                                )),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: _onSimpanEdit,
+                          child: Container(
+                            height: 52,
+                            decoration: BoxDecoration(
+                              color: _blue,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text('Edit',
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                )),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-        );
+            );
           },
         ),
       ),
@@ -248,7 +257,8 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   }
 
   // ── Layanan Selector ─────────────────────────────────────────
-  Widget _buildLayananSelector(KatalogItem selected, List<KatalogItem> katalogList) {
+  Widget _buildLayananSelector(
+      KatalogItem selected, List<KatalogItem> katalogList) {
     return GestureDetector(
       onTap: () => _showLayananPicker(katalogList),
       child: Container(
@@ -389,7 +399,44 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
 
   // ── Simpan Edit ────────────────────────────────────────────────
   void _onSimpanEdit() {
-    Navigator.pop(context);
+    // Build updated order and persist
+    // create a new OrderModel with updated fields
+    final newOrder = OrderModel(
+      id: widget.order.id,
+      customerName: widget.order.customerName,
+      phone: widget.order.phone,
+      serviceType: _selectedLayanan?.nama ?? widget.order.serviceType,
+      pickupDate: _tanggalJemput ?? widget.order.pickupDate,
+      pickupSlot: _sesiJemput,
+      status: widget.order.status,
+      beratKg: widget.order.beratKg,
+      totalHarga: widget.order.totalHarga,
+      address: _alamatCtrl.text.trim(),
+      catatan:
+          _catatanCtrl.text.trim().isEmpty ? '-' : _catatanCtrl.text.trim(),
+      steps: widget.order.steps,
+      createdAt: widget.order.createdAt,
+    );
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    FirestoreService.updateOrder(newOrder).then((_) {
+      if (!mounted) return;
+      Navigator.pop(context); // close loading
+      Navigator.pop(context); // close edit screen
+    }).catchError((e) {
+      if (!mounted) return;
+      Navigator.pop(context); // close loading
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Gagal menyimpan perubahan: $e',
+            style: GoogleFonts.inter(fontSize: 13)),
+        backgroundColor: Colors.redAccent,
+      ));
+    });
   }
 
   // ── Batalkan Dialog ──────────────────────────────────────────

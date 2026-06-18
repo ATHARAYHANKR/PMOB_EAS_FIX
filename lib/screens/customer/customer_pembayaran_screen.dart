@@ -54,7 +54,9 @@ class CustomerPembayaranScreen extends StatelessWidget {
                     return const Center(child: CircularProgressIndicator());
                   }
                   final tagihan = (snap.data ?? [])
-                      .where((o) => o.status == OrderStatus.konfirmasiBayar)
+                      .where((o) =>
+                          o.status == OrderStatus.konfirmasiBayar &&
+                          !o.isPaid)
                       .toList();
                   if (tagihan.isEmpty) {
                     return Padding(
@@ -82,7 +84,7 @@ class CustomerPembayaranScreen extends StatelessWidget {
   Widget _buildTagihanCard(BuildContext context, OrderModel order) {
     final dateStr = DateFormat('d MMMM yyyy', 'id').format(order.pickupDate);
     final berat = order.beratKg ?? 0;
-    final total = (berat * 7000).round();
+    final total = (order.totalHarga ?? berat * 7000).round();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),

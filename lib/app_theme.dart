@@ -60,8 +60,8 @@ class StatusBadgeConfig {
         );
       case OrderStatus.dikirim:
         return const StatusBadgeConfig(
-          bg: Color(0xFFF1F8E9),
-          fg: Color(0xFF558B2F),
+          bg: Color(0xFFE3F2FD),
+          fg: Color(0xFF1565C0),
           icon: Icons.local_shipping_rounded,
         );
       case OrderStatus.konfirmasiBayar:

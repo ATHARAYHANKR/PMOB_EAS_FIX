@@ -45,17 +45,16 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
         badgeFg = const Color(0xFF512DA8);
         badgeLabel = 'Disetrika';
         break;
-      case OrderStatus.dikirim:
-        badgeBg = const Color(0xFFF1F8E9);
-        badgeFg = const Color(0xFF558B2F);
-        badgeLabel = 'Dikirim';
-        break;
       case OrderStatus.dijemput:
         badgeBg = const Color(0xFFD6F0F7);
         badgeFg = const Color(0xFF1E88A8);
         badgeLabel = 'Dijemput';
         break;
-
+      case OrderStatus.dikirim:
+        badgeBg = const Color(0xFFE3F2FD);
+        badgeFg = const Color(0xFF1565C0);
+        badgeLabel = 'Dikirim';
+        break;
       case OrderStatus.perluTimbang:
         badgeBg = const Color(0xFFEEF6FF);
         badgeFg = const Color(0xFF1565C0);

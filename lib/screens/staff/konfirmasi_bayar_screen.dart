@@ -13,6 +13,8 @@ class KonfirmasiBayarScreen extends StatefulWidget {
 }
 
 class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
+  int _sectionIndex = 0;
+
   String _formatDate(DateTime dt) => DateFormat('d MMMM yyyy', 'id').format(dt);
 
   @override
@@ -27,6 +29,10 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
             const StaffPageHeader(
               title: 'Konfirmasi Bayar',
               subtitle: 'Order yang menunggu konfirmasi pembayaran',
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+              child: _buildSectionTabs(),
             ),
 
             // ── List / Empty / Loading / Error ───────────
@@ -54,7 +60,10 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  final orders = snapshot.data!;
+                  final orders = (snapshot.data ?? [])
+                      .where((order) =>
+                          _sectionIndex == 0 ? !order.isPaid : order.isPaid)
+                      .toList();
 
                   if (orders.isEmpty) {
                     return _buildEmptyState();
@@ -76,6 +85,56 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
   }
 
   // ── Card ─────────────────────────────────────────────────
+  Widget _buildSectionTabs() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F2F5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(child: _sectionButton('Menunggu', 0)),
+          const SizedBox(width: 4),
+          Expanded(child: _sectionButton('Konfirmasi', 1)),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionButton(String label, int index) {
+    final isActive = _sectionIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _sectionIndex = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        height: 42,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isActive ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(13),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: isActive ? AppColors.primary : AppColors.textGrey,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCard(OrderModel order) {
     final dateStr = _formatDate(order.pickupDate);
     final hargaStr = order.totalHarga != null
@@ -84,7 +143,6 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
         : null;
 
     return StaffCard(
-      onTap: () => _showPaymentDetail(order),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -147,104 +205,47 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
           ],
 
           const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed:
-                  order.isPaid ? () => _showKonfirmasiDialog(order) : null,
-              icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
-              label: Text(
-                order.isPaid ? 'Konfirmasi Lunas' : 'Menunggu Pembayaran',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    order.isPaid ? AppColors.primary : Colors.grey.shade400,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-          ),
-          if (!order.isPaid) ...[
-            const SizedBox(height: 10),
-            Text(
-              'Tunggu bukti pembayaran dari customer sebelum konfirmasi.',
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: Colors.black54,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  void _showPaymentDetail(OrderModel order) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text('Detail Pembayaran',
-            style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Order: ${order.id}', style: GoogleFonts.inter(fontSize: 13)),
-            const SizedBox(height: 8),
-            Text('Customer: ${order.customerName}',
-                style: GoogleFonts.inter(fontSize: 13)),
-            const SizedBox(height: 8),
-            Text(
-                'Total: ${order.totalHarga != null ? NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0).format(order.totalHarga) : '-'}',
-                style: GoogleFonts.inter(fontSize: 13)),
-            const SizedBox(height: 8),
-            Text(
-                'Status pembayaran: ${order.isPaid ? 'Sudah dibayar' : 'Belum dibayar'}',
-                style: GoogleFonts.inter(fontSize: 13)),
-            const SizedBox(height: 8),
-            if (order.paymentProofUrl != null &&
-                order.paymentProofUrl!.isNotEmpty)
-              Text('Bukti: ${order.paymentProofUrl!}',
-                  style: GoogleFonts.inter(fontSize: 13, color: Colors.blue))
-            else
-              Text('Tidak ada bukti transaksi tersimpan.',
-                  style:
-                      GoogleFonts.inter(fontSize: 13, color: Colors.black54)),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Tutup',
-                style: GoogleFonts.inter(color: AppColors.primary)),
-          ),
           if (order.isPaid)
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.pop(context);
-                try {
-                  await FirestoreService.updateStatus(
-                      order.id, OrderStatus.dicuci);
-                  if (!mounted) return;
-                  _showSnack('${order.id} berhasil dikonfirmasi lunas');
-                } catch (e) {
-                  if (!mounted) return;
-                  _showSnack('Gagal memperbarui status: $e');
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _showKonfirmasiDialog(order),
+                icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+                label: Text(
+                  'Konfirmasi Lunas',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
               ),
-              child: Text('Konfirmasi',
-                  style: GoogleFonts.inter(color: Colors.white)),
+            )
+          else
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF8E1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'Menunggu customer melakukan pembayaran',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF9A6A00),
+                ),
+              ),
             ),
         ],
       ),
@@ -273,9 +274,11 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
 
   // ── Empty state ───────────────────────────────────────────
   Widget _buildEmptyState() {
-    return const StaffEmptyState(
+    return StaffEmptyState(
       icon: Icons.payments_outlined,
-      message: 'Tidak ada pembayaran masuk saat ini',
+      message: _sectionIndex == 0
+          ? 'Tidak ada tagihan yang menunggu pembayaran'
+          : 'Tidak ada pembayaran yang perlu dikonfirmasi',
     );
   }
 
@@ -369,7 +372,7 @@ class _KonfirmasiBayarScreenState extends State<KonfirmasiBayarScreen> {
                         ),
                       ),
                       child: Text(
-                        'Konfirmasi',
+                        'Konfirmasi Bayar',
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,

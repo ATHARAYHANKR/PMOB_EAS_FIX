@@ -4,6 +4,9 @@ import '../../services/firestore_service.dart';
 import 'tambah_katalog_screen.dart';
 import 'tambah_layanan_screen.dart';
 import 'tambah_staff_screen.dart';
+import 'edit_katalog_screen.dart';
+import 'edit_layanan_screen.dart';
+import 'edit_staff_screen.dart';
 
 // ── Display models (dibangun dari data Firestore) ──────────────
 class KatalogItem {
@@ -402,8 +405,103 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
                               color: Colors.black87,
                             )),
                       ),
+                      PopupMenuButton<String>(
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => EditKatalogScreen(
+                                  id: item.id,
+                                  nama: item.nama,
+                                  satuan: item.satuan,
+                                  harga: item.harga,
+                                  estimasi: item.estimasi,
+                                  deskripsi: item.deskripsi,
+                                  aktif: item.aktif,
+                                ),
+                              ),
+                            );
+                          } else if (value == 'delete') {
+                            _showDeleteConfirmDialog(
+                              'Hapus Katalog',
+                              'Apakah Anda yakin ingin menghapus katalog "${item.nama}"?',
+                              () async {
+                                try {
+                                  await FirestoreService.deleteKatalog(item.id);
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(SnackBar(
+                                      content: Text(
+                                        'Katalog berhasil dihapus',
+                                        style: GoogleFonts.inter(fontSize: 13),
+                                      ),
+                                      backgroundColor: Colors.greenAccent,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      margin: const EdgeInsets.all(16),
+                                    ));
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(SnackBar(
+                                      content: Text(
+                                        'Gagal menghapus: $e',
+                                        style: GoogleFonts.inter(fontSize: 13),
+                                      ),
+                                      backgroundColor: Colors.redAccent,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      margin: const EdgeInsets.all(16),
+                                    ));
+                                  }
+                                }
+                              },
+                            );
+                          }
+                        },
+                        itemBuilder: (BuildContext context) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                const Icon(Icons.edit,
+                                    size: 18, color: Colors.black54),
+                                const SizedBox(width: 8),
+                                Text('Edit',
+                                    style: GoogleFonts.inter(fontSize: 13)),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                const Icon(Icons.delete,
+                                    size: 18, color: Colors.redAccent),
+                                const SizedBox(width: 8),
+                                Text('Hapus',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      color: Colors.redAccent,
+                                    )),
+                              ],
+                            ),
+                          ),
+                        ],
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          child: const Icon(Icons.more_vert,
+                              size: 20, color: Color(0xFF999999)),
+                        ),
+                      ),
                       Padding(
-                        padding: const EdgeInsets.only(right: 12),
+                        padding: const EdgeInsets.only(left: 8),
                         child: _statusBadge(item.aktif),
                       ),
                     ],
@@ -416,19 +514,6 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
                   Text('Estimasi ${item.estimasi}',
                       style: GoogleFonts.inter(
                           fontSize: 12, color: Colors.black45)),
-                  const SizedBox(height: 6),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: Text('Lihat detail',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: _purple,
-                            fontWeight: FontWeight.w600,
-                          )),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -518,8 +603,103 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
                               color: Colors.black87,
                             )),
                       ),
+                      PopupMenuButton<String>(
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => EditLayananScreen(
+                                  id: item.id,
+                                  nama: item.nama,
+                                  satuan: item.satuan,
+                                  harga: item.harga,
+                                  estimasi: item.estimasi,
+                                  deskripsi: item.deskripsi,
+                                  aktif: item.aktif,
+                                ),
+                              ),
+                            );
+                          } else if (value == 'delete') {
+                            _showDeleteConfirmDialog(
+                              'Hapus Layanan',
+                              'Apakah Anda yakin ingin menghapus layanan "${item.nama}"?',
+                              () async {
+                                try {
+                                  await FirestoreService.deleteLayanan(item.id);
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(SnackBar(
+                                      content: Text(
+                                        'Layanan berhasil dihapus',
+                                        style: GoogleFonts.inter(fontSize: 13),
+                                      ),
+                                      backgroundColor: Colors.greenAccent,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      margin: const EdgeInsets.all(16),
+                                    ));
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(SnackBar(
+                                      content: Text(
+                                        'Gagal menghapus: $e',
+                                        style: GoogleFonts.inter(fontSize: 13),
+                                      ),
+                                      backgroundColor: Colors.redAccent,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      margin: const EdgeInsets.all(16),
+                                    ));
+                                  }
+                                }
+                              },
+                            );
+                          }
+                        },
+                        itemBuilder: (BuildContext context) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                const Icon(Icons.edit,
+                                    size: 18, color: Colors.black54),
+                                const SizedBox(width: 8),
+                                Text('Edit',
+                                    style: GoogleFonts.inter(fontSize: 13)),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                const Icon(Icons.delete,
+                                    size: 18, color: Colors.redAccent),
+                                const SizedBox(width: 8),
+                                Text('Hapus',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      color: Colors.redAccent,
+                                    )),
+                              ],
+                            ),
+                          ),
+                        ],
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          child: const Icon(Icons.more_vert,
+                              size: 20, color: Color(0xFF999999)),
+                        ),
+                      ),
                       Padding(
-                        padding: const EdgeInsets.only(right: 12),
+                        padding: const EdgeInsets.only(left: 8),
                         child: _statusBadge(item.aktif),
                       ),
                     ],
@@ -532,19 +712,6 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
                   Text('Estimasi ${item.estimasi}',
                       style: GoogleFonts.inter(
                           fontSize: 12, color: Colors.black45)),
-                  const SizedBox(height: 6),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: Text('Lihat detail',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: _purple,
-                            fontWeight: FontWeight.w600,
-                          )),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -613,7 +780,9 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
             ),
             alignment: Alignment.center,
             child: Text(
-              item.nama.isNotEmpty ? item.nama.substring(0, 1).toUpperCase() : '?',
+              item.nama.isNotEmpty
+                  ? item.nama.substring(0, 1).toUpperCase()
+                  : '?',
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -639,26 +808,112 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
                             color: Colors.black87,
                           )),
                     ),
-                    _statusBadge(item.aktif),
+                    PopupMenuButton<String>(
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => EditStaffScreen(
+                                id: item.id,
+                                nama: item.nama,
+                                telepon: item.telepon,
+                                email: item.email,
+                                aktif: item.aktif,
+                              ),
+                            ),
+                          );
+                        } else if (value == 'delete') {
+                          _showDeleteConfirmDialog(
+                            'Hapus Staff',
+                            'Apakah Anda yakin ingin menghapus staff "${item.nama}"?',
+                            () async {
+                              try {
+                                await FirestoreService.deleteStaff(item.id);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(SnackBar(
+                                    content: Text(
+                                      'Staff berhasil dihapus',
+                                      style: GoogleFonts.inter(fontSize: 13),
+                                    ),
+                                    backgroundColor: Colors.greenAccent,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    margin: const EdgeInsets.all(16),
+                                  ));
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(SnackBar(
+                                    content: Text(
+                                      'Gagal menghapus: $e',
+                                      style: GoogleFonts.inter(fontSize: 13),
+                                    ),
+                                    backgroundColor: Colors.redAccent,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    margin: const EdgeInsets.all(16),
+                                  ));
+                                }
+                              }
+                            },
+                          );
+                        }
+                      },
+                      itemBuilder: (BuildContext context) => [
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.edit,
+                                  size: 18, color: Colors.black54),
+                              const SizedBox(width: 8),
+                              Text('Edit',
+                                  style: GoogleFonts.inter(fontSize: 13)),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.delete,
+                                  size: 18, color: Colors.redAccent),
+                              const SizedBox(width: 8),
+                              Text('Hapus',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    color: Colors.redAccent,
+                                  )),
+                            ],
+                          ),
+                        ),
+                      ],
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        child: const Icon(Icons.more_vert,
+                            size: 20, color: Color(0xFF999999)),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: _statusBadge(item.aktif),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 2),
                 Text('Staff',
-                    style: GoogleFonts.inter(
-                        fontSize: 12, color: Colors.black45)),
+                    style:
+                        GoogleFonts.inter(fontSize: 12, color: Colors.black45)),
                 Text(item.telepon,
-                    style: GoogleFonts.inter(
-                        fontSize: 12, color: Colors.black45)),
-                const SizedBox(height: 6),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text('Lihat detail',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: _purple,
-                        fontWeight: FontWeight.w600,
-                      )),
-                ),
+                    style:
+                        GoogleFonts.inter(fontSize: 12, color: Colors.black45)),
               ],
             ),
           ),
@@ -685,9 +940,7 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: aktif
-            ? const Color(0xFFE8F5E9)
-            : const Color(0xFFFEEEEE),
+        color: aktif ? const Color(0xFFE8F5E9) : const Color(0xFFFEEEEE),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -709,5 +962,101 @@ class _OwnerKelolaScreenState extends State<OwnerKelolaScreen> {
       buf.write(s[i]);
     }
     return buf.toString();
+  }
+
+  void _showDeleteConfirmDialog(
+    String title,
+    String message,
+    VoidCallback onConfirm,
+  ) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFFEBEE),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.delete_outline_rounded,
+                    color: Colors.redAccent, size: 36),
+              ),
+              const SizedBox(height: 20),
+              Text(title,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                    height: 1.4,
+                  )),
+              const SizedBox(height: 8),
+              Text(message,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: Colors.black45,
+                  )),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFEEEEEE),
+                        foregroundColor: Colors.black87,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text('Batal',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          )),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        onConfirm();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text('Hapus',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          )),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
