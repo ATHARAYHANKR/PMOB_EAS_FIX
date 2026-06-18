@@ -109,27 +109,28 @@ class _DetailPembayaranScreenState extends State<DetailPembayaranScreen> {
                 child: Column(
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Scan QRIS',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black87,
-                            )),
-                        const SizedBox(width: 80),
+                        Expanded(
+                          child: Text('Scan QRIS',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.black87,
+                              )),
+                        ),
                         const Icon(Icons.file_download_outlined,
                             size: 20, color: Colors.black45),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text('Rp${_formatHarga(total)}',
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: Colors.black87,
                         )),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 16),
                     Container(
                       width: 220,
                       height: 220,
@@ -138,38 +139,33 @@ class _DetailPembayaranScreenState extends State<DetailPembayaranScreen> {
                         color: const Color(0xFFF1F5FE),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Stack(
-                        alignment: Alignment.center,
+                      child: Center(
+                        child: CustomPaint(
+                          size: const Size(188, 188),
+                          painter: _QrPlaceholderPainter(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _blue,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          CustomPaint(
-                            size: const Size(188, 188),
-                            painter: _QrPlaceholderPainter(),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: _blue,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.person,
-                                      size: 12, color: Colors.white),
-                                  const SizedBox(width: 4),
-                                  Text('CleanGo',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
-                                      )),
-                                ],
-                              ),
-                            ),
-                          ),
+                          const Icon(Icons.person,
+                              size: 12, color: Colors.white),
+                          const SizedBox(width: 6),
+                          Text('CleanGo',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              )),
                         ],
                       ),
                     ),

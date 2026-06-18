@@ -144,10 +144,11 @@ class _ReseedAppState extends State<_ReseedApp> {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// DATA KATALOG (6 item, masing-masing 6 atribut: id, nama, satuan,
+// DATA KATALOG (20 item, masing-masing 7 atribut: id, nama, satuan,
 // harga, estimasi, deskripsi, aktif)
 // ─────────────────────────────────────────────────────────────────
 final List<Map<String, dynamic>> _katalogData = [
+  // ── 1. Cuci Kering ────────────────────────────────────────────
   {
     'id': 'cuci_kering_regular',
     'nama': 'Cuci Kering Regular',
@@ -166,6 +167,7 @@ final List<Map<String, dynamic>> _katalogData = [
     'deskripsi': 'Cuci kering cepat dengan prioritas pengerjaan.',
     'aktif': true,
   },
+  // ── 2. Cuci Setrika ───────────────────────────────────────────
   {
     'id': 'cuci_setrika_regular',
     'nama': 'Cuci Setrika Regular',
@@ -184,6 +186,7 @@ final List<Map<String, dynamic>> _katalogData = [
     'deskripsi': 'Cuci dan setrika cepat dengan prioritas pengerjaan.',
     'aktif': true,
   },
+  // ── 3. Setrika Saja ───────────────────────────────────────────
   {
     'id': 'setrika_saja_regular',
     'nama': 'Setrika Saja Regular',
@@ -202,6 +205,7 @@ final List<Map<String, dynamic>> _katalogData = [
     'deskripsi': 'Setrika saja cepat dengan prioritas pengerjaan.',
     'aktif': true,
   },
+  // ── 4. Laundry Sepatu ─────────────────────────────────────────
   {
     'id': 'laundry_sepatu_regular',
     'nama': 'Laundry Sepatu Regular',
@@ -218,6 +222,120 @@ final List<Map<String, dynamic>> _katalogData = [
     'harga': 27000,
     'estimasi': '1 hari',
     'deskripsi': 'Layanan cuci sepatu cepat dengan prioritas pengerjaan.',
+    'aktif': true,
+  },
+  // ── 5. Laundry Tas ────────────────────────────────────────────
+  {
+    'id': 'laundry_tas_regular',
+    'nama': 'Laundry Tas Regular',
+    'satuan': 'Pcs',
+    'harga': 25000,
+    'estimasi': '3 hari',
+    'deskripsi': 'Cuci tas kain, kanvas, dan ransel standar.',
+    'aktif': true,
+  },
+  {
+    'id': 'laundry_tas_express',
+    'nama': 'Laundry Tas Express',
+    'satuan': 'Pcs',
+    'harga': 38000,
+    'estimasi': '1 hari',
+    'deskripsi': 'Cuci tas kain, kanvas, dan ransel dengan prioritas cepat.',
+    'aktif': true,
+  },
+  // ── 6. Cuci Karpet ────────────────────────────────────────────
+  {
+    'id': 'cuci_karpet_regular',
+    'nama': 'Cuci Karpet Regular',
+    'satuan': 'M2',
+    'harga': 15000,
+    'estimasi': '3 hari',
+    'deskripsi': 'Cuci karpet bersih dengan deterjen khusus karpet.',
+    'aktif': true,
+  },
+  {
+    'id': 'cuci_karpet_express',
+    'nama': 'Cuci Karpet Express',
+    'satuan': 'M2',
+    'harga': 22000,
+    'estimasi': '1 hari',
+    'deskripsi': 'Cuci karpet cepat dengan pengeringan khusus.',
+    'aktif': true,
+  },
+  // ── 7. Cuci Boneka ────────────────────────────────────────────
+  {
+    'id': 'cuci_boneka_regular',
+    'nama': 'Cuci Boneka Regular',
+    'satuan': 'Pcs',
+    'harga': 20000,
+    'estimasi': '2 hari',
+    'deskripsi': 'Cuci boneka plush dan stuffed toy standar dengan aman.',
+    'aktif': true,
+  },
+  {
+    'id': 'cuci_boneka_express',
+    'nama': 'Cuci Boneka Express',
+    'satuan': 'Pcs',
+    'harga': 30000,
+    'estimasi': '1 hari',
+    'deskripsi': 'Cuci boneka cepat dengan pengeringan dan perawatan khusus.',
+    'aktif': true,
+  },
+  // ── 8. Laundry Jas / Pakaian Formal ──────────────────────────
+  {
+    'id': 'cuci_jas_regular',
+    'nama': 'Cuci Jas Regular',
+    'satuan': 'Pcs',
+    'harga': 35000,
+    'estimasi': '3 hari',
+    'deskripsi': 'Cuci dan setrika jas, blazer, dan pakaian formal standar.',
+    'aktif': true,
+  },
+  {
+    'id': 'cuci_jas_express',
+    'nama': 'Cuci Jas Express',
+    'satuan': 'Pcs',
+    'harga': 50000,
+    'estimasi': '1 hari',
+    'deskripsi': 'Cuci dan setrika jas dan pakaian formal dengan prioritas cepat.',
+    'aktif': true,
+  },
+  // ── 9. Laundry Bed Cover & Selimut ───────────────────────────
+  {
+    'id': 'cuci_bedcover_regular',
+    'nama': 'Cuci Bed Cover Regular',
+    'satuan': 'Pcs',
+    'harga': 30000,
+    'estimasi': '3 hari',
+    'deskripsi': 'Cuci bed cover, selimut, dan sprei ukuran besar standar.',
+    'aktif': true,
+  },
+  {
+    'id': 'cuci_bedcover_express',
+    'nama': 'Cuci Bed Cover Express',
+    'satuan': 'Pcs',
+    'harga': 45000,
+    'estimasi': '1 hari',
+    'deskripsi': 'Cuci bed cover dan selimut cepat dengan pengeringan optimal.',
+    'aktif': true,
+  },
+  // ── 10. Paket Hemat ───────────────────────────────────────────
+  {
+    'id': 'paket_hemat_5kg',
+    'nama': 'Paket Hemat 5 Kg',
+    'satuan': 'Paket',
+    'harga': 30000,
+    'estimasi': '2 hari',
+    'deskripsi': 'Paket cuci kering ekonomis untuk 5 kg pakaian, hemat lebih dari harga satuan.',
+    'aktif': true,
+  },
+  {
+    'id': 'paket_hemat_10kg',
+    'nama': 'Paket Hemat 10 Kg',
+    'satuan': 'Paket',
+    'harga': 55000,
+    'estimasi': '2 hari',
+    'deskripsi': 'Paket cuci kering ekonomis untuk 10 kg pakaian, harga paling terjangkau per kg.',
     'aktif': true,
   },
 ];

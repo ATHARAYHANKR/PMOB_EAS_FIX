@@ -17,6 +17,9 @@ class FormBookingScreen extends StatefulWidget {
 }
 
 class _FormBookingScreenState extends State<FormBookingScreen> {
+  // ── GlobalKey<FormState> wajib ─────────────────────────────────
+  final _formKey = GlobalKey<FormState>();
+
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
 
@@ -38,9 +41,8 @@ class _FormBookingScreenState extends State<FormBookingScreen> {
   }
 
   void _loadDefaultAddress() {
-    // Get default address from user (you can integrate with user service)
     final addr = FirestoreService.currentUserAddress;
-    _addressController.text = addr ?? 'Jl. Mawar No. 10';
+    _addressController.text = addr ?? '';
   }
 
   Future<void> _selectPickupDate() async {
@@ -73,6 +75,9 @@ class _FormBookingScreenState extends State<FormBookingScreen> {
   }
 
   Future<void> _submitBooking() async {
+    // ── Validasi Form ──────────────────────────────────────────────
+    if (!_formKey.currentState!.validate()) return;
+
     if (_selectedPickupDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pilih tanggal jemput terlebih dahulu')),
@@ -80,17 +85,9 @@ class _FormBookingScreenState extends State<FormBookingScreen> {
       return;
     }
 
-    if (_addressController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Masukkan alamat pengambilan')),
-      );
-      return;
-    }
-
     setState(() => _isLoading = true);
 
     try {
-      // Calculate finish date based on service estimation
       DateTime finishDate = _calculateFinishDate(_selectedPickupDate!);
 
       final booking = BookingModel(
@@ -102,7 +99,7 @@ class _FormBookingScreenState extends State<FormBookingScreen> {
         katalogNama: widget.service.nama,
         harga: widget.service.harga,
         satuan: widget.service.satuan,
-        alamat: _addressController.text,
+        alamat: _addressController.text.trim(),
         tanggalJemput: _selectedPickupDate!,
         tanggalSelesai: finishDate,
         sesiJemput: _selectedPickupSession,
@@ -110,7 +107,6 @@ class _FormBookingScreenState extends State<FormBookingScreen> {
         createdAt: DateTime.now(),
       );
 
-      // Save to Firebase or local storage
       await FirestoreService.createBooking(booking);
 
       if (mounted) {
@@ -120,8 +116,6 @@ class _FormBookingScreenState extends State<FormBookingScreen> {
             backgroundColor: Colors.green,
           ),
         );
-
-        // Navigate back to main screen or booking list
         Navigator.popUntil(context, (route) => route.isFirst);
       }
     } catch (e) {
@@ -138,7 +132,6 @@ class _FormBookingScreenState extends State<FormBookingScreen> {
   }
 
   DateTime _calculateFinishDate(DateTime pickupDate) {
-    // Parse estimation like "2 hari", "1 hari", "3 hari"
     final estimationParts = widget.service.estimasi.split(' ');
     if (estimationParts.length >= 2) {
       final days = int.tryParse(estimationParts[0]) ?? 1;
@@ -170,16 +163,20 @@ class _FormBookingScreenState extends State<FormBookingScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildServiceCard(),
-            const SizedBox(height: 24),
-            _buildFormSection(),
-            const SizedBox(height: 32),
-            _buildSubmitButton(),
-            const SizedBox(height: 16),
-          ],
+        // ── Form widget wajib ──────────────────────────────────────
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildServiceCard(),
+              const SizedBox(height: 24),
+              _buildFormSection(),
+              const SizedBox(height: 32),
+              _buildSubmitButton(),
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -237,7 +234,7 @@ class _FormBookingScreenState extends State<FormBookingScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Rp${widget.service.harga.toString()}/${widget.service.satuan}',
+                  'Rp${widget.service.harga}/${widget.service.satuan}',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -260,33 +257,61 @@ class _FormBookingScreenState extends State<FormBookingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ── Field 1: Alamat dengan validasi ───────────────────────
         _buildFormLabel('Alamat Penjemputan'),
         const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE0E0E0)),
-          ),
-          child: TextField(
-            controller: _addressController,
-            decoration: InputDecoration(
-              hintText: 'Jl. Mawar No. 10',
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-              hintStyle: GoogleFonts.inter(
-                fontSize: 14,
-                color: const Color(0xFFB0B0B0),
-              ),
+        TextFormField(
+          controller: _addressController,
+          style: GoogleFonts.inter(fontSize: 14),
+          maxLines: 2,
+          decoration: InputDecoration(
+            hintText: 'Masukkan alamat lengkap penjemputan',
+            hintStyle: GoogleFonts.inter(
+              fontSize: 14,
+              color: const Color(0xFFB0B0B0),
             ),
-            style: GoogleFonts.inter(fontSize: 14),
-            maxLines: 2,
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF3B5BDB)),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
           ),
+          // ── Validasi 1: tidak boleh kosong ─────────────────────
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Alamat penjemputan tidak boleh kosong';
+            }
+            // ── Validasi 2: minimal 10 karakter ─────────────────
+            if (value.trim().length < 10) {
+              return 'Alamat terlalu singkat, minimal 10 karakter';
+            }
+            return null;
+          },
         ),
         const SizedBox(height: 24),
+
+        // ── Field 2: Tanggal Jemput ────────────────────────────────
         _buildFormLabel('Tanggal Jemput'),
         const SizedBox(height: 8),
         GestureDetector(
@@ -322,46 +347,52 @@ class _FormBookingScreenState extends State<FormBookingScreen> {
           ),
         ),
         const SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildFormLabel('Sesi Jemput'),
-                  const SizedBox(height: 8),
-                  _buildSessionDropdown(),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        _buildFormLabel('Catatan'),
+
+        // ── Field 3: Sesi Jemput ───────────────────────────────────
+        _buildFormLabel('Sesi Jemput'),
         const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE0E0E0)),
-          ),
-          child: TextField(
-            controller: _notesController,
-            decoration: InputDecoration(
-              hintText: 'Misal: Hati-hati baju warna putih',
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-              hintStyle: GoogleFonts.inter(
-                fontSize: 14,
-                color: const Color(0xFFB0B0B0),
-              ),
+        _buildSessionDropdown(),
+        const SizedBox(height: 24),
+
+        // ── Field 4: Catatan (opsional, dengan validasi panjang) ───
+        _buildFormLabel('Catatan (Opsional)'),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _notesController,
+          style: GoogleFonts.inter(fontSize: 14),
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: 'Misal: Hati-hati baju warna putih',
+            hintStyle: GoogleFonts.inter(
+              fontSize: 14,
+              color: const Color(0xFFB0B0B0),
             ),
-            style: GoogleFonts.inter(fontSize: 14),
-            maxLines: 3,
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF3B5BDB)),
+            ),
           ),
+          // ── Validasi 3: catatan tidak boleh lebih dari 200 karakter
+          validator: (value) {
+            if (value != null && value.length > 200) {
+              return 'Catatan maksimal 200 karakter';
+            }
+            return null;
+          },
         ),
       ],
     );
