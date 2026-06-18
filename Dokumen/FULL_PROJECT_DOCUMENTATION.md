@@ -1,0 +1,1414 @@
+# 📚 DOKUMENTASI LENGKAP CLEANGO PROJECT
+
+**Project**: CleanGo - Laundry Management App (Flutter)  
+**Status**: Development/Production  
+**Last Updated**: 2026-06-18  
+**Platform Support**: Android, iOS, Web, Windows, macOS
+
+---
+
+## 📋 DAFTAR ISI LENGKAP
+
+1. [Project Overview](#project-overview)
+2. [Architecture & Structure](#architecture--structure)
+3. [Dependencies](#dependencies)
+4. [Core Files](#core-files)
+5. [Data Models](#data-models)
+6. [Services Layer](#services-layer)
+7. [UI/Theme System](#uitheme-system)
+8. [Authentication Flow](#authentication-flow)
+9. [Staff Module](#staff-module)
+10. [Customer Module](#customer-module)
+11. [Owner Module](#owner-module)
+12. [Android Configuration](#android-configuration)
+13. [Workflow & Status](#workflow--status)
+14. [Firebase Integration](#firebase-integration)
+
+---
+
+## 🎯 PROJECT OVERVIEW
+
+### Deskripsi
+CleanGo adalah aplikasi manajemen laundry berbasis Flutter dengan fitur:
+- **Customer**: Booking, tracking, pembayaran
+- **Staff**: Order management, verifikasi berat, konfirmasi pembayaran
+- **Owner**: Dashboard, katalog, staff management, reports
+
+### Tech Stack
+- **Frontend**: Flutter 3.x
+- **Backend**: Firebase Firestore (Real-time Database)
+- **Authentication**: Firebase Auth
+- **UI Framework**: Material Design 3
+- **Fonts**: Google Fonts (Inter)
+- **Localization**: intl package (support Indonesian locale)
+
+### Workflow Utama
+```
+Customer Book → Staff Pickup → Weigh → Wash → Iron → Ship → Confirm Payment → Complete
+```
+
+---
+
+## 🏗️ ARCHITECTURE & STRUCTURE
+
+```
+lib/
+├── main.dart                    # Entry point, Firebase init
+├── app_theme.dart              # Global colors, StatusBadge widget
+├── firebase_options.dart       # Firebase config (generated)
+│
+├── models/
+│   ├── order_model.dart        # OrderStatus enum, OrderModel class
+│   ├── booking_model.dart      # Booking data model
+│   └── katalog_model.dart      # Service catalog model
+│
+├── services/
+│   ├── firestore_service.dart  # Firestore CRUD, streams
+│   ├── notification_helper.dart# SnackBar, Dialog helpers
+│   └── order_service.dart      # (Local) Order repository
+│
+└── screens/
+    ├── login_screen.dart       # Auth login
+    ├── auth/
+    │   ├── login_screen.dart
+    │   └── register_screen.dart
+    ├── customer/               # 17+ screens untuk customer
+    ├── staff/                  # 8+ screens untuk staff
+    └── owner/                  # 13+ screens untuk owner
+```
+
+---
+
+## 📦 DEPENDENCIES
+
+### pubspec.yaml Overview
+
+```yaml
+dependencies:
+  flutter:
+    sdk: flutter                           # Core Flutter framework
+  
+  google_fonts: ^6.2.1                    # Font management dari Google Fonts
+  intl: ^0.19.0                           # Internationalization & date/number formatting
+  firebase_core: ^2.19.0                  # Firebase initialization
+  cloud_firestore: ^4.9.0                 # Firestore real-time database
+  
+  # Implicit dependencies (included in Flutter):
+  # - material.dart (Material Design)
+  # - services.dart (platform channels)
+```
+
+### Version Constraints
+- **Dart SDK**: >= 3.0.0 < 4.0.0
+- **Flutter**: Latest stable
+- **Firebase**: v2.19+ & v4.9+
+
+---
+
+## 🔧 CORE FILES
+
+### 1️⃣ main.dart
+**Lokasi**: `/lib/main.dart`  
+**Fungsi**: Entry point aplikasi
+
+```dart
+void main() async {
+  // ✅ Memastikan Flutter binding siap
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // ✅ Setup locale Indonesia untuk date formatting (dd MMMM yyyy)
+  await initializeDateFormatting('id', null);
+
+  // ✅ Inisialisasi Firebase dengan config platform-specific
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
+  // ✅ Initialize Firestore service (check availability, setup)
+  await FirestoreService.initialize();
+
+  // ✅ Setup status bar transparan
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark,
+  ));
+
+  // ✅ Jalankan aplikasi
+  runApp(const CleanGoApp());
+}
+
+class CleanGoApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'CleanGo Staff',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
+        useMaterial3: true,                    # Material Design 3
+        scaffoldBackgroundColor: AppColors.bgPage,
+        fontFamily: 'Inter',                   # Default font
+      ),
+      home: const LoginScreen(),               # First screen
+    );
+  }
+}
+```
+
+**Key Points**:
+- Firebase diinit di main sebelum runApp
+- Locale Indonesia setup untuk formatDate sesuai region
+- StatusBar transparan untuk UI yang clean
+
+---
+
+### 2️⃣ firebase_options.dart
+**Lokasi**: `/lib/firebase_options.dart`  
+**Fungsi**: Platform-specific Firebase configuration (auto-generated)  
+**Generated by**: `flutterfire configure`
+
+```dart
+class DefaultFirebaseOptions {
+  static FirebaseOptions get currentPlatform {
+    if (kIsWeb) return web;
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return android;
+      case TargetPlatform.iOS:
+        return ios;
+      case TargetPlatform.macOS:
+        return macos;
+      case TargetPlatform.windows:
+        return windows;
+      default:
+        throw UnsupportedError('Platform tidak didukung');
+    }
+  }
+  
+  // ✅ Config untuk setiap platform (API keys, project IDs, etc)
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: '...',
+    appId: '1:48359423210:android:dcb55b805d51e440846b93',
+    messagingSenderId: '48359423210',
+    projectId: 'cleango-pmob',               # Firebase Project ID
+    databaseURL: 'https://cleango-pmob-default-rtdb.asia-southeast1.firebasedatabase.app',
+    storageBucket: 'cleango-pmob.firebasestorage.app',
+  );
+  // ... (ios, web, windows, macos)
+}
+```
+
+**Key Points**:
+- Unique API keys per platform
+- Project ID: `cleango-pmob`
+- Database region: `asia-southeast1` (Singapore)
+- Auto-generated, jangan edit manual
+
+---
+
+### 3️⃣ app_theme.dart
+**Lokasi**: `/lib/app_theme.dart`  
+**Fungsi**: Centralized color palette & reusable UI components
+
+```dart
+class AppColors {
+  // Primary Brand Colors
+  static const primary = Color(0xFF2E7D32);       # Dark Green (#2E7D32)
+  static const primaryLight = Color(0xFF4CAF50); # Medium Green
+  
+  // Page/Card Backgrounds
+  static const bgPage = Color(0xFFF5F6FA);       # Light Gray
+  static const bgCard = Color(0xFFFFFFFF);       # White
+  
+  // Text Colors
+  static const textDark = Color(0xFF1A1A2E);     # Very Dark Gray
+  static const textGrey = Color(0xFF9E9E9E);     # Medium Gray
+  
+  // Accent Colors
+  static const orange = Color(0xFFFF8C42);       # Orange
+  static const blue = Color(0xFF1E88E5);         # Blue
+  static const statusGreen = Color(0xFF43A047);  # Status Green
+  static const statusOrange = Color(0xFFFB8C00); # Status Orange
+}
+
+/// Centralized status badge configuration
+/// Mencegah inkonsistensi warna/icon di berbagai screen
+class StatusBadgeConfig {
+  final Color bg;      # Background color
+  final Color fg;      # Foreground/text color
+  final IconData icon; # Icon
+
+  static StatusBadgeConfig of(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.masuk:
+        return StatusBadgeConfig(
+          bg: Color(0xFFFFF3E0),        # Light Orange
+          fg: AppColors.orange,
+          icon: Icons.inventory_2_rounded,
+        );
+      case OrderStatus.dijemput:
+        return StatusBadgeConfig(
+          bg: Color(0xFFD6EEFF),        # Light Blue
+          fg: Color(0xFF1565C0),
+          icon: Icons.delivery_dining_rounded,
+        );
+      case OrderStatus.dicuci:
+        return StatusBadgeConfig(
+          bg: Color(0xFFB2DFDB),        # Light Teal
+          fg: Color(0xFF00695C),
+          icon: Icons.local_laundry_service_rounded,
+        );
+      case OrderStatus.disetrika:
+        return StatusBadgeConfig(
+          bg: Color(0xFFD6F5F0),        # Light Cyan
+          fg: Color(0xFF00897B),
+          icon: Icons.dry_cleaning_rounded,
+        );
+      // ... more statuses
+    }
+  }
+}
+
+/// Reusable widget untuk display status badge
+class StatusBadge extends StatelessWidget {
+  final OrderStatus status;
+  final String? labelOverride;
+
+  @override
+  Widget build(BuildContext context) {
+    final cfg = StatusBadgeConfig.of(status);
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: cfg.bg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: cfg.fg, width: 0.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(cfg.icon, color: cfg.fg, size: 14),
+          SizedBox(width: 6),
+          Text(
+            labelOverride ?? status.statusLabel,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: cfg.fg,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+
+**Key Points**:
+- Single source of truth untuk warna di seluruh app
+- StatusBadgeConfig ensures consistency across all screens
+- Easy maintenance: ubah warna di satu tempat
+
+---
+
+## 💾 DATA MODELS
+
+### 1️⃣ order_model.dart
+
+#### Enum: OrderStatus
+```dart
+enum OrderStatus {
+  masuk,          # 0: Initial - Waiting for staff confirmation
+  dijemput,       # 1: Picked up from customer
+  perluTimbang,   # 2: Need weighing at store
+  dicuci,         # 3a: Being washed
+  disetrika,      # 3b: Being ironed
+  dikirim,        # 4: Being shipped back
+  konfirmasiBayar,# 5: Waiting for payment confirmation
+  selesai,        # 6: Order completed
+  dibatalkan,     # X: Order cancelled
+}
+```
+
+#### Extension: OrderStatusX
+```dart
+extension OrderStatusX on OrderStatus {
+  String get stepTitle {
+    // Title untuk progress indicator
+    // Contoh: OrderStatus.masuk → 'Menunggu Konfirmasi'
+  }
+
+  String get statusLabel {
+    // User-friendly label untuk UI
+    // Contoh: OrderStatus.dicuci → 'Dicuci'
+  }
+}
+```
+
+#### Helper Functions
+```dart
+String orderStatusToString(OrderStatus status)
+// Convert enum ke String untuk Firestore
+// OrderStatus.masuk → 'masuk'
+
+OrderStatus orderStatusFromString(String? value)
+// Parse String dari Firestore ke enum
+// 'masuk' → OrderStatus.masuk
+// Supports legacy values: 'diambil' → dijemput
+```
+
+#### Class: StatusStep
+```dart
+class StatusStep {
+  final String title;      # Step name (e.g., 'Dijemput')
+  final String? date;      # Completion date (optional)
+  final bool done;         # Is step completed?
+}
+```
+
+#### Class: OrderModel
+```dart
+class OrderModel {
+  // Identifiers
+  final String id;                      # ORD-20260618-001
+  
+  // Customer Info
+  final String customerName;            # Nama customer
+  final String phone;                   # No. telepon
+  final String address;                 # Alamat pickup
+  
+  // Service Details
+  final String serviceType;             # Cuci Kering, Cuci Setrika, etc
+  final DateTime pickupDate;            # Tanggal pickup
+  final String pickupSlot;              # 08:00 - 10:00 (Pagi)
+  
+  // Status & Progress
+  OrderStatus status;                   # Current status (mutable)
+  List<StatusStep> steps;               # Progress timeline
+  DateTime createdAt;                   # Timestamp order created
+  
+  // Pricing & Payment
+  double? beratKg;                      # Weight in kg (set saat timbang)
+  double? totalHarga;                   # Total price (Rp)
+  bool isPaid;                          # Payment status
+  DateTime? paymentConfirmedAt;         # Payment confirmation time
+  
+  // Notes
+  String catatan;                       # Customer notes/special requests
+  
+  // Factories
+  factory OrderModel.fromMap(String id, Map<String, dynamic> map)
+    // Parse dari Firestore document
+  
+  Map<String, dynamic> toMap()
+    // Convert ke Map untuk Firestore storage
+}
+```
+
+**Key Points**:
+- Status immutable (changed via updateOrderStatus)
+- Support backward compatibility (legacy status mapping)
+- Complete audit trail (createdAt, paymentConfirmedAt)
+
+---
+
+### 2️⃣ booking_model.dart
+
+```dart
+class BookingModel {
+  final String id;                      # Unique booking ID
+  final String customerId;              # Reference ke customer
+  final String katalogId;               # Reference ke katalog layanan
+  final String katalogNama;             # Nama layanan (Cuci Kering, etc)
+  final int harga;                      # Price per unit (Rp)
+  final String satuan;                  # Unit (Kg, Pasang, etc)
+  final String alamat;                  # Pickup address
+  final DateTime tanggalJemput;         # Pickup date
+  final DateTime tanggalSelesai;        # Estimated completion date
+  final String sesiJemput;              # Time slot (08:00 - 10:00)
+  final String catatan;                 # Customer notes
+  final String status;                  # Booking status (pending, confirmed)
+  final DateTime createdAt;             # Timestamp dibuat
+
+  // Factory methods untuk parsing/serialization
+  factory BookingModel.fromMap(String id, Map<String, dynamic> map)
+  Map<String, dynamic> toMap()
+}
+```
+
+**Key Points**:
+- Immutable (untuk consistency)
+- Links to both Booking & corresponding Order
+- Support untuk multiple time slots
+
+---
+
+### 3️⃣ katalog_model.dart
+
+```dart
+class KatalogModel {
+  final String id;                      # katalog_id (cuci_kering_regular)
+  final String nama;                    # Nama layanan
+  final String satuan;                  # Satuan (Kg, Pasang, etc)
+  final int harga;                      # Harga per satuan (Rp)
+  final String estimasi;                # Estimasi durasi (2 hari, dll)
+  final String deskripsi;               # Deskripsi layanan
+  final bool aktif;                     # Apakah layanan aktif/available?
+
+  factory KatalogModel.fromMap(String id, Map<String, dynamic> map)
+  Map<String, dynamic> toMap()
+}
+
+// Example Katalog Items:
+// 1. Cuci Kering Regular - 7000/Kg - 2 hari
+// 2. Cuci Kering Express - 12000/Kg - 1 hari
+// 3. Cuci Setrika Regular - 10000/Kg - 3 hari
+// 4. Setrika Saja - 5000/Kg - 1 hari
+// 5. Laundry Sepatu - 18000/Pasang - 2 hari
+```
+
+---
+
+## 🔌 SERVICES LAYER
+
+### 1️⃣ firestore_service.dart
+
+**Fungsi**: Single source untuk semua Firestore operations
+
+#### Static Properties
+```dart
+static bool firebaseAvailable          # Flag: Firebase tersedia?
+static FirebaseFirestore? _db          # Firestore instance
+static Map<String, dynamic>? currentUser  # Logged in user
+```
+
+#### Local Fallback Data
+```dart
+static final List<OrderModel> _localOrders      # In-memory orders
+static final List<BookingModel> _localBookings  # In-memory bookings
+static final List<Map> _localKatalog            # Catalog fallback
+static final List<Map> _localLayanan            # Services fallback
+static final List<Map> _localUsers              # Users fallback
+```
+
+#### Key Methods
+
+##### 1. Initialization
+```dart
+static Future<void> initialize() async {
+  try {
+    _db = FirebaseFirestore.instance;
+    firebaseAvailable = true;
+  } catch (e) {
+    // Fallback ke local data jika Firebase fail
+    firebaseAvailable = false;
+  }
+}
+```
+
+##### 2. User Profile Management
+```dart
+static String? get currentUserName       # Getter untuk nama user login
+static String? get currentUserPhone      # Getter untuk phone
+static String? get currentUserAddress    # Getter untuk address
+
+static Future<void> updateUserProfile({
+  required String name,
+  required String phone,
+  required String address,
+}) async {
+  // Update di Firestore + local state
+}
+```
+
+##### 3. Catalog Operations
+```dart
+static List<KatalogModel> getKatalog() {
+  // Return list katalog dari local data
+}
+```
+
+##### 4. Booking Operations
+```dart
+static Future<void> createBooking(BookingModel booking) async {
+  // 1. Simpan booking ke Firestore/local
+  // 2. Create corresponding Order
+  // 3. Emit notification ke customer
+}
+```
+
+##### 5. Order Stream Operations
+```dart
+// Stream ALL orders
+static Stream<List<OrderModel>> streamAllOrders()
+  → ordered by pickupDate descending
+
+// Stream orders dengan status tertentu
+static Stream<List<OrderModel>> streamOrdersByStatus(OrderStatus status)
+  → filtered by single status
+
+// Stream orders dengan multiple statuses
+static Stream<List<OrderModel>> streamOrdersByStatuses(List<OrderStatus> statuses)
+  → filtered by multiple statuses (e.g., [masuk, dijemput, perluTimbang])
+```
+
+##### 6. Order CRUD Operations
+```dart
+static Future<void> addOrder(OrderModel order)
+  → Create new order
+
+static Future<void> updateOrderStatus(String orderId, OrderStatus status)
+  → Update status only (merge update)
+
+static Future<void> updateOrder(OrderModel order)
+  → Full order update
+
+static Future<void> deleteOrder(String orderId)
+  → Soft or hard delete
+```
+
+#### Firebase Collections Schema
+```
+firestore-db/
+├── users/
+│   ├── userId/
+│   │   ├── name: string
+│   │   ├── phone: string
+│   │   ├── email: string
+│   │   ├── address: string
+│   │   ├── role: string (customer|staff|owner)
+│   │   └── createdAt: timestamp
+│
+├── orders/
+│   ├── orderId/
+│   │   ├── id: string
+│   │   ├── customerName: string
+│   │   ├── phone: string
+│   │   ├── status: string (masuk|dijemput|perluTimbang|dicuci|...)
+│   │   ├── pickupDate: timestamp
+│   │   ├── pickupSlot: string
+│   │   ├── serviceType: string
+│   │   ├── beratKg: number (nullable)
+│   │   ├── totalHarga: number (nullable)
+│   │   ├── isPaid: boolean
+│   │   ├── address: string
+│   │   ├── catatan: string
+│   │   ├── createdAt: timestamp
+│   │   └── paymentConfirmedAt: timestamp (nullable)
+│
+├── bookings/
+│   ├── bookingId/
+│   │   ├── customerId: string
+│   │   ├── katalogId: string
+│   │   ├── katalogNama: string
+│   │   ├── harga: number
+│   │   ├── satuan: string
+│   │   ├── alamat: string
+│   │   ├── tanggalJemput: timestamp
+│   │   ├── tanggalSelesai: timestamp
+│   │   ├── sesiJemput: string
+│   │   ├── catatan: string
+│   │   ├── status: string
+│   │   └── createdAt: timestamp
+│
+└── katalog/
+    ├── katalogId/
+    │   ├── nama: string
+    │   ├── satuan: string
+    │   ├── harga: number
+    │   ├── estimasi: string
+    │   ├── deskripsi: string
+    │   └── aktif: boolean
+```
+
+---
+
+### 2️⃣ notification_helper.dart
+
+**Fungsi**: Centralized notification system
+
+#### Static Methods
+
+```dart
+// ✅ Success notification (green background)
+static void showSuccessSnackBar(
+  BuildContext context,
+  String message,
+  {Duration duration = const Duration(seconds: 2)},
+)
+// Usage: NotificationHelper.showSuccessSnackBar(context, 'Order berhasil dibuat!')
+
+// ❌ Error notification (red background)
+static void showErrorSnackBar(
+  BuildContext context,
+  String message,
+  {Duration duration = const Duration(seconds: 2)},
+)
+// Usage: NotificationHelper.showErrorSnackBar(context, 'Gagal menyimpan data')
+
+// ⚠️ Warning notification (orange background)
+static void showWarningSnackBar(
+  BuildContext context,
+  String message,
+  {Duration duration = const Duration(seconds: 2)},
+)
+
+// ℹ️ Info notification (blue background)
+static void showInfoSnackBar(
+  BuildContext context,
+  String message,
+  {Duration duration = const Duration(seconds: 2)},
+)
+
+// 📋 Modal dialog notification
+static void showNotificationDialog(
+  BuildContext context,
+  {
+    required String title,
+    required String message,
+    String? icon,                      # Emoji icon
+    String? buttonText,
+    VoidCallback? onButtonPressed,
+  },
+)
+```
+
+#### Notification Styling
+- **Style**: SnackBar floating (custom shape, margin)
+- **Font**: Google Fonts Inter (13px, w500)
+- **Duration**: Default 2 seconds (customizable)
+- **Position**: Bottom with 16px margin
+
+---
+
+### 3️⃣ order_service.dart (Local Repository)
+
+**Fungsi**: Local in-memory order repository (fallback when Firebase unavailable)
+
+```dart
+class OrderRepository {
+  static final List<OrderModel> _orders = [
+    // Mock data untuk testing/demo
+    OrderModel(
+      id: 'ORD-20260606-001',
+      customerName: 'Dhira',
+      phone: '08132323232',
+      status: OrderStatus.dijemput,
+      // ...
+    ),
+    // ... more mock orders
+  ];
+
+  static final List<OrderModel> _riwayat = [
+    // Historical orders
+  ];
+
+  // Getters
+  static List<OrderModel> get all => _orders
+  static List<OrderModel> get riwayat => _riwayat
+  static List<OrderModel> byStatus(OrderStatus s) 
+    → Filter orders by status
+  static int countByStatus(OrderStatus s) 
+    → Count orders with status
+
+  // Mutators
+  static void updateStatus(OrderModel order, OrderStatus status)
+    → Update status
+  static void cancel(OrderModel order)
+    → Cancel order
+  static void advanceStatus(OrderModel order)
+    → Move to next status in workflow
+}
+```
+
+---
+
+## 🎨 UI/THEME SYSTEM
+
+### Color Palette
+
+| Nama | Hex | Usage |
+|------|-----|-------|
+| Primary (Dark Green) | #2E7D32 | Buttons, primary actions |
+| Primary Light (Medium Green) | #4CAF50 | Hover states |
+| Page Background | #F5F6FA | Screen background |
+| Card Background | #FFFFFF | Cards, dialog |
+| Text Dark | #1A1A2E | Headings, body text |
+| Text Grey | #9E9E9E | Labels, hints |
+| Orange Accent | #FF8C42 | Status badges |
+| Blue Accent | #1E88E5 | Status badges |
+
+### Typography
+- **Font Family**: Inter (Google Fonts)
+- **Sizes**: 11px (label), 13px (body), 14px (input), 16px (heading), 20px (title)
+- **Weights**: w400 (regular), w500 (medium), w600 (semibold), w700 (bold), w800 (extrabold)
+
+### Status Badge System
+
+Setiap status order punya visual yang unique dan konsisten:
+
+| Status | Icon | Background | Foreground |
+|--------|------|------------|-----------|
+| masuk | inventory_2 | #FFF3E0 (Light Orange) | #FF8C42 (Orange) |
+| dijemput | delivery_dining | #D6EEFF (Light Blue) | #1565C0 (Dark Blue) |
+| perluTimbang | balance | #FFF9C4 (Light Yellow) | #795548 (Brown) |
+| dicuci | local_laundry_service | #B2DFDB (Light Teal) | #00695C (Dark Teal) |
+| disetrika | dry_cleaning | #D6F5F0 (Light Cyan) | #00897B (Teal) |
+| dikirim | local_shipping | #E3F2FD (Light Blue) | #1565C0 (Dark Blue) |
+| konfirmasiBayar | payments | #EDD6FF (Light Purple) | #6A1F9F (Dark Purple) |
+| selesai | check_circle | #E8F5E9 (Light Green) | #2E7D32 (Dark Green) |
+| dibatalkan | cancel | #FFEBEE (Light Red) | #C62828 (Dark Red) |
+
+---
+
+## 🔐 AUTHENTICATION FLOW
+
+### Login Screen (`login_screen.dart`)
+
+#### UI Components
+```
+┌─────────────────────────────────┐
+│   Background Image + Overlay    │
+├─────────────────────────────────┤
+│                                 │
+│   Selamat Datang Card          │
+│   ├─ Username Field            │
+│   ├─ Password Field (toggle)   │
+│   ├─ Remember Me Checkbox      │
+│   ├─ Login Button              │
+│   └─ Register Link             │
+│                                 │
+└─────────────────────────────────┘
+```
+
+#### Key Features
+- Background image + dark overlay for contrast
+- Toggle password visibility
+- Remember me checkbox
+- Validation untuk empty fields
+- Error handling dengan SnackBar
+
+#### Login Flow
+```dart
+1. User masukkan username & password
+2. Validate: tidak boleh kosong
+3. Call FirestoreService.login() → Firebase Auth
+4. Jika sukses:
+   - Set currentUser di FirestoreService
+   - Navigate ke MainScreen (customer/staff/owner berdasarkan role)
+5. Jika gagal:
+   - Show error SnackBar
+   - Stay di login screen
+```
+
+---
+
+### Register Screen (`register_screen.dart`)
+
+#### Form Fields
+- Nama Lengkap
+- Email
+- Nomor Telepon
+- Password (min 6 chars)
+
+#### Validation
+```dart
+1. Semua field wajib diisi
+2. Email format valid
+3. Password min 6 karakter
+4. Phone bukan empty
+```
+
+#### Register Flow
+```dart
+1. Validasi semua field
+2. Call FirestoreService.createUser()
+3. Save ke Firestore users collection
+4. Auto set role = 'customer'
+5. Show success message
+6. Navigate kembali ke login
+```
+
+---
+
+## 👨‍💼 STAFF MODULE
+
+### Screens
+
+#### 1. Dashboard Screen (`staff/dashboard_screen.dart`)
+
+```
+┌──────────────────────────────────┐
+│    App Bar + Greeting            │
+│    Halo, Karimah Staff!          │
+├──────────────────────────────────┤
+│   Stat Cards (2×2 Grid)          │
+│   ├─ Order Masuk (icon, count)   │
+│   ├─ Dijemput (icon, count)      │
+│   ├─ Perlu Timbang (icon, count) │
+│   └─ Konfirmasi Bayar (icon)     │
+├──────────────────────────────────┤
+│   Aktivitas Terbaru               │
+│   ├─ Recent orders dengan badge  │
+│   └─ Swipe untuk aksi             │
+├──────────────────────────────────┤
+│   Menu Cepat (Grid)              │
+│   ├─ Order Masuk                 │
+│   ├─ Kelola Order                │
+│   ├─ Konfirmasi Bayar            │
+│   └─ History                     │
+└──────────────────────────────────┘
+```
+
+#### 2. Order Masuk Screen (`staff/order_masuk_screen.dart`)
+
+```
+┌──────────────────────────────────┐
+│    Title: Order Masuk            │
+│    Subtitle: Menunggu diambil    │
+├──────────────────────────────────┤
+│   Tab Selector                   │
+│   [Ambil] [Timbang]              │
+├──────────────────────────────────┤
+│   Order List                     │
+│   ├─ Order Card 1               │
+│   ├─ Order Card 2               │
+│   └─ ...                        │
+└──────────────────────────────────┘
+```
+
+**Tab Behavior**:
+- **Ambil (Pickup)**: Orders dengan status `masuk`
+- **Timbang (Weigh)**: Orders dengan status `dijemput` atau `perluTimbang`
+
+#### 3. Verifikasi Berat Screen (`staff/verifikasi_berat_screen.dart`)
+
+**Input untuk weighing**:
+```
+┌──────────────────────────────────┐
+│    Order ID Header               │
+│    [ORD-20260618-001]            │
+├──────────────────────────────────┤
+│    Order Details                 │
+│    ├─ Customer: Dhira           │
+│    ├─ Service: Cuci Kering      │
+│    ├─ Pickup: 18 Juni, 08:00   │
+│    └─ Price/kg: Rp7.000        │
+├──────────────────────────────────┤
+│    Berat Input                   │
+│    [____ kg]                     │
+├──────────────────────────────────┤
+│    Button: Simpan & Kirim        │
+│           Tagihan ke Customer   │
+└──────────────────────────────────┘
+```
+
+**On Save**:
+1. Parse weight input
+2. Calculate total price = weight × price/kg
+3. Update order: beratKg, totalHarga, status → konfirmasiBayar
+4. Send notification to customer
+5. Navigate back to order list
+
+#### 4. Kelola Order Screen (`staff/kelola_order_screen.dart`)
+
+**Filter Tabs**:
+- Semua
+- Dicuci
+- Disetrika
+- Kirim
+- Selesai
+
+**Order Card Actions**:
+- Swipe untuk quick actions
+- Tap untuk detail & update status
+
+#### 5. Konfirmasi Bayar Screen (`staff/konfirmasi_bayar_screen.dart`)
+
+**Workflow**:
+1. Display orders dengan status `konfirmasiBayar`
+2. Show total harga yang pending
+3. Staff confirm payment receipt
+4. Update status → `selesai` (or `dikirim`)
+
+---
+
+## 👥 CUSTOMER MODULE
+
+### Screens (17+ files)
+
+#### 1. Customer Main Screen
+**Navigation**: Bottom navigation dengan 5 tabs
+
+```
+[Dashboard] [Order] [Booking] [Pembayaran] [Profil]
+   home     📋(badge) 📅       💳(badge)    👤
+```
+
+#### 2. Customer Dashboard
+
+```
+┌────────────────────────────────┐
+│    Welcome Card                │
+│    Halo, Dhira!               │
+├────────────────────────────────┤
+│    Quick Stats                 │
+│    ├─ Active Orders: 2        │
+│    ├─ Pending Payment: 1      │
+│    └─ Completed: 5            │
+├────────────────────────────────┤
+│    Recent Order Activity       │
+│    ├─ ORD-xxx [Dicuci]        │
+│    ├─ ORD-yyy [Konfirmasi Bayar]
+│    └─ ...                     │
+├────────────────────────────────┤
+│    Menu Cepat                  │
+│    ├─ Booking Baru            │
+│    ├─ Track Order             │
+│    └─ Pembayaran              │
+└────────────────────────────────┘
+```
+
+#### 3. Booking Layanan Screen
+
+```
+1. Select Service (Katalog)
+   ├─ Cuci Kering: Rp7.000/kg
+   ├─ Cuci Setrika: Rp10.000/kg
+   ├─ Setrika Saja: Rp5.000/kg
+   └─ Laundry Sepatu: Rp18.000/pcs
+
+2. Fill Booking Details
+   ├─ Tanggal Pickup (date picker)
+   ├─ Waktu Slot (dropdown)
+   ├─ Alamat (auto-filled dari profile)
+   └─ Catatan (text input)
+
+3. Review & Confirm
+   ├─ Service: Cuci Kering
+   ├─ Date: 20 Juni 2026
+   ├─ Time: 08:00-10:00
+   └─ [Konfirmasi Booking]
+```
+
+#### 4. Order History Screen
+
+- Display semua orders dari oldest to newest
+- Filter by status
+- Each card shows: ID, service, date, status badge
+
+#### 5. Payment Screen
+
+- List orders dengan status `konfirmasiBayar`
+- Show total harga
+- Button untuk confirm/upload receipt
+- Mark as paid
+
+#### 6. Profile Screen
+
+- Display current user info
+- Edit profile button
+- Payment history
+- Help & support links
+
+---
+
+## 👨‍💼 OWNER MODULE
+
+### Screens (13+ files)
+
+#### 1. Owner Dashboard
+
+```
+┌────────────────────────────────┐
+│    Key Metrics                 │
+│    ├─ Total Orders Today: 12   │
+│    ├─ Revenue Today: Rp2.5M    │
+│    ├─ Active Staff: 3          │
+│    └─ Pending Payments: 2      │
+├────────────────────────────────┤
+│    Order Status Overview        │
+│    ├─ Masuk: 2                 │
+│    ├─ Dijemput: 1              │
+│    ├─ Dicuci: 3                │
+│    └─ Selesai: 6               │
+├────────────────────────────────┤
+│    Recent Activities            │
+│    ├─ Order ORD-001 dibuat     │
+│    ├─ Payment konfirmasi        │
+│    └─ ...                      │
+└────────────────────────────────┘
+```
+
+#### 2. Katalog Management
+
+**CRUD Operations**:
+- **Create**: `tambah_katalog_screen.dart`
+- **Read**: `owner_kelola_screen.dart` (list all)
+- **Update**: `edit_katalog_screen.dart`
+- **Delete**: Via swipe or long-press
+
+**Fields**:
+- Nama layanan
+- Satuan (Kg, Pasang, etc)
+- Harga per satuan
+- Estimasi durasi
+- Deskripsi
+- Status aktif/nonaktif
+
+#### 3. Staff Management
+
+**CRUD Operations**:
+- Create: `tambah_staff_screen.dart`
+- List: `owner_kelola_screen.dart`
+- Update: `edit_staff_screen.dart`
+- Delete: Via swipe
+
+**Staff Fields**:
+- Nama
+- Telepon
+- Email
+- Status aktif/nonaktif
+
+#### 4. Reports/History Screen
+
+- Daily/weekly/monthly reports
+- Revenue tracking
+- Order completion rates
+- Payment statistics
+
+---
+
+## 🤖 ANDROID CONFIGURATION
+
+### AndroidManifest.xml
+
+```xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application
+    android:label="cleango"                 # App name di launcher
+    android:name="${applicationName}"       # Flutter generated class
+    android:icon="@mipmap/ic_launcher">     # App icon
+
+    <activity
+      android:name=".MainActivity"           # Main Flutter activity
+      android:exported="true"
+      android:launchMode="singleTop"        # Single instance mode
+      android:theme="@style/LaunchTheme"    # Splash screen theme
+      android:configChanges="..."           # Handle config changes
+      android:windowSoftInputMode="adjustResize"> # Keyboard handling
+
+      <!-- Intent filter untuk launcher -->
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+    </activity>
+
+    <!-- FlutterFire metadata -->
+    <meta-data
+      android:name="flutterEmbedding"
+      android:value="2" />
+  </application>
+
+  <!-- Process text queries untuk Flutter -->
+  <queries>
+    <intent>
+      <action android:name="android.intent.action.PROCESS_TEXT"/>
+      <data android:mimeType="text/plain"/>
+    </intent>
+  </queries>
+</manifest>
+```
+
+### build.gradle.kts (App Level)
+
+```kotlin
+plugins {
+  id("com.android.application")
+  id("com.google.gms.google-services")  // Firebase plugin
+  id("kotlin-android")
+  id("dev.flutter.flutter-gradle-plugin")
+}
+
+android {
+  namespace = "com.example.cleango"
+  compileSdk = flutter.compileSdkVersion
+  ndkVersion = flutter.ndkVersion
+
+  compileOptions {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+  }
+
+  defaultConfig {
+    applicationId = "com.example.cleango"
+    minSdk = flutter.minSdkVersion
+    targetSdk = flutter.targetSdkVersion
+    versionCode = flutter.versionCode
+    versionName = flutter.versionName
+  }
+
+  buildTypes {
+    release {
+      signingConfig = signingConfigs.getByName("debug")  // TODO: setup release key
+    }
+  }
+}
+
+flutter {
+  source = "../.."  // Reference ke Flutter SDK
+}
+```
+
+---
+
+## 🔄 WORKFLOW & STATUS TRANSITIONS
+
+### Order Lifecycle
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                 ORDER WORKFLOW                          │
+└─────────────────────────────────────────────────────────┘
+
+START: Customer membuat booking
+  │
+  ▼
+[masuk] (Initial)
+  ├─ Staff lihat order baru
+  ├─ Konfirmasi untuk ambil
+  └─ Status → dijemput
+
+  ▼
+[dijemput] (Picked Up)
+  ├─ Staff sudah ambil barang
+  ├─ Navigate ke Verifikasi Berat
+  └─ Status → perluTimbang
+
+  ▼
+[perluTimbang] (Weighing)
+  ├─ Staff timbang barang
+  ├─ Input berat (kg)
+  ├─ System hitung harga = weight × rate
+  └─ Status → dicuci
+
+  ▼
+[dicuci] (Washing)
+  ├─ Staff process washing
+  ├─ After done
+  └─ Status → disetrika
+
+  ▼
+[disetrika] (Ironing)
+  ├─ Staff process ironing
+  ├─ After done
+  └─ Status → konfirmasiBayar
+
+  ▼
+[konfirmasiBayar] (Awaiting Payment)
+  ├─ Send invoice to customer
+  ├─ Customer confirm payment
+  ├─ Staff verify receipt
+  └─ Status → dikirim
+
+  ▼
+[dikirim] (Shipping)
+  ├─ Prepare shipment
+  ├─ Send notification
+  ├─ Customer confirm receive
+  └─ Status → selesai
+
+  ▼
+[selesai] (Complete) ✓
+  └─ Order finished, can archive
+
+OPTIONAL PATHS:
+[masuk] → [dibatalkan] (jika customer atau staff cancel)
+[any] → [dibatalkan] (emergency cancellation)
+```
+
+### Status Transition Rules
+
+```dart
+switch (currentStatus) {
+  case masuk:
+    → Allowed: dijemput, dibatalkan
+  
+  case dijemput:
+    → Allowed: perluTimbang, dibatalkan
+  
+  case perluTimbang:
+    → Allowed: dicuci, dibatalkan
+  
+  case dicuci:
+    → Allowed: disetrika, dibatalkan
+  
+  case disetrika:
+    → Allowed: konfirmasiBayar, dibatalkan
+  
+  case konfirmasiBayar:
+    → Allowed: dikirim, dibatalkan
+  
+  case dikirim:
+    → Allowed: selesai, dibatalkan
+  
+  case selesai:
+    → Allowed: (none - final state)
+  
+  case dibatalkan:
+    → Allowed: (none - final state)
+}
+```
+
+---
+
+## 🔥 FIREBASE INTEGRATION
+
+### Real-time Database Features
+
+#### 1. Firestore Real-time Listeners
+
+```dart
+// Listen to all orders
+FirestoreService.streamAllOrders()
+  .listen((orders) {
+    setState(() => _orders = orders);
+  });
+
+// Listen to specific status orders
+FirestoreService.streamOrdersByStatus(OrderStatus.masuk)
+  .listen((orders) {
+    // Update UI dengan latest orders
+  });
+```
+
+#### 2. Batch Operations
+
+```dart
+// Create booking + Order in one transaction
+FirebaseFirestore.instance.runTransaction((txn) async {
+  // Save booking
+  txn.set(bookingRef, booking.toMap());
+  
+  // Create corresponding order
+  txn.set(orderRef, order.toMap());
+  
+  // Update user stats
+  txn.update(userRef, {'totalBookings': FieldValue.increment(1)});
+});
+```
+
+#### 3. Offline Support
+
+- Firestore automatically handles offline queue
+- Changes synced when online
+- Local fallback untuk testing
+
+### Security Rules (Recommendations)
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users collection - only user can read/write own profile
+    match /users/{userId} {
+      allow read, write: if request.auth.uid == userId;
+    }
+
+    // Orders collection - customers read own, staff can read all
+    match /orders/{orderId} {
+      allow read: if request.auth.token.role in ['staff', 'owner'];
+      allow read: if request.resource.data.customerId == request.auth.uid;
+      allow write: if request.auth.token.role in ['staff', 'owner'];
+    }
+
+    // Bookings collection - customers read own
+    match /bookings/{bookingId} {
+      allow read: if resource.data.customerId == request.auth.uid;
+      allow write: if resource.data.customerId == request.auth.uid;
+    }
+
+    // Katalog collection - public read
+    match /katalog/{katalogId} {
+      allow read: if true;
+      allow write: if request.auth.token.role == 'owner';
+    }
+  }
+}
+```
+
+---
+
+## 📊 PROJECT STATISTICS
+
+### Codebase Metrics
+- **Total Screens**: 40+ (auth, customer, staff, owner)
+- **Models**: 3 (Order, Booking, Katalog)
+- **Services**: 3 (Firestore, Notification, Order Repository)
+- **Total LOC**: ~10,000+ (estimated)
+- **Firebase Collections**: 4 (users, orders, bookings, katalog)
+
+### Build Configuration
+- **Min SDK**: 21 (Android 5.0)
+- **Target SDK**: Latest (33+)
+- **Kotlin**: 1.7+
+- **Java**: 17
+
+---
+
+## ✅ DEVELOPMENT CHECKLIST
+
+- [x] Project structure set up
+- [x] Firebase integration
+- [x] Authentication (login, register)
+- [x] Staff module core
+- [x] Customer module core
+- [x] Order management workflow
+- [ ] Owner module (dalam development)
+- [ ] Payment gateway integration
+- [ ] Notification system (push notifications)
+- [ ] Tests & QA
+- [ ] Production deployment
+
+---
+
+## 🚀 DEPLOYMENT GUIDE
+
+### Android Build Release
+```bash
+flutter build apk --release
+# Output: build/app/outputs/flutter-apk/app-release.apk
+
+flutter build appbundle --release
+# Output: build/app/outputs/bundle/release/app-release.aab
+```
+
+### iOS Build
+```bash
+flutter build ios --release
+```
+
+### Firebase Deployment
+```bash
+# Deploy Firestore security rules
+firebase deploy --only firestore:rules
+
+# Deploy functions (if any)
+firebase deploy --only functions
+```
+
+---
+
+## 📞 SUPPORT & DOCUMENTATION
+
+- **Firebase Docs**: https://firebase.flutter.dev/
+- **Flutter Docs**: https://flutter.dev/docs
+- **Material Design 3**: https://m3.material.io/
+
+---
+
+**Document Version**: 1.0  
+**Last Updated**: 2026-06-18  
+**Maintained by**: Development Team  
+**License**: Proprietary

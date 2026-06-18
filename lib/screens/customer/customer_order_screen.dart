@@ -50,10 +50,8 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
         } else {
           return all.where((o) => o.status == OrderStatus.dibatalkan).toList();
         }
-      default: // Semua (kecuali Menunggu Pembayaran)
-        return all
-            .where((o) => o.status != OrderStatus.konfirmasiBayar || o.isPaid)
-            .toList();
+      default: // Semua: tampilkan semua order kecuali dibatalkan
+        return all.toList();
     }
   }
 
@@ -220,10 +218,17 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
         badgeLabel = 'Perlu Timbang';
         break;
       case OrderStatus.konfirmasiBayar:
-        badgeBg = const Color(0xFFB2DFDB);
-        badgeFg = const Color(0xFF00695C);
-        badgeLabel =
-            order.isPaid ? 'Menunggu Konfirmasi Bayar' : 'Menunggu Pembayaran';
+        if (order.isPaid) {
+          // Sudah bayar, menunggu konfirmasi staff → teal/hijau
+          badgeBg = const Color(0xFFB2DFDB);
+          badgeFg = const Color(0xFF00695C);
+          badgeLabel = 'Menunggu Konfirmasi Bayar';
+        } else {
+          // Belum bayar → orange/kuning
+          badgeBg = const Color(0xFFFFF3CD);
+          badgeFg = const Color(0xFFB7791F);
+          badgeLabel = 'Menunggu Pembayaran';
+        }
         break;
       case OrderStatus.dicuci:
         badgeBg = const Color(0xFFD9F7E3);
@@ -345,6 +350,7 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
                           MaterialPageRoute(
                               builder: (_) => EditOrderScreen(order: order)),
                         );
+                        if (!mounted) return;
                         setState(() {});
                       },
                       child: Container(
@@ -366,33 +372,37 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
                       onTap: () async {
                         final ok = await showDialog<bool>(
                           context: context,
-                          builder: (_) => AlertDialog(
+                          builder: (dialogCtx) => AlertDialog(
                             title: const Text('Batalkan order?'),
                             content: const Text(
                                 'Yakin ingin membatalkan order ini?'),
                             actions: [
                               TextButton(
                                   onPressed: () =>
-                                      Navigator.pop(context, false),
+                                      Navigator.pop(dialogCtx, false),
                                   child: const Text('Kembali')),
                               TextButton(
-                                  onPressed: () => Navigator.pop(context, true),
+                                  onPressed: () =>
+                                      Navigator.pop(dialogCtx, true),
                                   child: const Text('Batalkan',
                                       style: TextStyle(color: Colors.red))),
                             ],
                           ),
                         );
                         if (ok == true) {
+                          if (!mounted) return;
+                          // safe: capture messenger after mounted check
+                          // ignore: use_build_context_synchronously
+                          final messenger = ScaffoldMessenger.of(context);
                           try {
                             await FirestoreService.cancelOrder(order.id);
                             if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('Order dibatalkan')));
+                            messenger.showSnackBar(const SnackBar(
+                                content: Text('Order dibatalkan')));
                             setState(() {});
                           } catch (e) {
                             if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            messenger.showSnackBar(
                                 SnackBar(content: Text('Gagal batalkan: $e')));
                           }
                         }

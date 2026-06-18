@@ -263,103 +263,146 @@ final List<Map<String, dynamic>> _layananData = [
 
 // ─────────────────────────────────────────────────────────────────
 // DATA ORDERS (20 item untuk Dhira dengan berbagai status)
+// Harga: Cuci Kering Reg=7000/kg, Express=12000/kg, Cuci Setrika Reg=10000/kg,
+//        Express=15000/kg, Setrika Saja Reg=5000/kg, Express=8000/kg,
+//        Sepatu Reg=18000/pcs, Express=27000/pcs
 // ─────────────────────────────────────────────────────────────────
 final List<Map<String, dynamic>> _ordersData = [
-  // Status: menunggu bayar (konfirmasi/konfirmasiBayar) - 2 data
-  _order('ORD-20260617-001', 'Dhira Putri', '081323230001', 'Cuci Kering',
-      DateTime(2026, 6, 17), '08.00 - 10.00', 'konfirmasi',
-      beratKg: 5,
-      totalHarga: 35000,
+  // ── Sesuai screenshot yang terlihat ──────────────────────────────
+  // ORD-20260618002: Cuci Setrika Regular, pickup 21 Jun, status masuk
+  _order('ORD-20260618002', 'Dhira Putri', '081323230001', 'Cuci Setrika Regular',
+      DateTime(2026, 6, 21), '08.00 - 10.00', 'masuk',
+      beratKg: 1,
+      totalHarga: 10000,
       alamat: 'Jl. Mawar No. 10',
-      catatan: 'Menunggu konfirmasi pembayaran'),
-  _order('ORD-20260616-005', 'Dhira Putri', '081323230001', 'Cuci Setrika',
-      DateTime(2026, 6, 16), '10.00 - 12.00', 'konfirmasiBayar',
-      beratKg: 3,
-      totalHarga: 30000,
-      alamat: 'Jl. Mawar No. 10',
-      catatan: 'Menunggu pembayaran'),
+      catatan: '-',
+      createdAt: DateTime(2026, 6, 18, 8, 30)),
 
-  // Status: dicuci (masuk/sedang diproses) - 3 data
-  _order('ORD-20260615-003', 'Dhira Putri', '081323230001', 'Cuci Kering',
-      DateTime(2026, 6, 15), '08.00 - 10.00', 'masuk',
+  // ORD-20260617001: Cuci Kering Express, 2kg, Rp14.000, sudah bayar
+  _order('ORD-20260617001', 'Dhira Putri', '081323230001', 'Cuci Kering Express',
+      DateTime(2026, 6, 19), '08.00 - 10.00', 'konfirmasiBayar',
+      beratKg: 2,
+      totalHarga: 14000,
+      alamat: 'Jl. Mawar No. 10',
+      catatan: '-',
+      isPaid: true,
+      createdAt: DateTime(2026, 6, 17, 8, 0)),
+
+  // ORD-20260618-60109: Cuci Kering Express, 1kg, Rp7000, selesai/diterima
+  _order('ORD-20260618-60109', 'Dhira Putri', '081323230001', 'Cuci Kering Express',
+      DateTime(2026, 6, 18), '08.00 - 10.00', 'selesai',
+      beratKg: 1,
+      totalHarga: 7000,
+      alamat: 'Jl. Mawar No. 10',
+      catatan: '-',
+      createdAt: DateTime(2026, 6, 18, 6, 9)),
+
+  // ── Status aktif lainnya ──────────────────────────────────────────
+  _order('ORD-20260616001', 'Dhira Putri', '081323230001', 'Cuci Setrika Express',
+      DateTime(2026, 6, 16), '10.00 - 12.00', 'dijemput',
+      beratKg: 3,
+      totalHarga: 45000,
+      alamat: 'Jl. Mawar No. 10',
+      createdAt: DateTime(2026, 6, 16, 9, 0)),
+
+  _order('ORD-20260615001', 'Dhira Putri', '081323230001', 'Cuci Kering Regular',
+      DateTime(2026, 6, 15), '08.00 - 10.00', 'perluTimbang',
+      alamat: 'Jl. Mawar No. 10',
+      catatan: 'Menunggu penimbangan',
+      createdAt: DateTime(2026, 6, 15, 7, 30)),
+
+  _order('ORD-20260614001', 'Dhira Putri', '081323230001', 'Cuci Kering Regular',
+      DateTime(2026, 6, 14), '08.00 - 10.00', 'dicuci',
       beratKg: 4,
       totalHarga: 28000,
       alamat: 'Jl. Mawar No. 10',
-      catatan: 'Sedang dalam proses pencucian'),
-  _order('ORD-20260615-002', 'Dhira Putri', '081323230001', 'Setrika Saja',
-      DateTime(2026, 6, 14), '14.00 - 16.00', 'masuk',
-      beratKg: 2.5,
-      totalHarga: 12500,
-      alamat: 'Jl. Mawar No. 10',
-      catatan: 'Sedang diseterika'),
-  _order('ORD-20260614-001', 'Dhira Putri', '081323230001', 'Cuci Setrika',
-      DateTime(2026, 6, 14), '08.00 - 10.00', 'perluTimbang',
-      alamat: 'Jl. Mawar No. 10', catatan: 'Menunggu penimbangan berat'),
+      createdAt: DateTime(2026, 6, 14, 8, 0)),
 
-  // Status: siap diambil (dijemput/selesai) - 4 data
-  _order('ORD-20260613-001', 'Dhira Putri', '081323230001', 'Cuci Kering',
-      DateTime(2026, 6, 13), '08.00 - 10.00', 'selesai',
-      beratKg: 3.5,
-      totalHarga: 24500,
-      alamat: 'Jl. Mawar No. 10',
-      catatan: 'Siap diambil'),
-  _order('ORD-20260612-002', 'Dhira Putri', '081323230001', 'Laundry Sepatu',
-      DateTime(2026, 6, 12), '10.00 - 12.00', 'selesai',
-      beratKg: 1,
-      totalHarga: 18000,
-      alamat: 'Jl. Mawar No. 10',
-      catatan: 'Selesai - siap diambil'),
-  _order('ORD-20260611-003', 'Dhira Putri', '081323230001', 'Cuci Setrika',
-      DateTime(2026, 6, 11), '14.00 - 16.00', 'dijemput',
+  _order('ORD-20260613001', 'Dhira Putri', '081323230001', 'Cuci Setrika Regular',
+      DateTime(2026, 6, 13), '14.00 - 16.00', 'disetrika',
       beratKg: 2,
       totalHarga: 20000,
       alamat: 'Jl. Mawar No. 10',
-      catatan: 'Sudah dijemput'),
-  _order('ORD-20260610-002', 'Dhira Putri', '081323230001', 'Cuci Kering',
+      createdAt: DateTime(2026, 6, 13, 13, 0)),
+
+  _order('ORD-20260612001', 'Dhira Putri', '081323230001', 'Cuci Kering Express',
+      DateTime(2026, 6, 12), '10.00 - 12.00', 'dikirim',
+      beratKg: 3,
+      totalHarga: 36000,
+      alamat: 'Jl. Mawar No. 10',
+      createdAt: DateTime(2026, 6, 12, 9, 0)),
+
+  _order('ORD-20260611001', 'Dhira Putri', '081323230001', 'Laundry Sepatu Regular',
+      DateTime(2026, 6, 11), '08.00 - 10.00', 'selesai',
+      beratKg: 2,
+      totalHarga: 36000,
+      alamat: 'Jl. Mawar No. 10',
+      createdAt: DateTime(2026, 6, 11, 8, 0)),
+
+  _order('ORD-20260610001', 'Dhira Putri', '081323230001', 'Cuci Kering Regular',
       DateTime(2026, 6, 10), '08.00 - 10.00', 'selesai',
       beratKg: 6,
       totalHarga: 42000,
       alamat: 'Jl. Mawar No. 10',
-      catatan: 'Selesai'),
+      createdAt: DateTime(2026, 6, 10, 8, 0)),
 
-  // Status: dibatalkan - 1 data
-  _order('ORD-20260609-001', 'Dhira Putri', '081323230001', 'Cuci Kering',
-      DateTime(2026, 6, 9), '16.00 - 18.00', 'dibatalkan',
+  _order('ORD-20260609001', 'Dhira Putri', '081323230001', 'Cuci Setrika Regular',
+      DateTime(2026, 6, 9), '10.00 - 12.00', 'dibatalkan',
       beratKg: 2.5,
       alamat: 'Jl. Mawar No. 10',
-      catatan: 'Dibatalkan oleh pelanggan'),
+      catatan: 'Dibatalkan oleh pelanggan',
+      createdAt: DateTime(2026, 6, 9, 9, 30)),
 
-  // Data historis dengan berbagai status - 10 data
-  _order('ORD-20260608-001', 'Dhira Putri', '081323230001', 'Setrika Saja',
+  // ── Historis (selesai) ────────────────────────────────────────────
+  _order('ORD-20260608001', 'Dhira Putri', '081323230001', 'Setrika Saja Regular',
       DateTime(2026, 6, 8), '10.00 - 12.00', 'selesai',
-      beratKg: 1.5, totalHarga: 7500, alamat: 'Jl. Mawar No. 10'),
-  _order('ORD-20260607-001', 'Dhira Putri', '081323230001', 'Cuci Setrika',
+      beratKg: 1.5, totalHarga: 7500, alamat: 'Jl. Mawar No. 10',
+      createdAt: DateTime(2026, 6, 8, 9, 0)),
+
+  _order('ORD-20260607001', 'Dhira Putri', '081323230001', 'Cuci Setrika Regular',
       DateTime(2026, 6, 7), '08.00 - 10.00', 'selesai',
-      beratKg: 3, totalHarga: 30000, alamat: 'Jl. Mawar No. 10'),
-  _order('ORD-20260606-001', 'Dhira Putri', '081323230001', 'Cuci Kering',
+      beratKg: 3, totalHarga: 30000, alamat: 'Jl. Mawar No. 10',
+      createdAt: DateTime(2026, 6, 7, 8, 0)),
+
+  _order('ORD-20260606001', 'Dhira Putri', '081323230001', 'Cuci Kering Regular',
       DateTime(2026, 6, 6), '14.00 - 16.00', 'selesai',
-      beratKg: 4.5, totalHarga: 31500, alamat: 'Jl. Mawar No. 10'),
-  _order('ORD-20260605-001', 'Dhira Putri', '081323230001', 'Laundry Sepatu',
+      beratKg: 4.5, totalHarga: 31500, alamat: 'Jl. Mawar No. 10',
+      createdAt: DateTime(2026, 6, 6, 13, 0)),
+
+  _order('ORD-20260605001', 'Dhira Putri', '081323230001', 'Laundry Sepatu Regular',
       DateTime(2026, 6, 5), '10.00 - 12.00', 'selesai',
-      beratKg: 2, totalHarga: 36000, alamat: 'Jl. Mawar No. 10'),
-  _order('ORD-20260604-001', 'Dhira Putri', '081323230001', 'Cuci Kering',
+      beratKg: 2, totalHarga: 36000, alamat: 'Jl. Mawar No. 10',
+      createdAt: DateTime(2026, 6, 5, 9, 0)),
+
+  _order('ORD-20260604001', 'Dhira Putri', '081323230001', 'Cuci Kering Express',
       DateTime(2026, 6, 4), '08.00 - 10.00', 'selesai',
-      beratKg: 5.5, totalHarga: 38500, alamat: 'Jl. Mawar No. 10'),
-  _order('ORD-20260603-001', 'Dhira Putri', '081323230001', 'Cuci Setrika',
+      beratKg: 5, totalHarga: 60000, alamat: 'Jl. Mawar No. 10',
+      createdAt: DateTime(2026, 6, 4, 8, 0)),
+
+  _order('ORD-20260603001', 'Dhira Putri', '081323230001', 'Cuci Setrika Express',
       DateTime(2026, 6, 3), '08.00 - 10.00', 'selesai',
-      beratKg: 3.5, totalHarga: 35000, alamat: 'Jl. Mawar No. 10'),
-  _order('ORD-20260602-001', 'Dhira Putri', '081323230001', 'Cuci Kering',
+      beratKg: 3.5, totalHarga: 52500, alamat: 'Jl. Mawar No. 10',
+      createdAt: DateTime(2026, 6, 3, 8, 0)),
+
+  _order('ORD-20260602001', 'Dhira Putri', '081323230001', 'Cuci Kering Regular',
       DateTime(2026, 6, 2), '14.00 - 16.00', 'selesai',
-      beratKg: 2.5, totalHarga: 17500, alamat: 'Jl. Mawar No. 10'),
-  _order('ORD-20260601-001', 'Dhira Putri', '081323230001', 'Setrika Saja',
+      beratKg: 2.5, totalHarga: 17500, alamat: 'Jl. Mawar No. 10',
+      createdAt: DateTime(2026, 6, 2, 13, 0)),
+
+  _order('ORD-20260601001', 'Dhira Putri', '081323230001', 'Setrika Saja Regular',
       DateTime(2026, 6, 1), '10.00 - 12.00', 'selesai',
-      beratKg: 1.5, totalHarga: 7500, alamat: 'Jl. Mawar No. 10'),
-  _order('ORD-20260531-001', 'Dhira Putri', '081323230001', 'Cuci Kering',
+      beratKg: 1.5, totalHarga: 7500, alamat: 'Jl. Mawar No. 10',
+      createdAt: DateTime(2026, 6, 1, 9, 0)),
+
+  _order('ORD-20260531001', 'Dhira Putri', '081323230001', 'Cuci Kering Regular',
       DateTime(2026, 5, 31), '08.00 - 10.00', 'selesai',
-      beratKg: 6, totalHarga: 42000, alamat: 'Jl. Mawar No. 10'),
-  _order('ORD-20260530-001', 'Dhira Putri', '081323230001', 'Cuci Setrika',
+      beratKg: 6, totalHarga: 42000, alamat: 'Jl. Mawar No. 10',
+      createdAt: DateTime(2026, 5, 31, 8, 0)),
+
+  _order('ORD-20260530001', 'Dhira Putri', '081323230001', 'Cuci Setrika Regular',
       DateTime(2026, 5, 30), '08.00 - 10.00', 'selesai',
-      beratKg: 4, totalHarga: 40000, alamat: 'Jl. Mawar No. 10'),
+      beratKg: 4, totalHarga: 40000, alamat: 'Jl. Mawar No. 10',
+      createdAt: DateTime(2026, 5, 30, 8, 0)),
 ];
 
 Map<String, dynamic> _order(
@@ -372,8 +415,10 @@ Map<String, dynamic> _order(
   String status, {
   double? beratKg,
   double? totalHarga,
-  String alamat = 'Jl. Mawar No. 105',
+  String alamat = 'Jl. Mawar No. 10',
   String catatan = '-',
+  bool isPaid = false,
+  DateTime? createdAt,
 }) {
   return {
     'id': id,
@@ -387,5 +432,7 @@ Map<String, dynamic> _order(
     if (totalHarga != null) 'totalHarga': totalHarga,
     'address': alamat,
     'catatan': catatan,
+    'isPaid': isPaid,
+    'createdAt': Timestamp.fromDate(createdAt ?? pickupDate),
   };
 }
