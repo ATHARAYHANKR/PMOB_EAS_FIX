@@ -17,11 +17,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _obscure = true;
-  bool _remember = false;
+  bool _isLoading = false;
 
-  // ── Credentials ──────────────────────────────────────────
-  // Staff  → username: staff   / password: staff123
-  // Owner  → username: owner   / password: owner123
   static const _accounts = {
     'staff': ('staff123', 'staff'),
     'owner': ('owner123', 'owner'),
@@ -29,7 +26,9 @@ class _LoginScreenState extends State<LoginScreen> {
   };
 
   static const Color _blue = Color(0xFF3B5BDB);
-  static const Color _purple = Color(0xFFBB2BCD);
+  static const Color _blueDark = Color(0xFF2F4AC0);
+  static const Color _border = Color(0xFFDDE1F0);
+  static const Color _labelColor = Color(0xFF6B7280);
 
   @override
   void dispose() {
@@ -38,6 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // ─────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,11 +45,21 @@ class _LoginScreenState extends State<LoginScreen> {
         fit: StackFit.expand,
         children: [
           _buildBg(),
-          Container(color: Colors.black.withAlpha(89)),
+          // dark scrim
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0x55000000), Color(0xBB000000)],
+              ),
+            ),
+          ),
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
                 child: _buildCard(),
               ),
             ),
@@ -59,6 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // ── Background ────────────────────────────────────────────────
   Widget _buildBg() {
     return Image.asset(
       'assets/images/bg_login.jpg',
@@ -68,189 +79,177 @@ class _LoginScreenState extends State<LoginScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF1B5E20), Color(0xFF2E7D32), Color(0xFF43A047)],
+            colors: [Color(0xFF1B5E20), Color(0xFF2E7D32)],
           ),
         ),
       ),
     );
   }
 
+  // ── Card utama ────────────────────────────────────────────────
   Widget _buildCard() {
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 400),
+      constraints: const BoxConstraints(maxWidth: 420),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(46),
-            blurRadius: 32,
-            offset: const Offset(0, 12),
+            color: Colors.black.withAlpha(60),
+            blurRadius: 40,
+            offset: const Offset(0, 16),
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(28, 36, 28, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Header
-          RichText(
-            text: TextSpan(children: [
-              TextSpan(
-                  text: 'Selamat ',
-                  style: GoogleFonts.inter(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black87)),
-              TextSpan(
-                  text: 'Datang',
-                  style: GoogleFonts.inter(
-                      fontSize: 26, fontWeight: FontWeight.w800, color: _blue)),
-            ]),
-          ),
-          const SizedBox(height: 6),
-          Text('Masuk ke akun CleanGo Anda',
-              style: GoogleFonts.inter(fontSize: 13.5, color: Colors.black45)),
-          const SizedBox(height: 28),
-
-          // Hint akun
+          // ── Top banner biru ───────────────────────────────────
           Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3E5F5),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFCC44DD).withAlpha(80)),
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [_blue, _blueDark],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Akun Demo:',
+                // Logo / icon
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(30),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withAlpha(60)),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.local_laundry_service_rounded,
+                      color: Colors.white, size: 28),
+                ),
+                const SizedBox(height: 16),
+                Text('Selamat Datang',
                     style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: _purple)),
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: -0.4,
+                    )),
                 const SizedBox(height: 4),
-                Text('👤 Staff   →  staff / staff123',
-                    style:
-                        GoogleFonts.inter(fontSize: 12, color: Colors.black54)),
-                const SizedBox(height: 2),
-                Text('👑 Owner  →  owner / owner123',
-                    style:
-                        GoogleFonts.inter(fontSize: 12, color: Colors.black54)),
+                Text('Masuk ke akun CleanGo Anda',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: Colors.white.withAlpha(180),
+                    )),
               ],
             ),
           ),
-          const SizedBox(height: 20),
 
-          // Email / Telepon / Nama
-          _label('EMAIL / TELEPON / NAMA'),
-          const SizedBox(height: 8),
-          _field(
-            controller: _usernameCtrl,
-            hint: 'Masukkan email, telepon, atau nama',
-            prefix: Icons.person_outline_rounded,
-          ),
-          const SizedBox(height: 18),
+          // ── Form area ─────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(28, 28, 28, 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
 
-          // Password
-          _label('PASSWORD'),
-          const SizedBox(height: 8),
-          _field(
-            controller: _passwordCtrl,
-            hint: 'Masukkan password',
-            prefix: Icons.lock_outline_rounded,
-            obscure: _obscure,
-            suffix: IconButton(
-              icon: Icon(
-                _obscure
-                    ? Icons.visibility_off_outlined
-                    : Icons.visibility_outlined,
-                color: Colors.black38,
-                size: 20,
-              ),
-              onPressed: () => setState(() => _obscure = !_obscure),
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // Remember + register
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: Checkbox(
-                        value: _remember,
-                        onChanged: (v) =>
-                            setState(() => _remember = v ?? false),
-                        fillColor: WidgetStateProperty.all(_blue),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4)),
-                        side: const BorderSide(
-                            color: Color(0xFFCDD3E0), width: 1.5),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        visualDensity: VisualDensity.compact,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text('Ingat saya',
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(
-                              fontSize: 13, color: Colors.black54)),
-                    ),
-                  ],
+                // ── Field username ────────────────────────────────
+                _label('IDENTIFIER'),
+                const SizedBox(height: 8),
+                _field(
+                  controller: _usernameCtrl,
+                  hint: 'Email, telepon, atau username',
+                  prefix: Icons.person_outline_rounded,
                 ),
-              ),
-              Flexible(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const RegisterScreen()));
-                    },
-                    child: Text('Daftar akun baru',
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: _blue,
-                            fontWeight: FontWeight.w600)),
+                const SizedBox(height: 16),
+
+                // ── Field password ────────────────────────────────
+                _label('PASSWORD'),
+                const SizedBox(height: 8),
+                _field(
+                  controller: _passwordCtrl,
+                  hint: 'Masukkan password',
+                  prefix: Icons.lock_outline_rounded,
+                  obscure: _obscure,
+                  suffix: IconButton(
+                    icon: Icon(
+                      _obscure
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      color: Colors.black38,
+                      size: 20,
+                    ),
+                    onPressed: () => setState(() => _obscure = !_obscure),
+                    splashRadius: 20,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 22),
+                const SizedBox(height: 8),
 
-          // Login button
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton.icon(
-              onPressed: _login,
-              icon: const Icon(Icons.login_rounded,
-                  color: Colors.white, size: 20),
-              label: Text('Masuk ke Dashboard',
-                  style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _blue,
-                elevation: 4,
-                shadowColor: _blue.withAlpha(115),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
+                // ── Daftar akun baru (kanan) ──────────────────────
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const RegisterScreen())),
+                    child: Text('Daftar akun baru',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: _blue,
+                          fontWeight: FontWeight.w600,
+                        )),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // ── Tombol login ──────────────────────────────────
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _login,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _blue,
+                      disabledBackgroundColor: _blue.withAlpha(140),
+                      elevation: 4,
+                      shadowColor: _blue.withAlpha(100),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.login_rounded,
+                                  color: Colors.white, size: 20),
+                              const SizedBox(width: 10),
+                              Text('Masuk ke Dashboard',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  )),
+                            ],
+                          ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -258,13 +257,15 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // ── Helper: label field ───────────────────────────────────────
   Widget _label(String t) => Text(t,
       style: GoogleFonts.inter(
           fontSize: 11,
           fontWeight: FontWeight.w700,
-          color: Colors.black54,
+          color: _labelColor,
           letterSpacing: 1.1));
 
+  // ── Helper: text field ────────────────────────────────────────
   Widget _field({
     required TextEditingController controller,
     required String hint,
@@ -279,24 +280,29 @@ class _LoginScreenState extends State<LoginScreen> {
       decoration: InputDecoration(
         prefixIcon: Icon(prefix, color: Colors.black38, size: 20),
         hintText: hint,
-        hintStyle: GoogleFonts.inter(color: Colors.black26, fontSize: 14),
+        hintStyle: GoogleFonts.inter(color: Colors.black26, fontSize: 13.5),
         suffixIcon: suffix,
         filled: true,
-        fillColor: const Color(0xFFF7F8FC),
+        fillColor: const Color(0xFFF8F9FD),
         contentPadding:
-            const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+            const EdgeInsets.symmetric(vertical: 15, horizontal: 14),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFE0E4F0), width: 1.2),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _border, width: 1.2),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFF3B5BDB), width: 1.6),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _blue, width: 1.8),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
         ),
       ),
     );
   }
 
+  // ── Login logic ───────────────────────────────────────────────
   Future<void> _login() async {
     final u = _usernameCtrl.text.trim().toLowerCase();
     final p = _passwordCtrl.text.trim();
@@ -306,10 +312,13 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // First try demo accounts
+    setState(() => _isLoading = true);
+
+    // Demo accounts
     final account = _accounts[u];
     if (account != null) {
       if (account.$1 != p) {
+        setState(() => _isLoading = false);
         _showSnack('Username atau password salah.', Colors.redAccent);
         return;
       }
@@ -353,14 +362,14 @@ class _LoginScreenState extends State<LoginScreen> {
         default:
           target = const StaffMainScreen();
       }
+      setState(() => _isLoading = false);
+      if (!mounted) return;
       Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => target),
-      );
+          context, MaterialPageRoute(builder: (_) => target));
       return;
     }
 
-    // else try Firestore users
+    // Firestore users
     try {
       final user = await FirestoreService.findUserByCredential(
           usernameOrEmail: u, password: p);
@@ -386,6 +395,8 @@ class _LoginScreenState extends State<LoginScreen> {
           context, MaterialPageRoute(builder: (_) => target));
     } catch (e) {
       _showSnack('Gagal login: $e', Colors.redAccent);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

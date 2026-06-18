@@ -176,6 +176,7 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
                                                       EditOrderScreen(
                                                           order: o)),
                                             );
+                                            if (!mounted) return;
                                             setState(() {});
                                           },
                                           child: Container(
@@ -200,7 +201,8 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
                                           onTap: () async {
                                             final ok = await showDialog<bool>(
                                                 context: context,
-                                                builder: (_) => AlertDialog(
+                                                builder: (dialogCtx) =>
+                                                    AlertDialog(
                                                       title: const Text(
                                                           'Batalkan order?'),
                                                       content: const Text(
@@ -209,35 +211,39 @@ class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
                                                         TextButton(
                                                             onPressed: () =>
                                                                 Navigator.pop(
-                                                                    context,
+                                                                    dialogCtx,
                                                                     false),
                                                             child: const Text(
                                                                 'Kembali')),
                                                         TextButton(
                                                             onPressed: () =>
                                                                 Navigator.pop(
-                                                                    context,
+                                                                    dialogCtx,
                                                                     true),
                                                             child: const Text(
                                                                 'Batalkan')),
                                                       ],
                                                     ));
                                             if (ok == true) {
+                                              if (!mounted) return;
+                                              // safe: capture messenger after mounted check
+                                              // ignore: use_build_context_synchronously
+                                              final messenger =
+                                                  ScaffoldMessenger.of(context);
                                               try {
                                                 await FirestoreService
                                                     .cancelOrder(o.id);
                                                 if (!mounted) return;
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(const SnackBar(
+                                                messenger.showSnackBar(
+                                                    const SnackBar(
                                                         content: Text(
                                                             'Order dibatalkan')));
                                                 setState(() {});
                                               } catch (e) {
                                                 if (!mounted) return;
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(SnackBar(
-                                                        content: Text(
-                                                            'Gagal batalkan: $e')));
+                                                messenger.showSnackBar(SnackBar(
+                                                    content: Text(
+                                                        'Gagal batalkan: $e')));
                                               }
                                             }
                                           },

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'screens/auth/login_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'app_theme.dart';
 import 'firebase_options.dart';
 import 'services/firestore_service.dart';
@@ -42,7 +42,7 @@ class CleanGoApp extends StatelessWidget {
         scaffoldBackgroundColor: AppColors.bgPage,
         fontFamily: 'Inter',
       ),
-      home: const LoginScreen(),
+      home: const OnboardingScreen(),
     );
   }
 }

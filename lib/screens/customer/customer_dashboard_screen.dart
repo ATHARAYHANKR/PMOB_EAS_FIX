@@ -267,7 +267,11 @@ class CustomerDashboardScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       decoration: BoxDecoration(
-        color: _DashColors.ink,
+        gradient: const LinearGradient(
+          colors: [Color(0xFF4A90D9), Color(0xFF63B3ED)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
