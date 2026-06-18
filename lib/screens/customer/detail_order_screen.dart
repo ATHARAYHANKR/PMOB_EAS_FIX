@@ -5,6 +5,9 @@ import '../../models/order_model.dart';
 import '../../services/firestore_service.dart';
 import 'edit_order_screen.dart';
 
+//keterangan: Halaman detail menerima `OrderModel order` dari halaman daftar
+//keterangan: (ListView/GridView) melalui `Navigator.push` dan menampilkan
+//keterangan: informasi lengkap order, progress workflow, serta tombol aksi.
 class DetailOrderScreen extends StatefulWidget {
   const DetailOrderScreen({super.key, required this.order});
   final OrderModel order;
@@ -14,9 +17,14 @@ class DetailOrderScreen extends StatefulWidget {
 }
 
 class _DetailOrderScreenState extends State<DetailOrderScreen> {
+  //keterangan: Getter cepat untuk mengakses objek order yang dikirim
+  //keterangan: dari halaman daftar (contoh: ListView.builder -> onTap
+  //keterangan: Navigator.push(context, MaterialPageRoute(builder: (_) => DetailOrderScreen(order: order))))
   OrderModel get order => widget.order;
 
   @override
+  //keterangan: Build UI utama — header (Card), progress, info card,
+  //keterangan: daftar langkah (custom widget per step), dan aksi (button).
   Widget build(BuildContext context) {
     final dateStr = DateFormat('d MMMM yyyy', 'id').format(order.pickupDate);
 
@@ -101,6 +109,8 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              //keterangan: Header card — menampilkan ID order, tanggal jemput,
+              //keterangan: dan badge status. Biasanya dibungkus dalam Card/Container.
               // Header card
               Container(
                 width: double.infinity,
@@ -150,6 +160,7 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
                 ),
               ),
               const SizedBox(height: 14),
+              //keterangan: Progress bar ditampilkan hanya jika order belum dibatalkan.
               if (order.status != OrderStatus.dibatalkan) ...[
                 Text('Progress Pesanan',
                     style: GoogleFonts.inter(
@@ -187,6 +198,8 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
                 const SizedBox(height: 14),
               ],
 
+              //keterangan: Info card — menampilkan detail seperti customer,
+              //keterangan: alamat, layanan, berat, harga, jemput, dan catatan.
               // Info card
               Container(
                 width: double.infinity,
@@ -227,6 +240,9 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
                 ),
               ),
 
+              //keterangan: Tombol aksi (Edit/Batalkan) muncul berdasarkan status.
+              //keterangan: Tombol Edit membuka `EditOrderScreen`, Batalkan memanggil
+              //keterangan: `FirestoreService.cancelOrder(order.id)`.
               if (order.status == OrderStatus.disetrika) ...[
                 const SizedBox(height: 14),
                 Row(
@@ -281,6 +297,8 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
                 ),
               ],
 
+              //keterangan: Bagian 'Status Order' menampilkan langkah workflow
+              //keterangan: seperti Menunggu -> Dicuci -> Disetrika -> Selesai.
               if (order.status != OrderStatus.dibatalkan) ...[
                 const SizedBox(height: 22),
                 Text('Status Order',
@@ -303,6 +321,9 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
     );
   }
 
+  //keterangan: Komponen reusable untuk menampilkan satu baris label: value
+  //keterangan: Label rata kiri, value rata kanan penuh.
+  //keterangan: Digunakan di dalam Info card agar tampilan konsisten.
   Widget _infoRow(String label, String value,
       {bool isLast = false, bool bold = false}) {
     return Padding(
@@ -310,15 +331,20 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          //keterangan: Label di sebelah kiri
           Text(label,
               style: GoogleFonts.inter(
                 fontSize: 13,
                 color: Colors.black54,
               )),
+          //keterangan: Spacer memberi jarak antara label dan value
           const Spacer(),
-          Flexible(
+          //keterangan: Value mengambil sisa space dan rata kanan
+          Expanded(
             child: Text(value,
-                textAlign: TextAlign.right,
+                textAlign: TextAlign.end,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
@@ -330,6 +356,7 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
     );
   }
 
+  //keterangan: Mapping judul langkah -> emoji icon untuk tampilan visual.
   // Mapping title -> emoji icon as seen in screenshots
   String _iconFor(String title) {
     switch (title) {
@@ -356,6 +383,9 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
     }
   }
 
+  //keterangan: Render satu baris langkah workflow. Menampilkan lingkaran
+  //keterangan: status (done/undone), connector jika bukan langkah terakhir,
+  //keterangan: dan tanggal jika tersedia.
   Widget _buildStepRow(StatusStep step, bool isLast) {
     const activeColor = Color(0xFF3B5BDB);
     final doneCircleColor = step.title == 'Selesai' && step.done
@@ -418,6 +448,9 @@ class _DetailOrderScreenState extends State<DetailOrderScreen> {
     );
   }
 
+  //keterangan: Tampilkan dialog konfirmasi pembatalan. Jika dikonfirmasi,
+  //keterangan: panggil `FirestoreService.cancelOrder(order.id)` dan tampilkan
+  //keterangan: indikator loading serta snackbar error jika gagal.
   void _showBatalkanDialog() {
     showDialog(
       context: context,
