@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import '../../app_theme.dart';
 import '../../models/order_model.dart';
 import '../../services/firestore_service.dart';
-import 'order_masuk_screen.dart';
 
 class LanjutProsesScreen extends StatefulWidget {
   final OrderModel order;
@@ -53,6 +52,12 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
           fg: Color(0xFF00897B),
           label: 'Disetrika',
         );
+      case OrderStatus.dikirim:
+        return const _BadgeStyle(
+          bg: Color(0xFFE3F2FD),
+          fg: Color(0xFF1565C0),
+          label: 'Kirim',
+        );
       case OrderStatus.konfirmasiBayar:
         return const _BadgeStyle(
           bg: Color(0xFFEDD6FF),
@@ -83,7 +88,9 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
       case OrderStatus.dicuci:
         return 'Order sedang dicuci. Lanjutkan ke proses setrika setelah selesai.';
       case OrderStatus.disetrika:
-        return 'Order sedang disetrika. Tandai selesai atau lanjut ke konfirmasi pembayaran.';
+        return 'Order sudah disetrika. Lanjutkan ke proses pengiriman.';
+      case OrderStatus.dikirim:
+        return 'Order sedang dikirim. Tandai selesai setelah diterima customer.';
       case OrderStatus.konfirmasiBayar:
         return 'Menunggu customer melakukan pembayaran sebelum dilanjutkan.';
       default:
@@ -103,7 +110,9 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
       case OrderStatus.dicuci:
         return 'Lanjut Setrika';
       case OrderStatus.disetrika:
-        return 'Lanjut Proses';
+        return 'Kirim Order';
+      case OrderStatus.dikirim:
+        return 'Tandai Selesai';
       case OrderStatus.konfirmasiBayar:
         return 'Menunggu Pembayaran';
       default:
@@ -113,13 +122,7 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
 
   OrderStatus? get _nextStatus => order.nextStatus;
 
-  bool get _canContinue {
-    if (_nextStatus == null || order.isFinalized) return false;
-    if (order.status == OrderStatus.konfirmasiBayar && !order.isPaid) {
-      return false;
-    }
-    return true;
-  }
+  bool get _canContinue => _nextStatus != null && !order.isFinalized;
 
   // ──────────────────────────────────────────────────────────
 
@@ -438,11 +441,9 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _canContinue ? _onPrimaryAction : null,
+                        onPressed: () => _showKonfirmasiDialog(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _canContinue
-                              ? AppColors.primary
-                              : Colors.grey.shade400,
+                          backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -460,17 +461,6 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
                         ),
                       ),
                     ),
-                    if (order.status == OrderStatus.konfirmasiBayar &&
-                        !order.isPaid) ...[
-                      const SizedBox(height: 10),
-                      Text(
-                        'Pembayaran belum diterima. Tunggu customer mengupload bukti terlebih dahulu.',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -479,20 +469,6 @@ class _LanjutProsesScreenState extends State<LanjutProsesScreen> {
         ),
       ),
     );
-  }
-
-  void _onPrimaryAction() {
-    if (order.status == OrderStatus.dijemput) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const OrderMasukScreen(initialTabIndex: 1),
-        ),
-      );
-      return;
-    }
-
-    _showKonfirmasiDialog(context);
   }
 }
 

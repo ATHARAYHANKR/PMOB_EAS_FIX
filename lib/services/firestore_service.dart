@@ -1,8 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/order_model.dart';
-import '../models/katalog_model.dart';
 import '../models/booking_model.dart';
-import 'dart:async';
+import '../models/katalog_model.dart';
+import '../models/order_model.dart';
 
 class FirestoreService {
   static bool firebaseAvailable = false;
@@ -12,60 +11,115 @@ class FirestoreService {
   static final List<BookingModel> _localBookings = [];
   static final List<Map<String, dynamic>> _localKatalog = [
     {
-      'id': 'cuci_kering',
-      'nama': 'Cuci Kering',
+      'id': 'cuci_kering_regular',
+      'nama': 'Cuci Kering Regular',
       'satuan': 'Kg',
       'harga': 7000,
       'estimasi': '2 hari',
-      'deskripsi': 'Cuci Kering',
+      'deskripsi': 'Cuci kering standar dengan waktu pengerjaan normal.',
       'aktif': true,
     },
     {
-      'id': 'cuci_basah',
-      'nama': 'Cuci Basah',
+      'id': 'cuci_kering_express',
+      'nama': 'Cuci Kering Express',
       'satuan': 'Kg',
-      'harga': 6000,
+      'harga': 12000,
       'estimasi': '1 hari',
-      'deskripsi': 'Cuci Basah',
+      'deskripsi': 'Cuci kering cepat dengan prioritas pengerjaan.',
       'aktif': true,
     },
     {
-      'id': 'setrika',
-      'nama': 'Setrika',
-      'satuan': 'Kg',
-      'harga': 5000,
-      'estimasi': '1 hari',
-      'deskripsi': 'Setrika saja',
-      'aktif': true,
-    },
-    {
-      'id': 'cuci_setrika',
-      'nama': 'Cuci + Setrika',
+      'id': 'cuci_setrika_regular',
+      'nama': 'Cuci Setrika Regular',
       'satuan': 'Kg',
       'harga': 10000,
       'estimasi': '3 hari',
-      'deskripsi': 'Cuci dan Setrika',
+      'deskripsi': 'Cuci dan setrika standar dengan waktu pengerjaan normal.',
+      'aktif': true,
+    },
+    {
+      'id': 'cuci_setrika_express',
+      'nama': 'Cuci Setrika Express',
+      'satuan': 'Kg',
+      'harga': 15000,
+      'estimasi': '1 hari',
+      'deskripsi': 'Cuci dan setrika cepat dengan prioritas pengerjaan.',
+      'aktif': true,
+    },
+    {
+      'id': 'setrika_saja_regular',
+      'nama': 'Setrika Saja Regular',
+      'satuan': 'Kg',
+      'harga': 5000,
+      'estimasi': '1 hari',
+      'deskripsi': 'Setrika saja standar untuk pakaian bersih.',
+      'aktif': true,
+    },
+    {
+      'id': 'setrika_saja_express',
+      'nama': 'Setrika Saja Express',
+      'satuan': 'Kg',
+      'harga': 8000,
+      'estimasi': '6 jam',
+      'deskripsi': 'Setrika saja cepat dengan prioritas pengerjaan.',
+      'aktif': true,
+    },
+    {
+      'id': 'laundry_sepatu_regular',
+      'nama': 'Laundry Sepatu Regular',
+      'satuan': 'Pasang',
+      'harga': 18000,
+      'estimasi': '2 hari',
+      'deskripsi':
+          'Layanan cuci sepatu standar dengan waktu pengerjaan normal.',
+      'aktif': true,
+    },
+    {
+      'id': 'laundry_sepatu_express',
+      'nama': 'Laundry Sepatu Express',
+      'satuan': 'Pasang',
+      'harga': 27000,
+      'estimasi': '1 hari',
+      'deskripsi': 'Layanan cuci sepatu cepat dengan prioritas pengerjaan.',
       'aktif': true,
     },
   ];
 
   static final List<Map<String, dynamic>> _localLayanan = [
     {
-      'id': 'express_wash',
-      'nama': 'Express Wash',
+      'id': 'cuci_kering',
+      'nama': 'Cuci Kering',
       'satuan': 'Kg',
-      'harga': 12000,
-      'estimasi': '1 hari',
-      'deskripsi': 'Cuci Express',
+      'harga': 7000,
+      'estimasi': '2 hari',
+      'deskripsi': 'Layanan cuci kering standar.',
       'aktif': true,
     },
     {
-      'id': 'premium_dry_clean',
-      'nama': 'Premium Dry Clean',
-      'satuan': 'Pcs',
-      'harga': 25000,
+      'id': 'cuci_setrika',
+      'nama': 'Cuci Setrika',
+      'satuan': 'Kg',
+      'harga': 10000,
       'estimasi': '3 hari',
-      'deskripsi': 'Dry Cleaning Premium',
+      'deskripsi': 'Layanan cuci dan setrika lengkap.',
+      'aktif': true,
+    },
+    {
+      'id': 'setrika_saja',
+      'nama': 'Setrika Saja',
+      'satuan': 'Kg',
+      'harga': 5000,
+      'estimasi': '1 hari',
+      'deskripsi': 'Setrika saja tanpa cuci.',
+      'aktif': true,
+    },
+    {
+      'id': 'laundry_sepatu',
+      'nama': 'Laundry Sepatu',
+      'satuan': 'Pcs',
+      'harga': 18000,
+      'estimasi': '2 hari',
+      'deskripsi': 'Cuci sepatu kain dan kanvas.',
       'aktif': true,
     },
   ];
@@ -77,7 +131,6 @@ class FirestoreService {
       'role': 'customer',
       'email': 'demo@cleango.local',
       'phone': '0000000000',
-      'address': 'Jl. Mawar No. 10, Bandung',
       'password': 'customer123',
     },
   ];
@@ -94,12 +147,6 @@ class FirestoreService {
 
   static Map<String, dynamic>? currentUser;
 
-  // StreamController untuk notifikasi order baru (in-app)
-  static final StreamController<OrderModel> _newOrderController =
-      StreamController.broadcast();
-
-  static Stream<OrderModel> get newOrderStream => _newOrderController.stream;
-
   static String? get currentUserName =>
       currentUser?['name']?.toString().trim().isNotEmpty == true
           ? currentUser!['name'].toString().trim()
@@ -114,6 +161,95 @@ class FirestoreService {
       currentUser?['address']?.toString().trim().isNotEmpty == true
           ? currentUser!['address'].toString().trim()
           : null;
+
+  static Future<void> updateUserProfile({
+    required String name,
+    required String phone,
+    required String address,
+  }) async {
+    final updated = {
+      'name': name,
+      'phone': phone,
+      'address': address,
+    };
+
+    if (!firebaseAvailable) {
+      if (currentUser != null) {
+        currentUser = {...currentUser!, ...updated};
+      }
+      return;
+    }
+
+    if (currentUser == null) {
+      throw StateError('Pengguna belum login.');
+    }
+    final userId = currentUser!['id']?.toString();
+    if (userId == null || userId.isEmpty) {
+      throw StateError('ID pengguna tidak tersedia.');
+    }
+    await _db!
+        .collection('users')
+        .doc(userId)
+        .set(updated, SetOptions(merge: true));
+    currentUser = {...currentUser!, ...updated};
+  }
+
+  static List<KatalogModel> getKatalog() {
+    return _localKatalog
+        .map((data) => KatalogModel.fromMap(data['id']?.toString() ?? '', data))
+        .toList();
+  }
+
+  static Future<void> createBooking(BookingModel booking) async {
+    // Persist booking (bookings collection / local fallback)
+    final bookingId = booking.id.isNotEmpty
+        ? booking.id
+        : (firebaseAvailable
+            ? _db!.collection('bookings').doc().id
+            : 'booking_${_localBookings.length + 1}');
+
+    if (!firebaseAvailable) {
+      _localBookings.add(BookingModel(
+        id: bookingId,
+        customerId: booking.customerId,
+        katalogId: booking.katalogId,
+        katalogNama: booking.katalogNama,
+        harga: booking.harga,
+        satuan: booking.satuan,
+        alamat: booking.alamat,
+        tanggalJemput: booking.tanggalJemput,
+        tanggalSelesai: booking.tanggalSelesai,
+        sesiJemput: booking.sesiJemput,
+        catatan: booking.catatan,
+        status: booking.status,
+        createdAt: booking.createdAt,
+      ));
+    } else {
+      await _db!.collection('bookings').doc(bookingId).set(booking.toMap());
+    }
+
+    // Also create a corresponding Order so it appears in customer history
+    final orderId = bookingId; // reuse booking id for simplicity
+    final customerName = currentUserName ?? '';
+    final phone = currentUserPhone ?? '';
+
+    final order = OrderModel(
+      id: orderId,
+      customerName: customerName,
+      phone: phone,
+      serviceType: booking.katalogNama,
+      pickupDate: booking.tanggalJemput,
+      pickupSlot: booking.sesiJemput,
+      status: OrderStatus.masuk,
+      beratKg: null,
+      totalHarga: booking.harga.toDouble(),
+      address: booking.alamat,
+      catatan: booking.catatan,
+      steps: const [],
+    );
+
+    await addOrder(order);
+  }
 
   static Future<void> initialize() async {
     try {
@@ -152,6 +288,27 @@ class FirestoreService {
     return _db!
         .collection('orders')
         .where('status', isEqualTo: orderStatusToString(status))
+        .orderBy('pickupDate', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => OrderModel.fromMap(doc.id, doc.data()))
+            .toList());
+  }
+
+  static Stream<List<OrderModel>> streamOrdersByStatuses(
+      List<OrderStatus> statuses) {
+    if (!firebaseAvailable) {
+      return Stream.value(_localOrders
+          .where((order) => statuses.contains(order.status))
+          .toList());
+    }
+
+    final statusStrings =
+        statuses.map(orderStatusToString).toList(growable: false);
+
+    return _db!
+        .collection('orders')
+        .where('status', whereIn: statusStrings)
         .orderBy('pickupDate', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
@@ -324,6 +481,24 @@ class FirestoreService {
     return OrderModel.fromMap(doc.id, doc.data() as Map<String, dynamic>);
   }
 
+  static Future<void> updateOrder(OrderModel order) async {
+    if (!firebaseAvailable) {
+      final index = _localOrders.indexWhere((o) => o.id == order.id);
+      if (index >= 0) {
+        _localOrders[index] = order;
+        return;
+      }
+      throw StateError('Order ${order.id} tidak ditemukan.');
+    }
+
+    final docRef = _db!.collection('orders').doc(order.id);
+    final doc = await docRef.get();
+    if (!doc.exists) {
+      throw StateError('Order ${order.id} tidak ditemukan di Firestore.');
+    }
+    await docRef.set(order.toMap(), SetOptions(merge: true));
+  }
+
   static bool _isValidStatusTransition(OrderStatus current, OrderStatus next) {
     if (current == next) return false;
     if (next == OrderStatus.dibatalkan) {
@@ -335,7 +510,7 @@ class FirestoreService {
     }
     switch (current) {
       case OrderStatus.masuk:
-        return next == OrderStatus.dijemput;
+        return next == OrderStatus.dijemput || next == OrderStatus.perluTimbang;
       case OrderStatus.dijemput:
         return next == OrderStatus.perluTimbang;
       case OrderStatus.perluTimbang:
@@ -364,11 +539,6 @@ class FirestoreService {
         throw StateError(
             'Transisi status tidak valid: ${current.stepTitle} → ${status.stepTitle}');
       }
-      if (current == OrderStatus.konfirmasiBayar &&
-          status == OrderStatus.dikirim &&
-          !_localOrders[index].isPaid) {
-        throw StateError('Pembayaran belum diterima untuk order $id.');
-      }
       _localOrders[index].status = status;
       return;
     }
@@ -383,11 +553,6 @@ class FirestoreService {
     if (!_isValidStatusTransition(currentOrder.status, status)) {
       throw StateError(
           'Transisi status tidak valid: ${currentOrder.status.stepTitle} → ${status.stepTitle}');
-    }
-    if (currentOrder.status == OrderStatus.konfirmasiBayar &&
-        status == OrderStatus.dikirim &&
-        !currentOrder.isPaid) {
-      throw StateError('Pembayaran belum diterima untuk order $id.');
     }
     await docRef.update({'status': orderStatusToString(status)});
   }
@@ -404,6 +569,8 @@ class FirestoreService {
   }
 
   static Future<void> updateWeightAndConfirm(String id, double weightKg) async {
+    final totalHarga = weightKg * 7000;
+
     if (!firebaseAvailable) {
       final index = _localOrders.indexWhere((order) => order.id == id);
       if (index < 0) {
@@ -416,6 +583,8 @@ class FirestoreService {
             'Transisi status tidak valid: ${current.stepTitle} → ${OrderStatus.konfirmasiBayar.stepTitle}');
       }
       _localOrders[index].beratKg = weightKg;
+      _localOrders[index].totalHarga = totalHarga;
+      _localOrders[index].isPaid = false;
       _localOrders[index].status = OrderStatus.konfirmasiBayar;
       return;
     }
@@ -434,57 +603,82 @@ class FirestoreService {
     }
     await docRef.update({
       'beratKg': weightKg,
+      'totalHarga': totalHarga,
+      'isPaid': false,
       'status': orderStatusToString(OrderStatus.konfirmasiBayar),
     });
   }
 
-  static Future<void> addOrder(OrderModel order) async {
+  static Future<void> markCustomerPaid(String id) async {
     if (!firebaseAvailable) {
-      _localOrders.add(order);
-      // Emit event order baru
-      _newOrderController.add(order);
-      return;
-    }
-    await _db!.collection('orders').doc(order.id).set(order.toMap());
-    // Emit event order baru untuk listener in-app
-    _newOrderController.add(order);
-  }
-
-  static Future<void> submitPaymentProof(String id, String url) async {
-    if (!firebaseAvailable) {
-      final index = _localOrders.indexWhere((o) => o.id == id);
-      if (index < 0) throw StateError('Order $id tidak ditemukan');
-      _localOrders[index].paymentProofUrl = url;
-      _localOrders[index].isPaid = true;
-      return;
-    }
-    final docRef = _db!.collection('orders').doc(id);
-    final doc = await docRef.get();
-    if (!doc.exists) throw StateError('Order $id tidak ditemukan');
-    await docRef.update({'paymentProofUrl': url, 'isPaid': true});
-  }
-
-  static Future<void> completePayment(String id) async {
-    if (!firebaseAvailable) {
-      final index = _localOrders.indexWhere((o) => o.id == id);
-      if (index < 0) throw StateError('Order $id tidak ditemukan');
+      final index = _localOrders.indexWhere((order) => order.id == id);
+      if (index < 0) {
+        throw StateError('Order $id tidak ditemukan.');
+      }
       if (_localOrders[index].status != OrderStatus.konfirmasiBayar) {
-        throw StateError('Order $id tidak dalam status konfirmasi pembayaran.');
+        throw StateError('Order $id belum memiliki tagihan aktif.');
       }
       _localOrders[index].isPaid = true;
-      _localOrders[index].paymentProofUrl = null;
       return;
     }
 
     final docRef = _db!.collection('orders').doc(id);
     final doc = await docRef.get();
-    if (!doc.exists) throw StateError('Order $id tidak ditemukan');
+    if (!doc.exists) {
+      throw StateError('Order $id tidak ditemukan.');
+    }
     final order =
         OrderModel.fromMap(doc.id, doc.data() as Map<String, dynamic>);
     if (order.status != OrderStatus.konfirmasiBayar) {
-      throw StateError('Order $id tidak dalam status konfirmasi pembayaran.');
+      throw StateError('Order $id belum memiliki tagihan aktif.');
     }
-    await docRef.update({'isPaid': true, 'paymentProofUrl': null});
+    await docRef.update({'isPaid': true});
+  }
+
+  static Future<void> addOrder(OrderModel order) async {
+    // Ensure order has an ORD-... id; generate based on createdAt date if missing
+    OrderModel toSave = order;
+    if (order.id.isEmpty || !order.id.startsWith('ORD-')) {
+      final generated = await _generateOrderId(order.createdAt);
+      toSave = order.copyWith(id: generated, createdAt: order.createdAt);
+    }
+
+    if (!firebaseAvailable) {
+      _localOrders.add(toSave);
+      return;
+    }
+
+    await _db!.collection('orders').doc(toSave.id).set(toSave.toMap());
+  }
+
+  static Future<String> _generateOrderId(DateTime createdAt) async {
+    final y = createdAt.year.toString().padLeft(4, '0');
+    final m = createdAt.month.toString().padLeft(2, '0');
+    final d = createdAt.day.toString().padLeft(2, '0');
+    final datePart = '$y$m$d';
+
+    if (!firebaseAvailable) {
+      final count = _localOrders
+          .where((o) =>
+              o.createdAt.year == createdAt.year &&
+              o.createdAt.month == createdAt.month &&
+              o.createdAt.day == createdAt.day)
+          .length;
+      final seq = count + 1;
+      return 'ORD-$datePart${seq.toString().padLeft(3, '0')}';
+    }
+
+    final dayStart = DateTime(createdAt.year, createdAt.month, createdAt.day);
+    final dayEnd = dayStart.add(const Duration(days: 1));
+
+    final snap = await _db!
+        .collection('orders')
+        .where('createdAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(dayStart))
+        .where('createdAt', isLessThan: Timestamp.fromDate(dayEnd))
+        .get();
+    final seq = snap.docs.length + 1;
+    return 'ORD-$datePart${seq.toString().padLeft(3, '0')}';
   }
 
   static Stream<List<Map<String, dynamic>>> streamKatalogRaw() {
@@ -538,94 +732,65 @@ class FirestoreService {
     await _db!.collection('layanan').add(data);
   }
 
-  // ── User Profile Management ───────────────────────────────────
-  static Future<void> updateUserProfile({
-    String? name,
-    String? phone,
-    String? address,
-  }) async {
-    if (currentUser == null) {
-      throw StateError('Tidak ada user yang login');
-    }
-
-    final userId = currentUser!['id']?.toString() ?? '';
-    if (userId.isEmpty) {
-      throw StateError('User ID tidak valid');
-    }
-
-    final updateData = <String, dynamic>{};
-    if (name != null) {
-      updateData['name'] = name;
-      currentUser!['name'] = name;
-    }
-    if (phone != null) {
-      updateData['phone'] = phone;
-      currentUser!['phone'] = phone;
-    }
-    if (address != null) {
-      updateData['address'] = address;
-      currentUser!['address'] = address;
-    }
-
-    if (updateData.isEmpty) return;
-
+  // ── Update & Delete Katalog ─────────────────────────────────
+  static Future<void> updateKatalog(
+      String id, Map<String, dynamic> data) async {
     if (!firebaseAvailable) {
-      final index = _localUsers.indexWhere((u) => u['id'] == userId);
-      if (index >= 0) {
-        _localUsers[index].addAll(updateData);
+      final idx = _localKatalog.indexWhere((k) => k['id'] == id);
+      if (idx >= 0) {
+        _localKatalog[idx] = {..._localKatalog[idx], ...data};
       }
       return;
     }
-
-    await _db!.collection('users').doc(userId).update(updateData);
+    await _db!.collection('katalog').doc(id).update(data);
   }
 
-  // ── Katalog & Booking Management ──────────────────────────────
-  static List<KatalogModel> getKatalog() {
-    return _localKatalog
-        .map((item) => KatalogModel.fromMap(item['id'].toString(), item))
-        .where((k) => k.aktif)
-        .toList();
-  }
-
-  static Future<void> createBooking(BookingModel booking) async {
+  static Future<void> deleteKatalog(String id) async {
     if (!firebaseAvailable) {
-      final newBooking = BookingModel(
-        id: 'booking_${_localBookings.length + 1}',
-        customerId: booking.customerId,
-        katalogId: booking.katalogId,
-        katalogNama: booking.katalogNama,
-        harga: booking.harga,
-        satuan: booking.satuan,
-        alamat: booking.alamat,
-        tanggalJemput: booking.tanggalJemput,
-        tanggalSelesai: booking.tanggalSelesai,
-        sesiJemput: booking.sesiJemput,
-        catatan: booking.catatan,
-        status: booking.status,
-        createdAt: booking.createdAt,
-      );
-      _localBookings.add(newBooking);
+      _localKatalog.removeWhere((k) => k['id'] == id);
       return;
     }
+    await _db!.collection('katalog').doc(id).delete();
+  }
 
-    final id = _db!.collection('bookings').doc().id;
-    final newBooking = BookingModel(
-      id: id,
-      customerId: booking.customerId,
-      katalogId: booking.katalogId,
-      katalogNama: booking.katalogNama,
-      harga: booking.harga,
-      satuan: booking.satuan,
-      alamat: booking.alamat,
-      tanggalJemput: booking.tanggalJemput,
-      tanggalSelesai: booking.tanggalSelesai,
-      sesiJemput: booking.sesiJemput,
-      catatan: booking.catatan,
-      status: booking.status,
-      createdAt: booking.createdAt,
-    );
+  // ── Update & Delete Layanan ────────────────────────────────
+  static Future<void> updateLayanan(
+      String id, Map<String, dynamic> data) async {
+    if (!firebaseAvailable) {
+      final idx = _localLayanan.indexWhere((l) => l['id'] == id);
+      if (idx >= 0) {
+        _localLayanan[idx] = {..._localLayanan[idx], ...data};
+      }
+      return;
+    }
+    await _db!.collection('layanan').doc(id).update(data);
+  }
 
-    await _db!.collection('bookings').doc(id).set(newBooking.toMap());
+  static Future<void> deleteLayanan(String id) async {
+    if (!firebaseAvailable) {
+      _localLayanan.removeWhere((l) => l['id'] == id);
+      return;
+    }
+    await _db!.collection('layanan').doc(id).delete();
+  }
+
+  // ── Update & Delete Staff ───────────────────────────────────
+  static Future<void> updateStaff(String id, Map<String, dynamic> data) async {
+    if (!firebaseAvailable) {
+      final idx = _localStaff.indexWhere((s) => s['id'] == id);
+      if (idx >= 0) {
+        _localStaff[idx] = {..._localStaff[idx], ...data};
+      }
+      return;
+    }
+    await _db!.collection('staff').doc(id).update(data);
+  }
+
+  static Future<void> deleteStaff(String id) async {
+    if (!firebaseAvailable) {
+      _localStaff.removeWhere((s) => s['id'] == id);
+      return;
+    }
+    await _db!.collection('staff').doc(id).delete();
   }
 }

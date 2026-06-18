@@ -39,7 +39,8 @@ class _FormBookingScreenState extends State<FormBookingScreen> {
 
   void _loadDefaultAddress() {
     // Get default address from user (you can integrate with user service)
-    _addressController.text = 'Jl. Mawar No. 10';
+    final addr = FirestoreService.currentUserAddress;
+    _addressController.text = addr ?? 'Jl. Mawar No. 10';
   }
 
   Future<void> _selectPickupDate() async {
@@ -94,7 +95,9 @@ class _FormBookingScreenState extends State<FormBookingScreen> {
 
       final booking = BookingModel(
         id: '',
-        customerId: 'current_user_id', // Replace with actual user ID from auth
+        customerId: FirestoreService.currentUser?['id']?.toString() ??
+            FirestoreService.currentUserPhone ??
+            '',
         katalogId: widget.service.id,
         katalogNama: widget.service.nama,
         harga: widget.service.harga,

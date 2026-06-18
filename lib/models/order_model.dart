@@ -4,10 +4,10 @@ enum OrderStatus {
   masuk,
   dijemput,
   perluTimbang,
+  konfirmasiBayar,
   dicuci,
   disetrika,
   dikirim,
-  konfirmasiBayar,
   selesai,
   dibatalkan,
 }
@@ -95,6 +95,7 @@ OrderStatus orderStatusFromString(String? value) {
       return OrderStatus.dijemput;
     case 'perlu timbang':
     case 'perlu_timbang':
+    case 'perlutimbang':
     case 'perluTimbang':
       return OrderStatus.perluTimbang;
     case 'dicuci':
@@ -104,6 +105,7 @@ OrderStatus orderStatusFromString(String? value) {
     case 'konfirmasi bayar':
     case 'konfirmasibayar':
     case 'konfirmasiBayar':
+    case 'menunggu pembayaran':
       return OrderStatus.konfirmasiBayar;
     case 'dikirim':
       return OrderStatus.dikirim;
@@ -136,14 +138,15 @@ class OrderModel {
   final String serviceType;
   final DateTime pickupDate;
   final String pickupSlot;
+  final DateTime createdAt;
   OrderStatus status;
   double? beratKg;
   double? totalHarga;
-  String? paymentProofUrl;
   bool isPaid;
   String address;
   String catatan;
   List<StatusStep> steps;
+  DateTime? paymentConfirmedAt;
 
   OrderModel({
     required this.id,
@@ -155,12 +158,51 @@ class OrderModel {
     this.status = OrderStatus.masuk,
     this.beratKg,
     this.totalHarga,
+    this.isPaid = false,
     this.address = 'Jl. Mawar No. 105',
     this.catatan = '-',
-    this.paymentProofUrl,
-    this.isPaid = false,
     this.steps = const [],
+    this.paymentConfirmedAt,
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+
+  OrderModel._internal({
+    required this.id,
+    required this.customerName,
+    required this.phone,
+    required this.serviceType,
+    required this.pickupDate,
+    required this.pickupSlot,
+    this.status = OrderStatus.masuk,
+    this.beratKg,
+    this.totalHarga,
+    this.isPaid = false,
+    this.address = 'Jl. Mawar No. 105',
+    this.catatan = '-',
+    this.steps = const [],
+    this.paymentConfirmedAt,
+    required this.createdAt,
   });
+
+  OrderModel copyWith({String? id, DateTime? createdAt}) {
+    return OrderModel._internal(
+      id: id ?? this.id,
+      customerName: customerName,
+      phone: phone,
+      serviceType: serviceType,
+      pickupDate: pickupDate,
+      pickupSlot: pickupSlot,
+      status: status,
+      beratKg: beratKg,
+      totalHarga: totalHarga,
+      isPaid: isPaid,
+      address: address,
+      catatan: catatan,
+      steps: steps,
+      paymentConfirmedAt: paymentConfirmedAt,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 
   String get statusLabel {
     switch (status) {
@@ -241,10 +283,12 @@ class OrderModel {
       'status': orderStatusToString(status),
       if (beratKg != null) 'beratKg': beratKg,
       if (totalHarga != null) 'totalHarga': totalHarga,
-      if (paymentProofUrl != null) 'paymentProofUrl': paymentProofUrl,
       'isPaid': isPaid,
       'address': address,
       'catatan': catatan,
+      'createdAt': Timestamp.fromDate(createdAt),
+      if (paymentConfirmedAt != null)
+        'paymentConfirmedAt': Timestamp.fromDate(paymentConfirmedAt!),
       if (steps.isNotEmpty)
         'steps': steps
             .map((step) => {
@@ -287,6 +331,16 @@ class OrderModel {
       }
     }
 
+    // parse optional paymentConfirmedAt
+    DateTime? parsedPaymentConfirmedAt() {
+      final raw = map['paymentConfirmedAt'];
+      if (raw == null) return null;
+      if (raw is Timestamp) return raw.toDate();
+      if (raw is String) return DateTime.tryParse(raw);
+      if (raw is int) return DateTime.fromMillisecondsSinceEpoch(raw);
+      return null;
+    }
+
     return OrderModel(
       id: id,
       customerName: map['customerName']?.toString() ?? '',
@@ -297,11 +351,22 @@ class OrderModel {
       status: orderStatusFromString(map['status']?.toString()),
       beratKg: parseDouble(map['beratKg']),
       totalHarga: parseDouble(map['totalHarga']),
-      paymentProofUrl: map['paymentProofUrl']?.toString(),
       isPaid: map['isPaid'] == true,
       address: map['address']?.toString() ?? '',
       catatan: map['catatan']?.toString() ?? '-',
       steps: steps,
+      paymentConfirmedAt: parsedPaymentConfirmedAt(),
+      createdAt: () {
+        final rawCreated = map['createdAt'];
+        if (rawCreated is Timestamp) {
+          return rawCreated.toDate();
+        } else if (rawCreated is String) {
+          return DateTime.tryParse(rawCreated) ?? DateTime.now();
+        } else if (rawCreated is int) {
+          return DateTime.fromMillisecondsSinceEpoch(rawCreated);
+        }
+        return DateTime.now();
+      }(),
     );
   }
 }

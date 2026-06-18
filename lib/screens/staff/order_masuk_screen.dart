@@ -7,9 +7,7 @@ import '../../services/firestore_service.dart';
 import 'verifikasi_berat_screen.dart';
 
 class OrderMasukScreen extends StatefulWidget {
-  const OrderMasukScreen({super.key, this.initialTabIndex = 0});
-
-  final int initialTabIndex;
+  const OrderMasukScreen({super.key});
 
   @override
   State<OrderMasukScreen> createState() => _OrderMasukScreenState();
@@ -17,16 +15,11 @@ class OrderMasukScreen extends StatefulWidget {
 
 class _OrderMasukScreenState extends State<OrderMasukScreen> {
   // 0 = Ambil, 1 = Timbang
-  late int _tabIndex;
+  int _tabIndex = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _tabIndex = widget.initialTabIndex.clamp(0, 1);
-  }
-
-  OrderStatus get _activeStatus =>
-      _tabIndex == 0 ? OrderStatus.masuk : OrderStatus.dijemput;
+  List<OrderStatus> get _activeStatuses => _tabIndex == 0
+      ? [OrderStatus.masuk]
+      : [OrderStatus.dijemput, OrderStatus.perluTimbang];
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +46,8 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
             // ── Order List ────────────────────────────────
             Expanded(
               child: StreamBuilder<List<OrderModel>>(
-                stream: FirestoreService.streamOrdersByStatus(_activeStatus),
+                stream:
+                    FirestoreService.streamOrdersByStatuses(_activeStatuses),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return Center(
@@ -74,7 +68,9 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  final orders = snapshot.data!;
+                  final orders = snapshot.data!
+                      .where((order) => _activeStatuses.contains(order.status))
+                      .toList();
 
                   if (orders.isEmpty) {
                     return _buildEmptyState();
@@ -234,7 +230,7 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
   }
 
   Widget _buildActionButton(OrderModel order) {
-    final isAmbil = _tabIndex == 0;
+    final isAmbil = order.status == OrderStatus.masuk;
     return ElevatedButton.icon(
       onPressed: () => _handleAction(order),
       icon: Icon(
@@ -277,20 +273,21 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
   //  ACTION HANDLERS
   // ──────────────────────────────────────────────────────────
   void _handleAction(OrderModel order) {
-    if (_tabIndex == 0) {
+    if (order.status == OrderStatus.masuk) {
       _showAmbilDialog(order);
-    } else {
-      // Navigasi ke halaman Verifikasi Berat
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => VerifikasiBeratScreen(
-            order: order,
-            onKonfirmasi: () => setState(() {}),
-          ),
-        ),
-      ).then((_) => setState(() {})); // refresh list setelah kembali
+      return;
     }
+
+    // Navigasi ke halaman Verifikasi Berat untuk order yang siap ditimbang.
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => VerifikasiBeratScreen(
+          order: order,
+          onKonfirmasi: () => setState(() {}),
+        ),
+      ),
+    ).then((_) => setState(() {})); // refresh list setelah kembali
   }
 
   // ── Dialog "Yakin Ambil Sekarang?" ─────────────────────────
@@ -367,9 +364,13 @@ class _OrderMasukScreenState extends State<OrderMasukScreen> {
                         Navigator.pop(context);
                         try {
                           await FirestoreService.updateStatus(
-                              order.id, OrderStatus.dijemput);
+                              order.id, OrderStatus.perluTimbang);
                           if (!mounted) return;
-                          _showSnack('Order ${order.id} berhasil dijemput');
+                          setState(() {
+                            _tabIndex = 1;
+                          });
+                          _showSnack(
+                              'Order ${order.id} berhasil dijemput dan dipindah ke Timbang');
                         } catch (e) {
                           if (!mounted) return;
                           _showSnack('Gagal memperbarui status: $e');
